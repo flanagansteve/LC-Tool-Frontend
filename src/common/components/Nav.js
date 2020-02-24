@@ -5,7 +5,7 @@ import { NavLink } from 'react-router-dom';
 const StyledNav = styled.nav`
   display: flex;
   align-items: center;
-  padding: 0 120px;
+  padding: 0 140px;
   background-color: #fff;
   min-height: 80px;
   font-size: 14px;
@@ -17,6 +17,17 @@ const StyledNavLink = styled(NavLink)`
   text-decoration: none;
   &.active {
     color: #000;
+  }
+`;
+
+const StyledLoginLink = styled(NavLink)`
+  margin-left: auto;
+  text-decoration: none;
+  color: #000;
+  transition: color 0.3s;
+  
+  &:hover {
+    color: rgb(34, 103, 255);
   }
 `;
 
@@ -35,6 +46,7 @@ const Nav = () => {
       <StyledNavLink to="/create">Create an LC</StyledNavLink>
       <StyledNavLink to="/review">Review LC Applications</StyledNavLink>
       <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
+      <StyledLoginLink to="/login">Log In</StyledLoginLink>
     </StyledNav>
   )
 }
