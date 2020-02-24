@@ -5,7 +5,7 @@ import BasicLayout from '../common/components/BasicLayout';
 
 const LoginForm = styled.form`
   background-color: #fff;
-  padding: 30px 20px;
+  padding: 10px 20px;
   border: 1px solid #E5E4E2;
   border-radius: 25px;
 `
