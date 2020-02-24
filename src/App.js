@@ -16,6 +16,9 @@ function App() {
         <Route path="/">
           <HomePage/>
         </Route>
+        <Route path="/create"/>
+        <Route path="/review"/>
+        <Route path="/manage"/>
       </Switch>
     </Router>
   );
