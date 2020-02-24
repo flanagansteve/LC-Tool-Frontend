@@ -1,8 +1,11 @@
 import React from 'react';
+import BasicLayout from '../common/components/BasicLayout';
 
 const LoginPage = () => {
   return (
-    <div>Login</div>
+    <BasicLayout title="Log In">
+      whatup this will be a form eventually
+    </BasicLayout>
   );
 };
 
