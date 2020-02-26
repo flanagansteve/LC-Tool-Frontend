@@ -2,6 +2,9 @@ import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
 
+// TODO import different sized logos for performance
+import logo from '../images/logo.png'
+
 const StyledNav = styled.nav`
   display: flex;
   align-items: center;
@@ -31,18 +34,14 @@ const StyledLoginLink = styled(NavLink)`
   }
 `;
 
-const Bountium = styled.span`
-  font-size: 48px;
-  font-weight: 600;
-  color: rgb(34, 103, 255);
-  margin-right: 50px;
-  text-decoration: none;
+const NavLogo = styled.img.attrs({src: logo, alt: "Bountium Logo"})`
+  max-height: 50px;
 `
 
 const Nav = () => {
   return (
     <StyledNav>
-      <StyledNavLink to="/"><Bountium>B</Bountium></StyledNavLink>
+      <StyledNavLink to="/"><NavLogo src={logo} alt="Bountium Logo"/></StyledNavLink>
       <StyledNavLink to="/create">Create an LC</StyledNavLink>
       <StyledNavLink to="/review">Review LC Applications</StyledNavLink>
       <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
