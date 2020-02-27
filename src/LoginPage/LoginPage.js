@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+import { useHistory } from 'react-router-dom'
 import styled from 'styled-components';
 
 import BasicLayout from '../common/components/BasicLayout';
+import { logIn } from '../common/utils/api';
 
 const LoginForm = styled.form`
   background-color: #fff;
@@ -42,12 +44,16 @@ const FormInput = ({ title, value, type, onChange }) => {
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const history = useHistory();
+  const clickLogIn = () => {
+    logIn.then(() => history.push("/"));
+  }
   return (
     <BasicLayout title="Log In">
       <LoginForm>
         <FormInput title="Email" type="text" value={email} onChange={e => setEmail(e.target.value)}></FormInput>
         <FormInput title="Password" type="password" value={password} onChange={e => setPassword(e.target.value)}></FormInput>
-        <LogInButton>Log In</LogInButton>
+        <LogInButton onClick={clickLogIn}>Log In</LogInButton>
       </LoginForm>
     </BasicLayout>
   );
