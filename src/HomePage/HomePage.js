@@ -1,5 +1,5 @@
-import React from 'react';
-import { useAuthentication } from '../common/utils/auth';
+import React from "react";
+import { useAuthentication } from "../common/utils/auth";
 
 const HomePage = () => {
   useAuthentication();
