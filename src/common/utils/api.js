@@ -7,7 +7,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
   const requestURL = API_BASEURL + url;
   const authToken = getAuthToken();
   const response = await fetch(requestURL, {
-    mode: requestType,
+    method: requestType,
     headers: {
       'Authorization': authToken
     },
@@ -25,7 +25,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
 export const logIn = async (email, password) => {
   const requestURL = API_BASEURL + "/login";
   const response = await fetch(requestURL, {
-    mode: "POST",
+    method: "POST",
     body: JSON.stringify({ email, password }),
   });
   const json = response.json();

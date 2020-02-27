@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom'
 import styled from 'styled-components';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faArrowRight } from '@fortawesome/free-solid-svg-icons'
 
 import BasicLayout from '../common/components/BasicLayout';
 import { logIn } from '../common/utils/api';
@@ -28,8 +30,21 @@ const StyledFormInput = styled.input`
   border-bottom: 1px solid #cdcdcd;
 `
 
-const LogInButton = styled.button`
-  margin: auto 0 auto auto;
+const FormFooter = styled.div`
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 10px;
+`
+
+// TODO revisit styles? not super happy with how this looks
+// also it says "Log In" 3 times on this page... we get it
+const LogInButton = styled.span`
+  cursor: pointer;
+  transition: color 0.3s;
+  
+  &:hover {
+    color: rgb(34, 103, 255);
+  }
 `
 
 const FormInput = ({ title, value, type, onChange }) => {
@@ -46,14 +61,18 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const history = useHistory();
   const clickLogIn = () => {
-    logIn.then(() => history.push("/"));
+    logIn().then(() => history.push("/"));
   }
   return (
     <BasicLayout title="Log In">
       <LoginForm>
         <FormInput title="Email" type="text" value={email} onChange={e => setEmail(e.target.value)}></FormInput>
         <FormInput title="Password" type="password" value={password} onChange={e => setPassword(e.target.value)}></FormInput>
-        <LogInButton onClick={clickLogIn}>Log In</LogInButton>
+        <FormFooter>
+          <LogInButton onClick={clickLogIn}>
+            Log In<FontAwesomeIcon icon={faArrowRight} size="lg" color="rgb(34, 103, 255)" style={{marginLeft: "10px"}}/>
+           </LogInButton>
+        </FormFooter>
       </LoginForm>
     </BasicLayout>
   );
