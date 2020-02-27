@@ -1,6 +1,10 @@
-const API_BASEURL = "steves-computer.com:8080"
+const API_BASEURL = "http://localhost:8080"
 
-export const makeAPIRequest = (url, params) => {
+export async const makeAPIRequest = (url, requestType, params) => {
   const requestURL = API_BASEURL + url;
-  
+  const response = await fetch(requestURL, {
+    mode: requestType,
+    ...params,
+  });
+  return response
 };
