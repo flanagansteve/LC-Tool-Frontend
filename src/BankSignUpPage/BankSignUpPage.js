@@ -1,13 +1,14 @@
-import React, { useState } from "react";
+import React from "react";
 import { useHistory } from "react-router-dom";
 import styled from "styled-components";
+import { Formik, Form, Field } from 'formik';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../components/BasicLayout";
 import { logIn } from "../utils/api";
 
-const SignUpForm = styled.form`
+const SignUpForm = styled(Form)`
   background-color: #fff;
   padding: 10px 20px;
   border: 1px solid #e5e4e2;
@@ -23,7 +24,7 @@ const FormInputTitle = styled.h3`
   color: #555;
 `;
 
-const StyledFormInput = styled.input`
+const StyledFormInput = styled(Field)`
   font-size: 18px;
   padding: 10px 0 5px;
   min-width: 100%;
@@ -39,27 +40,28 @@ const FormFooter = styled.div`
 
 // TODO revisit styles? not super happy with how this looks
 // also it says "Log In" 3 times on this page... we get it
-const SignUpButton = styled.span`
+const SignUpButton = styled.button`
   cursor: pointer;
   transition: color 0.3s;
+  font-size: 14px;
+  border: none;
+  background-color: #fff;
 
   &:hover {
     color: rgb(34, 103, 255);
   }
 `;
 
-const FormInput = ({ title, value, type, onChange }) => {
+const FormInput = ({ title, type, name }) => {
   return (
     <FormInputWrapper>
       <FormInputTitle>{title}</FormInputTitle>
-      <StyledFormInput type={type} value={value} onChange={onChange} />
+      <StyledFormInput type={type} name={name}/>
     </FormInputWrapper>
   );
 };
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const history = useHistory();
   const clickLogIn = () => {
     logIn().then(() => history.push("/"));
@@ -69,21 +71,45 @@ const LoginPage = () => {
       title="Welcome! 🎉"
       subtitle="Get your team up & running with lightning-fast LC processing."
     >
+    <Formik
+      initialValues={{
+        bankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
+      }}
+    >
+    {({ isSubmitting }) => (
       <SignUpForm>
+      <FormInput
+          title="Bank Name"
+          name="bankName"
+          type="text"
+        />
+        <FormInput
+          title="Your Name"
+          name="name"
+          type="text"
+        />
+        <FormInput
+          title="Your Title"
+          name="title"
+          type="text"
+        />
         <FormInput
           title="Email"
-          type="text"
-          value={email}
-          onChange={e => setEmail(e.target.value)}
-        ></FormInput>
+          name="email"
+          type="email"
+        />
         <FormInput
           title="Password"
+          name="password"
           type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-        ></FormInput>
+        />
+        <FormInput
+          title="Confirm Password"
+          name="passwordConfirm"
+          type="password"
+        />
         <FormFooter>
-          <SignUpButton onClick={clickLogIn}>
+          <SignUpButton onClick={clickLogIn} disabled={isSubmitting}>
             Sign Up
             <FontAwesomeIcon
               icon={faArrowRight}
@@ -94,6 +120,9 @@ const LoginPage = () => {
           </SignUpButton>
         </FormFooter>
       </SignUpForm>
+
+    )}
+    </Formik>
     </BasicLayout>
   );
 };
