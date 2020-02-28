@@ -2,7 +2,8 @@ import React from 'react';
 import styled from 'styled-components';
 
 const Margin = styled.div`
-  margin: 80px 140px 40px;
+  margin: 80px auto 40px;
+  max-width: 1000px;
 `
 
 const Title = styled.h1`
