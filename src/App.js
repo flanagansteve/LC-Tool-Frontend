@@ -9,6 +9,7 @@ import GlobalStyle, { CSSReset } from './GlobalStyle'
 import HomePage from './HomePage/HomePage';
 import LoginPage from './LoginPage/LoginPage';
 import Nav from './components/Nav';
+import BankSignUpPage from './BankSignUpPage/BankSignUpPage';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -22,6 +23,9 @@ function App() {
         <Route path="/create"/>
         <Route path="/review"/>
         <Route path="/manage"/>
+        <Route path="/bank/register">
+          <BankSignUpPage/>
+        </Route>
         <Route path="/login">
           <LoginPage/>
         </Route>
