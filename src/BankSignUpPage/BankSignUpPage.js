@@ -1,12 +1,11 @@
 import React from "react";
-import { useHistory } from "react-router-dom";
 import styled from "styled-components";
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, ErrorMessage } from 'formik';
+import { string, object, ref } from 'yup';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../components/BasicLayout";
-import { logIn } from "../utils/api";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -32,6 +31,12 @@ const StyledFormInput = styled(Field)`
   border-bottom: 1px solid #cdcdcd;
 `;
 
+const StyledErrorMessage = styled(ErrorMessage)`
+  font-size: 12px;
+  color: #f00;
+  margin-top: 5px;
+`;
+
 const FormFooter = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -52,20 +57,36 @@ const SignUpButton = styled.button`
   }
 `;
 
+const requiredMsg = 'This field is required.';
+
+const signUpFormValidationSchema = object().shape({
+  bankName: string().required(requiredMsg),
+  name: string().required(requiredMsg),
+  title: string().required(requiredMsg),
+  email: string().email('Please enter a valid email address.').required(requiredMsg),
+  password: string().required(requiredMsg).matches(
+    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+    "Password must have at least 8 characters, and have at least one of each of the following: " +
+    "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
+  ), // wtf is this regex... idk but it works
+  // source https://stackoverflow.com/questions/55451304/formik-yup-password-strength-validation-with-react
+  // TODO update this to be more user friendly
+  passwordConfirm: string().required(requiredMsg)
+    .oneOf([ref('password')], "Passwords do not match."),
+});
+
 const FormInput = ({ title, type, name }) => {
   return (
     <FormInputWrapper>
       <FormInputTitle>{title}</FormInputTitle>
       <StyledFormInput type={type} name={name}/>
+      <StyledErrorMessage name={name} component="div"/>
     </FormInputWrapper>
   );
 };
 
-const LoginPage = () => {
-  const history = useHistory();
-  const clickLogIn = () => {
-    logIn().then(() => history.push("/"));
-  };
+const BankSignUpPage = () => {
+
   return (
     <BasicLayout 
       title="Welcome! 🎉"
@@ -75,6 +96,12 @@ const LoginPage = () => {
       initialValues={{
         bankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
+      onSubmit={(values, { setSubmitting }) => {
+        console.log("Sending API request...");
+        console.log(values);
+        setSubmitting(false);
+      }}
+      validationSchema={signUpFormValidationSchema}
     >
     {({ isSubmitting }) => (
       <SignUpForm>
@@ -96,7 +123,7 @@ const LoginPage = () => {
         <FormInput
           title="Email"
           name="email"
-          type="email"
+          type="text"
         />
         <FormInput
           title="Password"
@@ -109,7 +136,7 @@ const LoginPage = () => {
           type="password"
         />
         <FormFooter>
-          <SignUpButton onClick={clickLogIn} disabled={isSubmitting}>
+          <SignUpButton disabled={isSubmitting}>
             Sign Up
             <FontAwesomeIcon
               icon={faArrowRight}
@@ -127,4 +154,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default BankSignUpPage;
