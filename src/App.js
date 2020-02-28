@@ -8,7 +8,7 @@ import {
 import GlobalStyle, { CSSReset } from './GlobalStyle'
 import HomePage from './HomePage/HomePage';
 import LoginPage from './LoginPage/LoginPage';
-import Nav from './common/components/Nav';
+import Nav from './components/Nav';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.

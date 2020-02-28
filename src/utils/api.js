@@ -1,5 +1,5 @@
 import { getAuthToken, setAuthToken } from './auth'
-import history from '../../history'
+import history from '../history'
 
 const API_BASEURL = "http://localhost:8080"
 

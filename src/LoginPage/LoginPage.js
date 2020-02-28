@@ -4,8 +4,8 @@ import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-import BasicLayout from "../common/components/BasicLayout";
-import { logIn } from "../common/utils/api";
+import BasicLayout from "../components/BasicLayout";
+import { logIn } from "../utils/api";
 
 const LoginForm = styled.form`
   background-color: #fff;
@@ -20,6 +20,7 @@ const FormInputWrapper = styled.div`
 
 const FormInputTitle = styled.h3`
   font-size: 14px;
+  color: #555;
 `;
 
 const StyledFormInput = styled.input`

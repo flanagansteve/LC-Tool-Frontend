@@ -12,14 +12,21 @@ const Title = styled.h1`
   font-size: 24px;
 `
 
+const Subtitle = styled.h2`
+  margin-top: 40px;
+  text-align: center;
+  color: #555;
+`
+
 const Content = styled.div`
   margin: 40px 0 0;
 `
 
-const BasicLayout = ({ title, children }) => {
+const BasicLayout = ({ title, subtitle, children }) => {
   return (
     <Margin>
       <Title>{title}</Title>
+      {subtitle && <Subtitle>{subtitle}</Subtitle>}
       <Content>{children}</Content>
     </Margin>
   );
