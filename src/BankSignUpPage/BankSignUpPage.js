@@ -2,10 +2,12 @@ import React from "react";
 import styled from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
+import { snakeCase } from 'lodash';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../components/BasicLayout";
+import { makeAPIRequest } from '../utils/api';
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -86,7 +88,6 @@ const FormInput = ({ title, type, name }) => {
 };
 
 const BankSignUpPage = () => {
-
   return (
     <BasicLayout 
       title="Welcome! 🎉"
@@ -97,8 +98,7 @@ const BankSignUpPage = () => {
         bankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
-        console.log("Sending API request...");
-        console.log(values);
+        makeAPIRequest("/bank", "POST", values);
         setSubmitting(false);
       }}
       validationSchema={signUpFormValidationSchema}

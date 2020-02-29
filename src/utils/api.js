@@ -1,7 +1,24 @@
 import { getAuthToken, setAuthToken } from './auth'
+import { snakeCase } from 'lodash';
 import history from '../history'
 
 const API_BASEURL = "http://localhost:8080"
+
+const objectToSnakeCase = (object) => {
+  let newObject = {};
+  if (typeof object !== "object" || object === null) {
+    return object;
+  } else if (Array.isArray(object)) {
+    return object.map(objectToSnakeCase);
+  } else if (typeof object === "object" && object !== null) {
+    Object.keys(object).forEach((key) => {
+      newObject[snakeCase(key)] = objectToSnakeCase(object[key]);
+    })
+  } else {
+    console.error("objectToSnakeCase failed - unrecognized type.");
+  }
+  return newObject;
+}
 
 export const makeAPIRequest = async (url, requestType, params) => {
   const requestURL = API_BASEURL + url;
@@ -11,7 +28,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
     headers: {
       'Authorization': authToken
     },
-    body: JSON.stringify(params),
+    body: JSON.stringify(objectToSnakeCase(params)),
   });
   if (response.status === 401) {
     history.push('/login');
