@@ -2,7 +2,6 @@ import React from "react";
 import styled from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
-import { snakeCase } from 'lodash';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 

@@ -1,5 +1,5 @@
 import React from "react";
-import { useAuthentication } from "../common/utils/auth";
+import { useAuthentication } from "../utils/auth";
 
 const HomePage = () => {
   useAuthentication();
