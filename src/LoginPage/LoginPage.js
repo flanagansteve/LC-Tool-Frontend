@@ -62,7 +62,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const history = useHistory();
   const clickLogIn = () => {
-    logIn().then(() => history.push("/"));
+    logIn(email, password).then(() => history.push("/"));
   };
   return (
     <BasicLayout title="Log In">

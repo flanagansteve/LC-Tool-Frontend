@@ -2,7 +2,7 @@ import { getAuthToken, setAuthToken } from './auth'
 import { snakeCase } from 'lodash';
 import history from '../history'
 
-const API_BASEURL = "http://localhost:8080"
+const API_BASEURL = "http://127.0.0.1:8000"
 
 const objectToSnakeCase = (object) => {
   let newObject = {};
@@ -40,7 +40,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
 };
 
 export const logIn = async (email, password) => {
-  const requestURL = API_BASEURL + "/login";
+  const requestURL = API_BASEURL + "/bank/1/login";
   const response = await fetch(requestURL, {
     method: "POST",
     body: JSON.stringify({ email, password }),
