@@ -5,8 +5,8 @@ import { string, object, ref } from 'yup';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-import BasicLayout from "../components/BasicLayout";
-import { makeAPIRequest } from '../utils/api';
+import BasicLayout from "../../components/BasicLayout";
+import { makeAPIRequest } from '../../utils/api';
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -61,7 +61,7 @@ const SignUpButton = styled.button`
 const requiredMsg = 'This field is required.';
 
 const signUpFormValidationSchema = object().shape({
-  bankName: string().required(requiredMsg),
+  newBankName: string().required(requiredMsg),
   name: string().required(requiredMsg),
   title: string().required(requiredMsg),
   email: string().email('Please enter a valid email address.').required(requiredMsg),
@@ -94,10 +94,10 @@ const BankSignUpPage = () => {
     >
     <Formik
       initialValues={{
-        bankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
+        newBankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
-        makeAPIRequest("/bank", "POST", values);
+        makeAPIRequest("/bank/", "POST", values);
         setSubmitting(false);
       }}
       validationSchema={signUpFormValidationSchema}
@@ -106,7 +106,7 @@ const BankSignUpPage = () => {
       <SignUpForm>
       <FormInput
           title="Bank Name"
-          name="bankName"
+          name="newBankName"
           type="text"
         />
         <FormInput

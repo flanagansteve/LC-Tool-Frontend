@@ -4,8 +4,8 @@ import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
-import BasicLayout from "../components/BasicLayout";
-import { logIn } from "../utils/api";
+import BasicLayout from "../../components/BasicLayout";
+import { logIn } from "../../utils/api";
 
 const LoginForm = styled.form`
   background-color: #fff;
@@ -13,6 +13,21 @@ const LoginForm = styled.form`
   border: 1px solid #e5e4e2;
   border-radius: 25px;
 `;
+
+const LoginErrorMessage = styled.div`
+  ${props => props.showError && `
+    padding: 10px 10px;
+  `}
+  border-radius: 5px;
+  background-color: #dc3545;
+  color: #fff;
+`
+
+const HelpEmail = styled.a`
+  font-size: 14px;
+  font-style: italic;
+  margin: 0 10px 10px;
+`
 
 const FormInputWrapper = styled.div`
   margin: 20px 10px 40px;
@@ -33,7 +48,8 @@ const StyledFormInput = styled.input`
 
 const FormFooter = styled.div`
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 10px;
 `;
 
@@ -42,6 +58,7 @@ const FormFooter = styled.div`
 const LogInButton = styled.span`
   cursor: pointer;
   transition: color 0.3s;
+  margin: 10px 5px;
 
   &:hover {
     color: rgb(34, 103, 255);
@@ -51,7 +68,10 @@ const LogInButton = styled.span`
 const FormInput = ({ title, value, type, onChange }) => {
   return (
     <FormInputWrapper>
-      <FormInputTitle>{title}</FormInputTitle>
+      <FormInputTitle>
+        {title}
+        {type === "password" && (<HelpEmail href="mailto:support@bountium.com"> Need help?</HelpEmail>)}
+      </FormInputTitle>
       <StyledFormInput type={type} value={value} onChange={onChange} />
     </FormInputWrapper>
   );
@@ -60,9 +80,14 @@ const FormInput = ({ title, value, type, onChange }) => {
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState(null);
   const history = useHistory();
   const clickLogIn = () => {
-    logIn(email, password).then(() => history.push("/"));
+    logIn(email, password)
+      .then(() => history.push("/"))
+      .catch(() => {
+        setError("❕ We can't seem to log you in right now.");
+      });
   };
   return (
     <BasicLayout title="Log In">
@@ -72,14 +97,20 @@ const LoginPage = () => {
           type="text"
           value={email}
           onChange={e => setEmail(e.target.value)}
-        ></FormInput>
+        />
         <FormInput
           title="Password"
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
-        ></FormInput>
+        />
+        <HelpEmail>
+          
+        </HelpEmail>
         <FormFooter>
+        <LoginErrorMessage showError={error}>
+          {error}
+        </LoginErrorMessage>
           <LogInButton onClick={clickLogIn}>
             Log In
             <FontAwesomeIcon

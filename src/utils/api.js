@@ -1,4 +1,4 @@
-import { getAuthToken, setAuthToken } from './auth'
+import { setSessionUser } from './auth'
 import { snakeCase } from 'lodash';
 import history from '../history'
 
@@ -22,12 +22,8 @@ const objectToSnakeCase = (object) => {
 
 export const makeAPIRequest = async (url, requestType, params) => {
   const requestURL = API_BASEURL + url;
-  const authToken = getAuthToken();
   const response = await fetch(requestURL, {
     method: requestType,
-    headers: {
-      'Authorization': authToken
-    },
     body: JSON.stringify(objectToSnakeCase(params)),
   });
   if (response.status === 401) {
@@ -40,11 +36,14 @@ export const makeAPIRequest = async (url, requestType, params) => {
 };
 
 export const logIn = async (email, password) => {
-  const requestURL = API_BASEURL + "/bank/1/login";
+  const requestURL = API_BASEURL + "/user/login/";
   const response = await fetch(requestURL, {
     method: "POST",
     body: JSON.stringify({ email, password }),
   });
+  if (response.status !== 200) {
+    throw new Error("Error logging in: recieved status code " + response.status);
+  }
   const json = response.json();
-  setAuthToken(json.auth_token);
+  setSessionUser(json.user);
 }

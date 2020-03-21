@@ -1,27 +1,31 @@
-import { useEffect } from 'react';
+import { useEffect, createContext, useContext } from 'react';
 import { useHistory } from 'react-router-dom';
 
-export const getAuthToken = () => {
+export const UserContext = createContext([null, () => null]);
+
+export const getSessionUser = () => {
   const now = new Date();
-  const expirySeconds = localStorage.getItem("auth_token_expiry");
+  const expirySeconds = localStorage.getItem("session_expiry");
   if (expirySeconds && now.getTime() > expirySeconds) {
     return undefined;
   }
   return localStorage.getItem("auth_token");
 }
 
-export const setAuthToken = (newToken) => {
+export const setSessionUser = (newUser) => {
   // TODO change this expiry date to be consistent with the backend
-  localStorage.setItem("auth_token_expiry", new Date().getTime() + 86400000);
-  localStorage.setItem("auth_token", newToken);
+  localStorage.setItem("session_expiry", new Date().getTime() + 60);
+  localStorage.setItem("session_user", newUser);
 }
 
 export const useAuthentication = () => {
   const history = useHistory();
+  const [user] = useContext(UserContext);
   useEffect(() => {
-    const currentToken = getAuthToken();
+    if (user) return;
+    const currentToken = getSessionUser();
     if (!currentToken) {
       history.push("/login");
     }
-  }, [history])
+  }, [user, history])
 }
