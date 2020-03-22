@@ -87,7 +87,7 @@ const FormInput = ({ title, type, name }) => {
   );
 };
 
-const BankSignUpPage = () => {
+const BankSignUpPage = ({ history }) => {
   const setUser = useContext(UserContext)[1];
   return (
     <BasicLayout 
@@ -101,8 +101,9 @@ const BankSignUpPage = () => {
       onSubmit={(values, { setSubmitting }) => {
         makeAPIRequest("/bank/", "POST", values)
           .then((response) => {
-            const user = response["objects_created"][0];
+            const user = response["objectsCreated"][0];
             setUser({ ...user, userType: 'bank' });
+            history.push("/bank/invite");
           });
         setSubmitting(false);
       }}
