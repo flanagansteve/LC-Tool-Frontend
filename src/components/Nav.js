@@ -36,7 +36,7 @@ const StyledLoginLink = styled(NavLink)`
 
 const LoginLink = ({ user }) => {
   if (!user) return <StyledLoginLink to="/login">Log In</StyledLoginLink>
-  return <StyledLoginLink loggedIn to="/bank/account">Manage Account</StyledLoginLink>
+  return <StyledLoginLink loggedIn={true} to="/bank/account">{ user.name }</StyledLoginLink>
 }
 
 const NavLogo = styled.img.attrs({src: logo, alt: "Bountium Logo"})`

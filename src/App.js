@@ -13,15 +13,16 @@ import BankSignUpPage from './pages/bank/BankSignUpPage';
 import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
 import { UserContext } from './utils/auth';
-
+import history from './history';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
 function App() {
-  const [user, setUser] = useState({ type: 'bank', email: 'joe@joe.com' });
+  const [user, setUser] = useState(null);
+
   return (
     <UserContext.Provider value={[user, setUser]}>
-      <Router>
+      <Router history={history}>
         <CSSReset />
         <GlobalStyle />
         <Nav user={user} />

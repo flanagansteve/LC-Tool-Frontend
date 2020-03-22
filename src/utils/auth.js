@@ -18,14 +18,14 @@ export const setSessionUser = (newUser) => {
   localStorage.setItem("session_user", newUser);
 }
 
-export const useAuthentication = () => {
+export const useAuthentication = (nextRoute) => {
   const history = useHistory();
   const [user] = useContext(UserContext);
   useEffect(() => {
     if (user) return;
     const currentToken = getSessionUser();
     if (!currentToken) {
-      history.push("/login");
+      history.push("/login", { nextRoute });
     }
-  }, [user, history])
+  }, [user, history, nextRoute])
 }

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useContext } from "react";
 import styled from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
@@ -7,6 +7,7 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
+import { UserContext } from "../../utils/auth";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -87,6 +88,7 @@ const FormInput = ({ title, type, name }) => {
 };
 
 const BankSignUpPage = () => {
+  const setUser = useContext(UserContext)[1];
   return (
     <BasicLayout 
       title="Welcome! 🎉"
@@ -97,7 +99,11 @@ const BankSignUpPage = () => {
         newBankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
-        makeAPIRequest("/bank/", "POST", values);
+        makeAPIRequest("/bank/", "POST", values)
+          .then((response) => {
+            const user = response["objects_created"][0];
+            setUser({ ...user, userType: 'bank' });
+          });
         setSubmitting(false);
       }}
       validationSchema={signUpFormValidationSchema}
@@ -146,7 +152,6 @@ const BankSignUpPage = () => {
           </SignUpButton>
         </FormFooter>
       </SignUpForm>
-
     )}
     </Formik>
     </BasicLayout>

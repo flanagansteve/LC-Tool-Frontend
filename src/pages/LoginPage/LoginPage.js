@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -6,6 +6,7 @@ import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../../components/BasicLayout";
 import { logIn } from "../../utils/api";
+import { UserContext } from "../../utils/auth";
 
 const LoginForm = styled.form`
   background-color: #fff;
@@ -55,10 +56,13 @@ const FormFooter = styled.div`
 
 // TODO revisit styles? not super happy with how this looks
 // also it says "Log In" 3 times on this page... we get it
-const LogInButton = styled.span`
+const LogInButton = styled.button`
   cursor: pointer;
   transition: color 0.3s;
   margin: 10px 5px;
+  border: none;
+  font-size: 16px;
+  background-color: #fff;
 
   &:hover {
     color: rgb(34, 103, 255);
@@ -77,21 +81,24 @@ const FormInput = ({ title, value, type, onChange }) => {
   );
 };
 
-const LoginPage = () => {
+const LoginPage = ({ nextRoute }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
+  const setUser = useContext(UserContext)[1];
   const history = useHistory();
-  const clickLogIn = () => {
+  const clickLogIn = (e) => {
+    e.preventDefault();
     logIn(email, password)
-      .then(() => history.push("/"))
+      .then((json) => setUser(json))
+      .then(() => history.push(nextRoute || "/"))
       .catch(() => {
         setError("❕ We can't seem to log you in right now.");
       });
   };
   return (
     <BasicLayout title="Log In">
-      <LoginForm>
+      <LoginForm onSubmit={clickLogIn}>
         <FormInput
           title="Email"
           type="text"
@@ -103,6 +110,7 @@ const LoginPage = () => {
           type="password"
           value={password}
           onChange={e => setPassword(e.target.value)}
+          onKey
         />
         <HelpEmail>
           
@@ -111,7 +119,7 @@ const LoginPage = () => {
         <LoginErrorMessage showError={error}>
           {error}
         </LoginErrorMessage>
-          <LogInButton onClick={clickLogIn}>
+          <LogInButton type="submit">
             Log In
             <FontAwesomeIcon
               icon={faArrowRight}

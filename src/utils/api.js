@@ -1,5 +1,5 @@
 import { setSessionUser } from './auth'
-import { snakeCase } from 'lodash';
+import { snakeCase, camelCase } from 'lodash';
 import history from '../history'
 
 const API_BASEURL = "http://127.0.0.1:8000"
@@ -20,6 +20,22 @@ const objectToSnakeCase = (object) => {
   return newObject;
 }
 
+const objectToCamelCase = (object) => {
+  let newObject = {};
+  if (typeof object !== "object" || object === null) {
+    return object;
+  } else if (Array.isArray(object)) {
+    return object.map(objectToCamelCase);
+  } else if (typeof object === "object" && object !== null) {
+    Object.keys(object).forEach((key) => {
+      newObject[camelCase(key)] = objectToCamelCase(object[key]);
+    })
+  } else {
+    console.error("objectToCamelCase failed - unrecognized type.");
+  }
+  return newObject;
+}
+
 export const makeAPIRequest = async (url, requestType, params) => {
   const requestURL = API_BASEURL + url;
   const response = await fetch(requestURL, {
@@ -32,7 +48,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
     console.error("Error: Attempted to make unauthenticated API request. Redirecting to login.")
     return;
   }
-  return response.json();
+  return objectToCamelCase(await response.json());
 };
 
 export const logIn = async (email, password) => {
@@ -44,6 +60,7 @@ export const logIn = async (email, password) => {
   if (response.status !== 200) {
     throw new Error("Error logging in: recieved status code " + response.status);
   }
-  const json = response.json();
-  setSessionUser(json.user);
+  const json = objectToCamelCase(await response.json());
+  setSessionUser(json.userEmployee.id);
+  return { ...json.userEmployee, bank: json.usersEmployer };
 }
