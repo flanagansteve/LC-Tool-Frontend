@@ -26,7 +26,7 @@ const StyledNavLink = styled(NavLink)`
 const StyledLoginLink = styled(NavLink)`
   margin-left: auto;
   text-decoration: none;
-  color: #000;
+  color: ${(props) => props.loggedIn ? "rgb(34, 103, 255)" : "#000"};
   transition: color 0.3s;
   
   &:hover {
@@ -34,18 +34,23 @@ const StyledLoginLink = styled(NavLink)`
   }
 `;
 
+const LoginLink = ({ user }) => {
+  if (!user) return <StyledLoginLink to="/login">Log In</StyledLoginLink>
+  return <StyledLoginLink loggedIn to="/bank/account">Manage Account</StyledLoginLink>
+}
+
 const NavLogo = styled.img.attrs({src: logo, alt: "Bountium Logo"})`
   max-height: 50px;
 `
 
-const Nav = () => {
+const Nav = ({ user }) => {
   return (
     <StyledNav>
       <StyledNavLink to="/"><NavLogo src={logo} alt="Bountium Logo"/></StyledNavLink>
       <StyledNavLink to="/create">Create an LC</StyledNavLink>
       <StyledNavLink to="/review">Review LC Applications</StyledNavLink>
       <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
-      <StyledLoginLink to="/login">Log In</StyledLoginLink>
+      <LoginLink user={user}/>
     </StyledNav>
   )
 }
