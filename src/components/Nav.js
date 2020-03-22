@@ -1,6 +1,8 @@
 import React from 'react';
 import styled from 'styled-components';
 import { NavLink } from 'react-router-dom';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 
 // TODO import different sized logos for performance
 import logo from '../images/logo.png'
@@ -36,7 +38,12 @@ const StyledLoginLink = styled(NavLink)`
 
 const LoginLink = ({ user }) => {
   if (!user) return <StyledLoginLink to="/login">Log In</StyledLoginLink>
-  return <StyledLoginLink loggedIn={true} to="/bank/account">{ user.name }</StyledLoginLink>
+  return (
+    <StyledLoginLink loggedIn={true} to="/bank/account">
+      <FontAwesomeIcon icon={faUserCircle} style={{ marginRight: "10px", fontSize: "16px" }}/>
+      { user.name }
+    </StyledLoginLink>
+  )
 }
 
 const NavLogo = styled.img.attrs({src: logo, alt: "Bountium Logo"})`

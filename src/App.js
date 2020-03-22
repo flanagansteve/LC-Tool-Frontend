@@ -30,21 +30,11 @@ function App() {
           <Route path="/create" />
           <Route path="/review" />
           <Route path="/manage" />
-          <Route path="/bank/register">
-            <BankSignUpPage />
-          </Route>
-          <Route path="/bank/invite">
-            <BankInvitePage />
-          </Route>
-          <Route path="/bank/account">
-            <BankManageAccountPage />
-          </Route>
-          <Route path="/login">
-            <LoginPage />
-          </Route>
-          <Route path="/">
-            <HomePage />
-          </Route>
+          <Route path="/bank/register" component={BankSignUpPage} />
+          <Route path="/bank/invite" component={BankInvitePage} />
+          <Route path="/bank/account" component={BankManageAccountPage} />
+          <Route path="/login" component={LoginPage}/>
+          <Route path="/" component={HomePage} />
         </Switch>
       </Router>
     </UserContext.Provider>

@@ -1,8 +1,8 @@
 import React, { useState, useContext } from "react";
-import { useHistory } from "react-router-dom";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
+import { get } from "lodash";
 
 import BasicLayout from "../../components/BasicLayout";
 import { logIn } from "../../utils/api";
@@ -81,12 +81,12 @@ const FormInput = ({ title, value, type, onChange }) => {
   );
 };
 
-const LoginPage = ({ nextRoute }) => {
+const LoginPage = ({ history, location }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState(null);
   const setUser = useContext(UserContext)[1];
-  const history = useHistory();
+  const nextRoute = get(location, "state.nextRoute");
   const clickLogIn = (e) => {
     e.preventDefault();
     logIn(email, password)
