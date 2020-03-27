@@ -1,18 +1,17 @@
 import { useEffect, createContext, useContext } from 'react';
 import { useHistory } from 'react-router-dom';
+import { makeAPIRequest } from './api';
 
 export const UserContext = createContext([null, () => null]);
 const SESSION_EXPIRY = 'session_expiry';
 
 export const getSessionExpiry = () => {
-  return false;
-  /* will return to persistence at a later time */
-  // const now = new Date();
-  // const expirySeconds = localStorage.getItem("session_expiry");
-  // if (expirySeconds && now.getTime() > expirySeconds) {
-  //   return null;
-  // }
-  // return localStorage.getItem("auth_token");
+  const now = new Date();
+  const expirySeconds = localStorage.getItem("session_expiry");
+  if (expirySeconds && now.getTime() > expirySeconds) {
+    return null;
+  }
+  return localStorage.getItem(SESSION_EXPIRY);
 }
 
 export const setSessionExpiry = (expiry) => {
@@ -22,12 +21,17 @@ export const setSessionExpiry = (expiry) => {
 
 export const useAuthentication = (nextRoute) => {
   const history = useHistory();
-  const [user] = useContext(UserContext);
+  let [user, setUser] = useContext(UserContext);
+
   useEffect(() => {
     if (user) return;
     const sessionExists = getSessionExpiry();
     if (!sessionExists) {
       history.push("/login", { nextRoute });
+    } else {
+      makeAPIRequest('/user/this_users_info/')
+        .then(json => setUser({ ...json.userEmployee, bank: json.usersEmployer }))
+        .catch(err => console.error(err));
     }
-  }, [user, history, nextRoute])
+  }, [user, setUser, history, nextRoute])
 }
