@@ -18,6 +18,7 @@ import { UserContext } from './utils/auth';
 //      component is poor separation of concerns. Look into this.
 function App() {
   const [user, setUser] = useState(null);
+  // const [user, setUser] = useState(null);
 
   return (
     <UserContext.Provider value={[user, setUser]}>

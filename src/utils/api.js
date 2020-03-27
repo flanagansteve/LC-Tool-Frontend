@@ -1,8 +1,8 @@
-import { setSessionUser } from './auth'
+import { setSessionExpiry } from './auth'
 import { snakeCase, camelCase } from 'lodash';
 import history from '../history'
 
-const API_BASEURL = "http://127.0.0.1:8000"
+const API_BASEURL = "/api"
 
 const objectToSnakeCase = (object) => {
   let newObject = {};
@@ -52,7 +52,7 @@ export const makeAPIRequest = async (url, requestType, params) => {
 };
 
 export const logIn = async (email, password) => {
-  const requestURL = API_BASEURL + "/user/login/";
+  const requestURL = "/api/user/login/";
   const response = await fetch(requestURL, {
     method: "POST",
     body: JSON.stringify({ email, password }),
@@ -61,6 +61,6 @@ export const logIn = async (email, password) => {
     throw new Error("Error logging in: recieved status code " + response.status);
   }
   const json = objectToCamelCase(await response.json());
-  setSessionUser(json.userEmployee.id);
+  setSessionExpiry((new Date(json.sessionExpiry)).getTime());
   return { ...json.userEmployee, bank: json.usersEmployer };
 }
