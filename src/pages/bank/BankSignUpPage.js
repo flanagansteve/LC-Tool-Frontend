@@ -90,7 +90,7 @@ const FormInput = ({ title, type, name }) => {
 const BankSignUpPage = ({ history }) => {
   const setUser = useContext(UserContext)[1];
   return (
-    <BasicLayout 
+    <BasicLayout
       title="Welcome! 🎉"
       subtitle="Get your team up & running with lightning-fast LC processing."
     >
@@ -101,7 +101,7 @@ const BankSignUpPage = ({ history }) => {
       onSubmit={(values, { setSubmitting }) => {
         makeAPIRequest("/bank/", "POST", values)
           .then((response) => {
-            const user = response["objectsCreated"][0];
+            const user = response["user_employee"];
             setUser({ ...user, userType: 'bank' });
             history.push("/bank/invite");
           });

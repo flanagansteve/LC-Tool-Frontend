@@ -99,7 +99,7 @@ const BankManageAccountPage = ({ history }) => {
       onSubmit={(values, { setSubmitting }) => {
         makeAPIRequest("/", "PATCH", values)
           .then((response) => {
-            const user = response["objectsCreated"][0];
+            const user = response["user_employee"][0];
             setUser({ ...user, userType: 'bank' });
           });
         setSubmitting(false);
