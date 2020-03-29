@@ -6,7 +6,7 @@ import { string, object, ref } from 'yup';
 import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { UserContext } from "../../utils/auth";
-import Button from "./Button";
+import Button from "../../components/ui/Button";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;

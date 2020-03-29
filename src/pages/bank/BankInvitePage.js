@@ -2,7 +2,7 @@ import React, { useContext } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { object, string } from 'yup';
 
-import Button from './Button';
+import Button from '../../components/ui/Button';
 import BasicLayout from "../../components/BasicLayout";
 import { useAuthentication, UserContext } from '../../utils/auth';
 import { makeAPIRequest } from '../../utils/api';

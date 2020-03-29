@@ -33,7 +33,10 @@ export const useAuthentication = nextRoute => {
         .then(json =>
           setUser({ ...json.userEmployee, bank: json.usersEmployer })
         )
-        .catch(err => console.error(err));
+        .catch(err => {
+          console.error(err);
+          history.push("/login", { nextRoute });
+        });
     }
   }, [user, setUser, history, nextRoute]);
 };

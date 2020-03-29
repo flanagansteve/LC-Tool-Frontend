@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { NavLink } from "react-router-dom";
+import { NavLink, useHistory } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 
@@ -29,7 +29,7 @@ const StyledNavLink = styled(NavLink)`
 const LoginMenu = styled.div`
   margin-left: auto;
   display: flex;
-`
+`;
 
 const StyledLoginLink = styled(NavLink)`
   text-decoration: none;
@@ -49,30 +49,37 @@ const StyledIconButton = styled.span`
   &:hover {
     color: rgb(34, 103, 255);
   }
-`
+`;
 
 const LoginSection = ({ user, setUser }) => {
+  const history = useHistory();
   return (
     <LoginMenu>
-    {user ? (
-      <>
-    {user.name}
-    <StyledLoginLink to="/bank/account">
-      <FontAwesomeIcon
-        icon={faUserCircle}
-        style={{ marginLeft: "10px", fontSize: "16px" }}
-      />
-    </StyledLoginLink>
-    <StyledIconButton onClick={() => logOut(setUser)}>
-      <FontAwesomeIcon
-        icon={faSignOutAlt}
-        style={{ marginLeft: "10px", fontSize: "16px" }}
-      />
-    </StyledIconButton>
-    </>
-    ) : (
-      <StyledLoginLink to="/login">Log In</StyledLoginLink>
-    )}
+      {user ? (
+        <>
+          {user.name}
+          <StyledLoginLink to="/bank/account">
+            <FontAwesomeIcon
+              icon={faUserCircle}
+              style={{ marginLeft: "10px", fontSize: "16px" }}
+            />
+          </StyledLoginLink>
+          <StyledIconButton
+            onClick={() => {
+              logOut(setUser)
+                .then(() => history.push("/login"))
+                .catch(err => console.log(err));
+            }}
+          >
+            <FontAwesomeIcon
+              icon={faSignOutAlt}
+              style={{ marginLeft: "10px", fontSize: "16px" }}
+            />
+          </StyledIconButton>
+        </>
+      ) : (
+        <StyledLoginLink to="/login">Log In</StyledLoginLink>
+      )}
     </LoginMenu>
   );
 };

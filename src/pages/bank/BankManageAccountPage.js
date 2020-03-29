@@ -3,7 +3,7 @@ import styled from 'styled-components';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
 
-import Button from "./Button";
+import Button from "../../components/ui/Button";
 import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
