@@ -73,7 +73,6 @@ const BankInvitePage = ({ history }) => {
         initialValues={{ email: '' }}
         onSubmit={(values, { setSubmitting }) => {
           setSubmitting(true);
-          console.log(user)
           makeAPIRequest(`/bank/${user.bank.id}/invite_teammate`, "POST", { "inviteeEmail": values.email }, true)
             .then((response) => {
               if (response.status === 200) setStatus({ 

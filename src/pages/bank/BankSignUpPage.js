@@ -84,12 +84,13 @@ const BankSignUpPage = ({ history }) => {
         newBankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
+        setSubmitting(true);
         makeAPIRequest("/bank/", "POST", values)
           .then((json) => {
             setUser({ ...json.userEmployee, bank: json.usersEmployer });
             history.push("/bank/invite");
-          });
-        setSubmitting(false);
+          })
+          .then(() => setSubmitting(false));
       }}
       validationSchema={signUpFormValidationSchema}
     >
@@ -126,7 +127,7 @@ const BankSignUpPage = ({ history }) => {
           type="password"
         />
         <FormFooter>
-<Button showArrow>
+<Button showArrow disabled={isSubmitting}>
   Sign Up
 </Button>
         </FormFooter>

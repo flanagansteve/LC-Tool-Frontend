@@ -2,6 +2,9 @@ import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
+import { get } from "lodash";
+import MoonLoader from "react-spinners/MoonLoader";
+import { css } from "@emotion/core";
 
 import Button from "../../components/ui/Button";
 import BasicLayout from "../../components/BasicLayout";
@@ -69,33 +72,29 @@ const FormInput = ({ title, type, name }) => {
   );
 };
 
-const BankManageAccountPage = ({ history }) => {
+const BankManageAccountPage = () => {
   useAuthentication("/bank/account");
-  const setUser = useContext(UserContext)[1];
+  const [user, setUser] = useContext(UserContext);
+
   return (
     <BasicLayout title="My Account 🛠" subtitle="View and edit your user settings.">
+    {user ? (
     <Formik
       initialValues={{
-        newBankName: '', name: '', title: '', password: '', passwordConfirm: '',
+        name: get(user, ['name']), title: get(user, ['title']), password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
-        makeAPIRequest("/", "PUT", values)
-          .then((response) => {
-            const user = response["user_employee"][0];
-            setUser({ ...user, userType: 'bank' });
-          });
-        setSubmitting(false);
+        makeAPIRequest(`/bank/${get(user, ['bank', 'id'])}/${get(user, ['id'])}/`, "PUT", { name: values.name, title: values.title })
+          .then((json) => {
+            setUser({ ...json.userEmployee, bank: json.usersEmployer });
+          })
+          .then(() => setSubmitting(false));
       }}
       validationSchema={signUpFormValidationSchema}
     >
     {({ isSubmitting }) => (
       <SignUpForm>
-      <FormInput
-          title="Bank Name"
-          name="newBankName"
-          type="text"
-        />
         <FormInput
           title="Your Name"
           name="name"
@@ -107,12 +106,12 @@ const BankManageAccountPage = ({ history }) => {
           type="text"
         />
         <FormInput
-          title="Password"
+          title="New Password"
           name="password"
           type="password"
         />
         <FormInput
-          title="Confirm Password"
+          title="Confirm New Password"
           name="passwordConfirm"
           type="password"
         />
@@ -124,6 +123,10 @@ const BankManageAccountPage = ({ history }) => {
       </SignUpForm>
     )}
     </Formik>
+
+    ) : (
+      <MoonLoader size={45} color={"rgb(27, 108, 255)"} loading={true} css={css`margin: 0 auto;`} />
+    )}
     </BasicLayout>
   );
 }
