@@ -89,7 +89,8 @@ const BankManageAccountPage = () => {
           .then((json) => {
             setUser({ ...json.userEmployee, bank: json.usersEmployer });
           })
-          .then(() => setSubmitting(false));
+          .then(() => setSubmitting(false))
+          .catch((err) => console.error(err));
       }}
       validationSchema={signUpFormValidationSchema}
     >
