@@ -2,10 +2,11 @@ import React from "react";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
+import { faUserCircle, faSignOutAlt } from "@fortawesome/free-solid-svg-icons";
 
 // TODO import different sized logos for performance
 import logo from "../images/logo.png";
+import { logOut } from "../utils/api";
 
 const StyledNav = styled.nav`
   display: flex;
@@ -25,10 +26,14 @@ const StyledNavLink = styled(NavLink)`
   }
 `;
 
-const StyledLoginLink = styled(NavLink)`
+const LoginMenu = styled.div`
   margin-left: auto;
+  display: flex;
+`
+
+const StyledLoginLink = styled(NavLink)`
   text-decoration: none;
-  color: ${props => (props.loggedIn ? "rgb(34, 103, 255)" : "#000")};
+  color: #000;
   transition: color 0.3s;
 
   &:hover {
@@ -36,16 +41,39 @@ const StyledLoginLink = styled(NavLink)`
   }
 `;
 
-const LoginLink = ({ user }) => {
-  if (!user) return <StyledLoginLink to="/login">Log In</StyledLoginLink>;
+const StyledIconButton = styled.span`
+  color: #000;
+  transition: color 0.3s;
+  cursor: pointer;
+
+  &:hover {
+    color: rgb(34, 103, 255);
+  }
+`
+
+const LoginSection = ({ user, setUser }) => {
   return (
-    <StyledLoginLink loggedIn={true} to="/bank/account">
+    <LoginMenu>
+    {user ? (
+      <>
+    {user.name}
+    <StyledLoginLink to="/bank/account">
       <FontAwesomeIcon
         icon={faUserCircle}
-        style={{ marginRight: "10px", fontSize: "16px" }}
+        style={{ marginLeft: "10px", fontSize: "16px" }}
       />
-      {user.name}
     </StyledLoginLink>
+    <StyledIconButton onClick={() => logOut(setUser)}>
+      <FontAwesomeIcon
+        icon={faSignOutAlt}
+        style={{ marginLeft: "10px", fontSize: "16px" }}
+      />
+    </StyledIconButton>
+    </>
+    ) : (
+      <StyledLoginLink to="/login">Log In</StyledLoginLink>
+    )}
+    </LoginMenu>
   );
 };
 
@@ -53,7 +81,7 @@ const NavLogo = styled.img.attrs({ src: logo, alt: "Bountium Logo" })`
   max-height: 50px;
 `;
 
-const Nav = ({ user }) => {
+const Nav = ({ user, setUser }) => {
   return (
     <StyledNav>
       <StyledNavLink to="/">
@@ -62,7 +90,7 @@ const Nav = ({ user }) => {
       <StyledNavLink to="/create">Create an LC</StyledNavLink>
       <StyledNavLink to="/review">Review LC Applications</StyledNavLink>
       <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
-      <LoginLink user={user} />
+      <LoginSection user={user} setUser={setUser} />
     </StyledNav>
   );
 };

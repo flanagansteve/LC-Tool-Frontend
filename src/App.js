@@ -25,7 +25,7 @@ function App() {
       <Router>
         <CSSReset />
         <GlobalStyle />
-        <Nav user={user} />
+        <Nav user={user} setUser={setUser} />
         <Switch>
           <Route path="/create" />
           <Route path="/review" />

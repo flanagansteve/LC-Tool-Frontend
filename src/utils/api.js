@@ -47,16 +47,13 @@ export const makeAPIRequest = async (
     method: requestType,
     body: JSON.stringify(objectToSnakeCase(params))
   });
-  if (response.status === 401) {
+  if (response.status === 401 || response.status === 403) {
     history.push("/login");
     // TODO show this error to the user
-    console.error(
-      "Error: Attempted to make unauthenticated API request. Redirecting to login."
-    );
-    return;
+    return Promise.reject("Error: Attempted to make unauthenticated API request. Redirecting to login.");
   } else if (response.status < 200 || response.status >= 400) {
     // TODO show this error to the user
-    console.warning("Error: Nonstandard status code received in API response: " + response.status);
+    console.warn("Error: Nonstandard status code received in API response: " + response.status);
     return response; // probably doesn't have json if there was an error
   }
 
@@ -79,3 +76,16 @@ export const logIn = async (email, password) => {
   setSessionExpiry(new Date(json.sessionExpiry).getTime());
   return { ...json.userEmployee, bank: json.usersEmployer };
 };
+
+export const logOut = async (setUser) => {
+  const requestURL = "/api/user/logout/";
+  const response = await fetch(requestURL, {
+    method: "POST",
+  });
+  if (response.status !== 200) {
+    console.error("Error logging out: recieved status code " + response.status);
+  }
+  setSessionExpiry(null);
+  setUser(null);
+  history.push("/login");
+}
