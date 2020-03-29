@@ -56,7 +56,8 @@ export const makeAPIRequest = async (
     return;
   } else if (response.status < 200 || response.status >= 400) {
     // TODO show this error to the user
-    console.error("Error: Nonstandard status code received in API response.");
+    console.warning("Error: Nonstandard status code received in API response: " + response.status);
+    return response; // probably doesn't have json if there was an error
   }
 
   if (returnFullResponse) return response;

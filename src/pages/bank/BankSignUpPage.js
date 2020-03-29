@@ -2,12 +2,11 @@ import React, { useContext } from "react";
 import styled from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { UserContext } from "../../utils/auth";
+import Button from "./Button";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -43,20 +42,6 @@ const FormFooter = styled.div`
   display: flex;
   justify-content: flex-end;
   margin-bottom: 10px;
-`;
-
-// TODO revisit styles? not super happy with how this looks
-// also it says "Log In" 3 times on this page... we get it
-const SignUpButton = styled.button`
-  cursor: pointer;
-  transition: color 0.3s;
-  font-size: 14px;
-  border: none;
-  background-color: #fff;
-
-  &:hover {
-    color: rgb(34, 103, 255);
-  }
 `;
 
 const requiredMsg = 'This field is required.';
@@ -141,15 +126,9 @@ const BankSignUpPage = ({ history }) => {
           type="password"
         />
         <FormFooter>
-          <SignUpButton disabled={isSubmitting}>
-            Sign Up
-            <FontAwesomeIcon
-              icon={faArrowRight}
-              size="lg"
-              color="rgb(34, 103, 255)"
-              style={{ marginLeft: "10px" }}
-            />
-          </SignUpButton>
+<Button showArrow>
+  Sign Up
+</Button>
         </FormFooter>
       </SignUpForm>
     )}

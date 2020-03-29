@@ -2,9 +2,8 @@ import React, { useContext } from 'react';
 import styled from 'styled-components';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
+import Button from "./Button";
 import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
@@ -45,35 +44,18 @@ const FormFooter = styled.div`
   margin-bottom: 10px;
 `;
 
-// TODO revisit styles? not super happy with how this looks
-// also it says "Log In" 3 times on this page... we get it
-const SignUpButton = styled.button`
-  cursor: pointer;
-  transition: color 0.3s;
-  font-size: 14px;
-  border: none;
-  background-color: #fff;
-
-  &:hover {
-    color: rgb(34, 103, 255);
-  }
-`;
-
-const requiredMsg = 'This field is required.';
-
 const signUpFormValidationSchema = object().shape({
-  newBankName: string().required(requiredMsg),
-  name: string().required(requiredMsg),
-  title: string().required(requiredMsg),
-  email: string().email('Please enter a valid email address.').required(requiredMsg),
-  password: string().required(requiredMsg).matches(
+  newBankName: string(),
+  name: string(),
+  title: string(),
+  password: string().matches(
     /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
     "Password must have at least 8 characters, and have at least one of each of the following: " +
     "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
   ), // wtf is this regex... idk but it works
   // source https://stackoverflow.com/questions/55451304/formik-yup-password-strength-validation-with-react
   // TODO update this to be more user friendly
-  passwordConfirm: string().required(requiredMsg)
+  passwordConfirm: string()
     .oneOf([ref('password')], "Passwords do not match."),
 });
 
@@ -94,10 +76,11 @@ const BankManageAccountPage = ({ history }) => {
     <BasicLayout title="My Account 🛠" subtitle="View and edit your user settings.">
     <Formik
       initialValues={{
-        newBankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
+        newBankName: '', name: '', title: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
-        makeAPIRequest("/", "PATCH", values)
+        setSubmitting(true);
+        makeAPIRequest("/", "PUT", values)
           .then((response) => {
             const user = response["user_employee"][0];
             setUser({ ...user, userType: 'bank' });
@@ -124,11 +107,6 @@ const BankManageAccountPage = ({ history }) => {
           type="text"
         />
         <FormInput
-          title="Email"
-          name="email"
-          type="text"
-        />
-        <FormInput
           title="Password"
           name="password"
           type="password"
@@ -139,15 +117,9 @@ const BankManageAccountPage = ({ history }) => {
           type="password"
         />
         <FormFooter>
-          <SignUpButton disabled={isSubmitting}>
-            Sign Up
-            <FontAwesomeIcon
-              icon={faArrowRight}
-              size="lg"
-              color="rgb(34, 103, 255)"
-              style={{ marginLeft: "10px" }}
-            />
-          </SignUpButton>
+          <Button disabled={isSubmitting}>
+            Save Update
+          </Button>
         </FormFooter>
       </SignUpForm>
     )}

@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { object, string } from 'yup';
 
+import Button from './Button';
 import BasicLayout from "../../components/BasicLayout";
 import { useAuthentication, UserContext } from '../../utils/auth';
 import { makeAPIRequest } from '../../utils/api';
@@ -54,17 +55,12 @@ const ErrorMessageWrapper = styled.div`
   margin-top: 10px;
 `
 
-const InviteButton = styled.button`
-  background-color: rgb(34, 103, 255);
-  border-radius: 5px;
-  padding: 10px;
-  color: #fff;
-  border: none;
-  font-size: 16px;
-  cursor: pointer;
+const ButtonHolder = styled.div`
+  display: flex;
+  justify-content: flex-end;
 `
 
-const BankInvitePage = () => {
+const BankInvitePage = ({ history }) => {
   useAuthentication('/bank/invite');
   const [user] = useContext(UserContext);
   const [status, setStatus] = useState({ status: null, message: ""});
@@ -77,6 +73,7 @@ const BankInvitePage = () => {
         initialValues={{ email: '' }}
         onSubmit={(values, { setSubmitting }) => {
           setSubmitting(true);
+          console.log(user)
           makeAPIRequest(`/bank/${user.bank.id}/invite_teammate`, "POST", { "inviteeEmail": values.email }, true)
             .then((response) => {
               if (response.status === 200) setStatus({ 
@@ -96,7 +93,7 @@ const BankInvitePage = () => {
         <FormWrapper>
         <StyledForm>
           <StyledField type="email" name="email"/>
-          <InviteButton type="submit">{isSubmitting ? 'Sending...' : 'Send'}</InviteButton>
+          <Button type="submit">{isSubmitting ? 'Sending...' : 'Send'}</Button>
         </StyledForm>
         <ErrorMessageWrapper>
           <ErrorMessage name="email"/>
@@ -105,6 +102,12 @@ const BankInvitePage = () => {
       )}
       </Formik>
         {status.status && (<StatusMessage status={status.status}>{status.message}</StatusMessage>)}
+
+    <ButtonHolder>
+      <Button showArrow onClick={() => history.push("/")}>
+        Next
+      </Button>
+    </ButtonHolder>
     </BasicLayout>
   );
 }
