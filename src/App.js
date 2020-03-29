@@ -12,6 +12,7 @@ import Nav from './components/Nav';
 import BankSignUpPage from './pages/bank/BankSignUpPage';
 import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
+import BankCreateLCAppPage from './pages/bank/BankCreateLCAppPage';
 import { UserContext } from './utils/auth';
 
 // TODO It seems like having the presentational nav in this mostly-container
@@ -33,6 +34,7 @@ function App() {
           <Route path="/bank/register" component={BankSignUpPage} />
           <Route path="/bank/invite" component={BankInvitePage} />
           <Route path="/bank/account" component={BankManageAccountPage} />
+          <Route path="/bank/createApp" component={BankCreateLCAppPage} />
           <Route path="/login" component={LoginPage}/>
           <Route path="/" component={HomePage} />
         </Switch>

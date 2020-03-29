@@ -104,7 +104,7 @@ const BankInvitePage = ({ history }) => {
         {status.status && (<StatusMessage status={status.status}>{status.message}</StatusMessage>)}
 
     <ButtonHolder>
-      <Button showArrow onClick={() => history.push("/")}>
+      <Button showArrow onClick={() => history.push("/bank/createApp")}>
         Next
       </Button>
     </ButtonHolder>
