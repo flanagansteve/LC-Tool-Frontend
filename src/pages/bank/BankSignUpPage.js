@@ -100,9 +100,8 @@ const BankSignUpPage = ({ history }) => {
       }}
       onSubmit={(values, { setSubmitting }) => {
         makeAPIRequest("/bank/", "POST", values)
-          .then((response) => {
-            const user = response["user_employee"];
-            setUser({ ...user, userType: 'bank' });
+          .then((json) => {
+            setUser({ ...json.userEmployee, bank: json.usersEmployer });
             history.push("/bank/invite");
           });
         setSubmitting(false);

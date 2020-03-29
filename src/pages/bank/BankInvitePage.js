@@ -70,7 +70,7 @@ const BankInvitePage = () => {
   const [status, setStatus] = useState({ status: null, message: ""});
   return (
     <BasicLayout 
-      title={`Welcome${', ' + (user ? user.name : '')} 🚀`}
+      title={`Welcome${(user ? ', ' + user.name : '')} 🚀`}
       subtitle="Enter your teammates' emails to invite them to the platform."
     >
       <Formik
