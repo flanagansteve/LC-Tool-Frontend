@@ -56,7 +56,6 @@ const StyledProfileLink = styled.a`
 const ProfileWrapper = styled.div`
   display: flex;
   flex-direction: column;
-
 `;
 
 const ProfileLinkWrapper = styled.button`
@@ -70,7 +69,7 @@ const ProfileLinkWrapper = styled.button`
   }
   transition: border 0.3s;
   ${props => props.show && `border: 1px solid rgb(27, 108, 255);`}
-`
+`;
 
 const DropDownWrapper = styled.div`
   background-color: #fff;
@@ -85,7 +84,7 @@ const DropDownWrapper = styled.div`
   top: 60px;
   right: 50px;
   ${props => props.show && `opacity: 1;`}
-`
+`;
 
 const DropDownHeader = styled.div`
   color: rgb(27, 108, 255);
@@ -94,7 +93,7 @@ const DropDownHeader = styled.div`
   :not(:first-child) {
     margin-top: 10px;
   }
-`
+`;
 
 const DropDownLink = styled.div`
   margin: 5px;
@@ -106,7 +105,7 @@ const DropDownLink = styled.div`
     text-decoration: underline;
     cursor: pointer;
   }
-`
+`;
 
 const DropDownNavLink = styled(NavLink)`
   margin: 5px;
@@ -118,7 +117,7 @@ const DropDownNavLink = styled(NavLink)`
     text-decoration: underline;
     cursor: pointer;
   }
-`
+`;
 
 const ProfileDropDown = ({ user, setUser, show }) => {
   const history = useHistory();
@@ -140,7 +139,7 @@ const ProfileDropDown = ({ user, setUser, show }) => {
       </DropDownLink>
     </DropDownWrapper>
   );
-}
+};
 
 const LoginSection = ({ user, setUser }) => {
   const [showingDropdown, setShowingDropdown] = useState(false);
@@ -149,22 +148,29 @@ const LoginSection = ({ user, setUser }) => {
     <LoginMenu>
       {user ? (
         <ProfileWrapper>
-          <ProfileLinkWrapper onClick={(e) => {
-            e.preventDefault();
-            setShowingDropdown(true);
-            wrapperEl.current.focus();
-          }}
-          ref={wrapperEl} show={showingDropdown} onBlur={() => setShowingDropdown(false)}
+          <ProfileLinkWrapper
+            onClick={e => {
+              e.preventDefault();
+              setShowingDropdown(true);
+              wrapperEl.current.focus();
+            }}
+            ref={wrapperEl}
+            show={showingDropdown}
+            onBlur={() => setShowingDropdown(false)}
           >
-          <StyledProfileLink>
-          {user.name}
-            <FontAwesomeIcon
-              icon={faUserCircle}
-              style={{ marginLeft: "10px", fontSize: "16px" }}
-            />
-          </StyledProfileLink>
+            <StyledProfileLink>
+              {user.name}
+              <FontAwesomeIcon
+                icon={faUserCircle}
+                style={{ marginLeft: "10px", fontSize: "16px" }}
+              />
+            </StyledProfileLink>
           </ProfileLinkWrapper>
-          <ProfileDropDown user={user} setUser={setUser} show={showingDropdown}/>
+          <ProfileDropDown
+            user={user}
+            setUser={setUser}
+            show={showingDropdown}
+          />
         </ProfileWrapper>
       ) : (
         <StyledLoginLink to="/login">Log In</StyledLoginLink>
