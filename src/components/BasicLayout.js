@@ -1,5 +1,7 @@
 import React from "react";
 import styled from "styled-components";
+import MoonLoader from "react-spinners/MoonLoader";
+import { css } from "@emotion/core";
 
 const Margin = styled.div`
   margin: 80px auto 40px;
@@ -22,12 +24,12 @@ const Content = styled.div`
   margin: 40px 0 0;
 `;
 
-const BasicLayout = ({ title, subtitle, children }) => {
+const BasicLayout = ({ title, subtitle, isLoading, children }) => {
   return (
     <Margin>
       <Title>{title}</Title>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
-      <Content>{children}</Content>
+      <Content>{isLoading ? (<MoonLoader size={45} color={"rgb(27, 108, 255)"} loading={true} css={css`margin: 0 auto;`} />) : children}</Content>
     </Margin>
   );
 };

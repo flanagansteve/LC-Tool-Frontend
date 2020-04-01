@@ -3,8 +3,6 @@ import styled from 'styled-components';
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
 import { get } from "lodash";
-import MoonLoader from "react-spinners/MoonLoader";
-import { css } from "@emotion/core";
 
 import Button from "../../components/ui/Button";
 import BasicLayout from "../../components/BasicLayout";
@@ -77,8 +75,7 @@ const BankManageAccountPage = () => {
   const [user, setUser] = useContext(UserContext);
 
   return (
-    <BasicLayout title="My Account 🛠" subtitle="View and edit your user settings.">
-    {user ? (
+    <BasicLayout title="My Account 🛠" subtitle="View and edit your user settings." isLoading={!user}>
     <Formik
       initialValues={{
         name: get(user, ['name']), title: get(user, ['title']), password: '', passwordConfirm: '',
@@ -124,10 +121,6 @@ const BankManageAccountPage = () => {
       </SignUpForm>
     )}
     </Formik>
-
-    ) : (
-      <MoonLoader size={45} color={"rgb(27, 108, 255)"} loading={true} css={css`margin: 0 auto;`} />
-    )}
     </BasicLayout>
   );
 }
