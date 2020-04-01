@@ -29,7 +29,20 @@ const BasicLayout = ({ title, subtitle, isLoading, children }) => {
     <Margin>
       <Title>{title}</Title>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
-      <Content>{isLoading ? (<MoonLoader size={45} color={"rgb(27, 108, 255)"} loading={true} css={css`margin: 0 auto;`} />) : children}</Content>
+      <Content>
+        {isLoading ? (
+          <MoonLoader
+            size={45}
+            color={"rgb(27, 108, 255)"}
+            loading={true}
+            css={css`
+              margin: 0 auto;
+            `}
+          />
+        ) : (
+          children
+        )}
+      </Content>
     </Margin>
   );
 };
