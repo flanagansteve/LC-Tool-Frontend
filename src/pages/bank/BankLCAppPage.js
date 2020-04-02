@@ -1,14 +1,53 @@
 import React, { useState, useEffect } from 'react';
-import { Formik, Field, ErrorMessage } from 'formik';
+import styled from 'styled-components';
+import { Formik, Form, Field } from 'formik';
 
-import BasicLayout from '../../components/BasicLayout'
+import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
 
-const BasicInput = ({ question }) => {
+const InputWrapper = styled.div`
+  max-width: 700px;
+  margin: 10px auto;
+  padding: 15px 25px;
+  border-radius: 10px;
+  border: 1px solid #cdcdcd;
 
+  &:hover {
+    border: 1px solid rgb(27, 108, 255);
+  }
+  transition: border 0.3s;
+  background-color: #fff;
+`
+
+const QuestionText = styled.h3`
+  font-size: 14px;
+  font-weight: 300;
+`
+
+const StyledFormInput = styled(Field)`
+  padding: 10px 0 5px;
+  min-width: 100%;
+  font-size: 16px;
+  border: none;
+  border-bottom: 1px solid #cdcdcd;
+`;
+
+const BasicInput = ({ question, children }) => {
+  return (
+    <InputWrapper>
+      <QuestionText>{question.questionText}</QuestionText>
+      {children}
+    </InputWrapper>
+  )
 }
 
-const TextInput = ({ question }) => <div>{question.questionText}</div>;
+const TextInput = ({ question }) => {
+  return (
+    <BasicInput question={question}>
+      <StyledFormInput type="text" name={question.key}/>
+    </BasicInput>
+  );
+};
 
 const TYPE_TO_COMPONENT = {
   text: TextInput,
@@ -40,25 +79,30 @@ const BankLCAppPage = ({ match }) => {
   }, [match.params.bankid])
 console.log(lcApp)
 
+  const initialValues = {};
+
+  if (lcApp) {
+    lcApp.forEach(q => initialValues[q.key] = TYPE_TO_DEFAULT[q.type])
+  }
+
   return (
     <BasicLayout title={`LC Application`} loading={lcApp}>
     {lcApp && (
     <Formik
-      initialValues={lcApp.map(q => TYPE_TO_DEFAULT[q.type])}
+      initialValues={initialValues}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
         console.log(values)
         setSubmitting(false);
       }}
-      validationSchema={{}}
     >
     {({ isSubmitting }) => (
-      <>
+      <Form>
       {lcApp && lcApp.map(question => {
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.id} question={question} />;
       })}
-      </>
+      </Form>
     )}
       </Formik>
 
