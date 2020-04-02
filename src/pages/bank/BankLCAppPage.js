@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Formik, Form, Field, useField } from 'formik';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCheckSquare } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
@@ -67,8 +69,8 @@ const NumberInput = ({ question }) => {
 
 const ButtonWrapper = styled.div`
   display: flex;
-  justify-content: center;
   margin-top: 15px;
+  flex-wrap: wrap;
 
   > :not(:last-child) {
     margin-right: 20px;
@@ -83,6 +85,8 @@ const StyledButton = styled.button`
   border: 1px solid rgb(27, 108, 255);
   font-size: 16px;
   cursor: pointer;
+  margin: 10px 0;
+  max-width: 45%;
 `
 
 const YesNoInput = ({ question }) => {
@@ -90,11 +94,16 @@ const YesNoInput = ({ question }) => {
   const { value } = meta;
   const { setValue } = helpers;
 
+  const handleClick = (val) => (e) => {
+    e.preventDefault();
+    setValue(val);
+  }
+
   return (
     <BasicInput question={question}>
-      <ButtonWrapper>
-        <StyledButton onClick={() => setValue(true)} selected={value}>Yes</StyledButton>
-        <StyledButton onClick={() => setValue(false)} selected={!value}>No</StyledButton>
+      <ButtonWrapper style={{ justifyContent: 'center' }}>
+        <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
+        <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
       </ButtonWrapper>
     </BasicInput>
   )
@@ -110,12 +119,16 @@ const RadioInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
   const { value } = meta;
   const { setValue } = helpers;
+  const handleClick = (val) => (e) => {
+    e.preventDefault();
+    setValue(val);
+  }
   return (
     <BasicInput question={question}>
     <AllRadiosWrapper>
       <ButtonWrapper>
     {options && options.map((opt) => (
-        <StyledButton onClick={() => setValue(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
+        <StyledButton onClick={handleClick(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
     ))}
       </ButtonWrapper>
     </AllRadiosWrapper>
@@ -150,16 +163,30 @@ const CheckboxWrapper = styled.div`
 
 const CheckboxInput = ({ question }) => {
   const options = JSON.parse(question.options);
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+  const handleClick = (val) => (e) => {
+    e.preventDefault();
+    const i = value.indexOf(val);
+    if (i !== -1) {
+      setValue(value.slice(0, i).concat(value.slice(i + 1)));
+    } else {
+      setValue(value.concat([val]));
+    }
+  }
 
   return (
     <BasicInput question={question}>
     <AllCheckboxesWrapper>
-    {options && options.map((opt, i) => (
-      <CheckboxWrapper key={opt}>
-      <input type="checkbox"/>
-      <span style={{ fontSize: "14px" }}>{opt}</span>
-      </CheckboxWrapper>
+      <ButtonWrapper>
+    {options && options.map((opt) => (
+        <StyledButton onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
+        {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{ marginRight: '10px' }}/>}
+        {opt}
+        </StyledButton>
     ))}
+      </ButtonWrapper>
     </AllCheckboxesWrapper>
     </BasicInput>
   )
@@ -180,8 +207,8 @@ const TYPE_TO_DEFAULT = {
   text: "",
   decimal: 0,
   number: 0,
-  boolean: false,
-  radio: "",
+  boolean: null,
+  radio: null,
   date: (new Date()).getTime(),
   checkbox: [],
   array_of_objs: [],
