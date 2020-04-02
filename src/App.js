@@ -12,6 +12,8 @@ import Nav from './components/Nav';
 import BankSignUpPage from './pages/bank/BankSignUpPage';
 import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
+import BankLCFeedPage from './pages/bank/BankLCFeedPage';
+import BankLCViewPage from './pages/bank/BankLCFeedPage';
 import BankEmployeeSignUpPage from './pages/bank/BankEmployeeSignUpPage';
 import BankLCAppPage from './pages/bank/BankLCAppPage';
 import { UserContext } from './utils/auth';
@@ -36,6 +38,8 @@ function App() {
           <Route path="/bank/register" component={BankSignUpPage} />
           <Route path="/bank/invite" component={BankInvitePage} />
           <Route path="/bank/account" component={BankManageAccountPage} />
+          <Route path="/bank/lcs/:lcid" component={BankLCViewPage} />
+          <Route path="/bank/lcs" component={BankLCFeedPage} />
           <Route path="/bank/:bankid/application" component={BankLCAppPage} />
           <Route path="/login" component={LoginPage}/>
           <Route path="/" component={HomePage} />
