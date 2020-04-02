@@ -219,7 +219,9 @@ console.log(lcApp && lcApp.map(l => l.type))
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.id} question={question} />;
       })}
-      <Button showArrow disabled={isSubmitting} type="submit">Submit LC App</Button>
+      <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
+      <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
+      </div>
       </Form>
     )}
       </Formik>
