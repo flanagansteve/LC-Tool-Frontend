@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
-import { Formik, Form, Field } from 'formik';
+import { Formik, Form, Field, useField } from 'formik';
 
 import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
@@ -23,6 +23,7 @@ const InputWrapper = styled.div`
 const QuestionText = styled.h3`
   font-size: 14px;
   font-weight: 300;
+  line-height: 1.25;
 `
 
 const Asterisk = styled.span`
@@ -64,18 +65,70 @@ const NumberInput = ({ question }) => {
   )
 }
 
+const ButtonWrapper = styled.div`
+  display: flex;
+  justify-content: center;
+  margin-top: 15px;
+
+  > :not(:last-child) {
+    margin-right: 20px;
+  }
+`
+
+const StyledButton = styled.button`
+  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  border-radius: 5px;
+  padding: 5px 10px;
+  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
+  border: 1px solid rgb(27, 108, 255);
+  font-size: 16px;
+  cursor: pointer;
+`
+
 const YesNoInput = ({ question }) => {
+  const [field, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+
   return (
     <BasicInput question={question}>
-      <StyledFormInput type="checkbox" name={question.key}/>
+      <ButtonWrapper>
+        <StyledButton onClick={() => setValue(true)} selected={value}>Yes</StyledButton>
+        <StyledButton onClick={() => setValue(false)} selected={!value}>No</StyledButton>
+      </ButtonWrapper>
     </BasicInput>
   )
 }
 
+const AllRadiosWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`
+
+const RadioWrapper = styled.div`
+  display: flex;
+  margin: 25px 20px 10px;
+  align-items: center;
+  flex-basis: auto;
+  line-height: 1.25;
+
+  > :not(:last-child) {
+    margin-right: 10px;
+  }
+`
+
 const RadioInput = ({ question }) => {
+  const options = JSON.parse(question.options);
   return (
     <BasicInput question={question}>
-      <StyledFormInput type="radio" name={question.key}/>
+    <AllRadiosWrapper>
+    {options && options.map((opt, i) => (
+      <RadioWrapper key={opt}>
+      <Field type="radio" name={question.key + `[${i}]`}/>
+      <span style={{ fontSize: "14px" }}>{opt}</span>
+      </RadioWrapper>
+    ))}
+    </AllRadiosWrapper>
     </BasicInput>
   )
 }
@@ -98,7 +151,7 @@ const CheckboxWrapper = styled.div`
   margin: 25px 20px 10px;
   align-items: center;
   flex-basis: auto;
-  line-height: 1.2;
+  line-height: 1.25;
 
   > :not(:last-child) {
     margin-right: 10px;
@@ -107,12 +160,16 @@ const CheckboxWrapper = styled.div`
 
 const CheckboxInput = ({ question }) => {
   const options = JSON.parse(question.options);
+  const [field, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+
   return (
     <BasicInput question={question}>
     <AllCheckboxesWrapper>
     {options && options.map((opt, i) => (
-      <CheckboxWrapper>
-      <Field type="checkbox" name={question.key + `[${i}]`} key={opt}/>
+      <CheckboxWrapper key={opt}>
+      <input type="checkbox"/>
       <span style={{ fontSize: "14px" }}>{opt}</span>
       </CheckboxWrapper>
     ))}
@@ -137,7 +194,7 @@ const TYPE_TO_DEFAULT = {
   decimal: 0,
   number: 0,
   boolean: false,
-  radio: [],
+  radio: "",
   date: (new Date()).getTime(),
   checkbox: [],
   array_of_objs: [],
@@ -175,7 +232,7 @@ console.log(lcApp && lcApp.map(l => l.type))
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.id} question={question} />;
       })}
-      <Button showArrow disabled={isSubmitting}>Submit LC App</Button>
+      <Button showArrow disabled={isSubmitting} type="submit">Submit LC App</Button>
       </Form>
     )}
       </Formik>
