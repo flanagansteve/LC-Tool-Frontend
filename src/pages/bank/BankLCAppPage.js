@@ -86,7 +86,7 @@ const StyledButton = styled.button`
 `
 
 const YesNoInput = ({ question }) => {
-  const [field, meta, helpers] = useField(question.key);
+  const [, meta, helpers] = useField(question.key);
   const { value } = meta;
   const { setValue } = helpers;
 
@@ -105,29 +105,19 @@ const AllRadiosWrapper = styled.div`
   flex-wrap: wrap;
 `
 
-const RadioWrapper = styled.div`
-  display: flex;
-  margin: 25px 20px 10px;
-  align-items: center;
-  flex-basis: auto;
-  line-height: 1.25;
-
-  > :not(:last-child) {
-    margin-right: 10px;
-  }
-`
-
 const RadioInput = ({ question }) => {
   const options = JSON.parse(question.options);
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
   return (
     <BasicInput question={question}>
     <AllRadiosWrapper>
-    {options && options.map((opt, i) => (
-      <RadioWrapper key={opt}>
-      <Field type="radio" name={question.key + `[${i}]`}/>
-      <span style={{ fontSize: "14px" }}>{opt}</span>
-      </RadioWrapper>
+      <ButtonWrapper>
+    {options && options.map((opt) => (
+        <StyledButton onClick={() => setValue(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
     ))}
+      </ButtonWrapper>
     </AllRadiosWrapper>
     </BasicInput>
   )
@@ -160,9 +150,6 @@ const CheckboxWrapper = styled.div`
 
 const CheckboxInput = ({ question }) => {
   const options = JSON.parse(question.options);
-  const [field, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
 
   return (
     <BasicInput question={question}>
