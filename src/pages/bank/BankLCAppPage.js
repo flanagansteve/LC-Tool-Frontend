@@ -4,6 +4,7 @@ import { Formik, Form, Field } from 'formik';
 
 import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
+import Button from "../../components/ui/Button";
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -24,7 +25,13 @@ const QuestionText = styled.h3`
   font-weight: 300;
 `
 
+const Asterisk = styled.span`
+  color: #dc3545;
+  font-size: 16px;
+`
+
 const StyledFormInput = styled(Field)`
+  margin-top: 10px;
   padding: 10px 0 5px;
   min-width: 100%;
   font-size: 16px;
@@ -35,7 +42,7 @@ const StyledFormInput = styled(Field)`
 const BasicInput = ({ question, children }) => {
   return (
     <InputWrapper>
-      <QuestionText>{question.questionText}</QuestionText>
+      <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
       {children}
     </InputWrapper>
   )
@@ -49,14 +56,79 @@ const TextInput = ({ question }) => {
   );
 };
 
+const NumberInput = ({ question }) => {
+  return (
+    <BasicInput question={question}>
+      <StyledFormInput type="number" name={question.key}/>
+    </BasicInput>
+  )
+}
+
+const YesNoInput = ({ question }) => {
+  return (
+    <BasicInput question={question}>
+      <StyledFormInput type="checkbox" name={question.key}/>
+    </BasicInput>
+  )
+}
+
+const RadioInput = ({ question }) => {
+  return (
+    <BasicInput question={question}>
+      <StyledFormInput type="radio" name={question.key}/>
+    </BasicInput>
+  )
+}
+
+const DateInput = ({ question }) => {
+  return (
+    <BasicInput question={question}>
+      <StyledFormInput type="date" name={question.key}/>
+    </BasicInput>
+  )
+}
+
+const AllCheckboxesWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`
+
+const CheckboxWrapper = styled.div`
+  display: flex;
+  margin: 25px 20px 10px;
+  align-items: center;
+  flex-basis: auto;
+  line-height: 1.2;
+
+  > :not(:last-child) {
+    margin-right: 10px;
+  }
+`
+
+const CheckboxInput = ({ question }) => {
+  const options = JSON.parse(question.options);
+  return (
+    <BasicInput question={question}>
+    <AllCheckboxesWrapper>
+    {options && options.map((opt, i) => (
+      <CheckboxWrapper>
+      <Field type="checkbox" name={question.key + `[${i}]`} key={opt}/>
+      <span style={{ fontSize: "14px" }}>{opt}</span>
+      </CheckboxWrapper>
+    ))}
+    </AllCheckboxesWrapper>
+    </BasicInput>
+  )
+}
+
 const TYPE_TO_COMPONENT = {
   text: TextInput,
-  decimal: TextInput,
-  number: TextInput,
-  boolean: TextInput,
-  radio: TextInput,
-  date: TextInput,
-  checkbox: TextInput,
+  decimal: NumberInput,
+  number: NumberInput,
+  boolean: YesNoInput,
+  radio: RadioInput,
+  date: DateInput,
+  checkbox: CheckboxInput,
   array_of_objs: TextInput,
 };
 
@@ -78,6 +150,7 @@ const BankLCAppPage = ({ match }) => {
       .then(json => setLCApp(json))
   }, [match.params.bankid])
 console.log(lcApp)
+console.log(lcApp && lcApp.map(l => l.type))
 
   const initialValues = {};
 
@@ -86,7 +159,7 @@ console.log(lcApp)
   }
 
   return (
-    <BasicLayout title={`LC Application`} loading={lcApp}>
+    <BasicLayout title={`LC Application`} subtitle={(<span><Asterisk>*</Asterisk> denotes required field.</span>)} isLoading={!lcApp}>
     {lcApp && (
     <Formik
       initialValues={initialValues}
@@ -102,6 +175,7 @@ console.log(lcApp)
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.id} question={question} />;
       })}
+      <Button showArrow disabled={isSubmitting}>Submit LC App</Button>
       </Form>
     )}
       </Formik>
