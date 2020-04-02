@@ -42,6 +42,30 @@ const StyledFormInput = styled(Field)`
   border-bottom: 1px solid #cdcdcd;
 `;
 
+const ButtonWrapper = styled.div`
+  display: flex;
+  margin-top: 15px;
+  flex-wrap: wrap;
+
+  > :not(:last-child) {
+    margin-right: 20px;
+  }
+`
+
+const StyledButton = styled.button`
+  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  border-radius: 5px;
+  padding: 5px 10px;
+  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
+  border: 1px solid rgb(27, 108, 255);
+  font-size: 16px;
+  cursor: pointer;
+  margin: 10px 0;
+  max-width: 45%;
+  display: flex;
+  align-items: center;
+`
+
 const BasicInput = ({ question, children }) => {
   return (
     <InputWrapper>
@@ -66,28 +90,6 @@ const NumberInput = ({ question }) => {
     </BasicInput>
   )
 }
-
-const ButtonWrapper = styled.div`
-  display: flex;
-  margin-top: 15px;
-  flex-wrap: wrap;
-
-  > :not(:last-child) {
-    margin-right: 20px;
-  }
-`
-
-const StyledButton = styled.button`
-  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
-  border-radius: 5px;
-  padding: 5px 10px;
-  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
-  border: 1px solid rgb(27, 108, 255);
-  font-size: 16px;
-  cursor: pointer;
-  margin: 10px 0;
-  max-width: 45%;
-`
 
 const YesNoInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
@@ -147,18 +149,6 @@ const DateInput = ({ question }) => {
 const AllCheckboxesWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-`
-
-const CheckboxWrapper = styled.div`
-  display: flex;
-  margin: 25px 20px 10px;
-  align-items: center;
-  flex-basis: auto;
-  line-height: 1.25;
-
-  > :not(:last-child) {
-    margin-right: 10px;
-  }
 `
 
 const CheckboxInput = ({ question }) => {
