@@ -28,6 +28,14 @@ const QuestionText = styled.h3`
   line-height: 1.25;
 `
 
+const Subtitle = styled.div`
+  margin-top: 15px;
+  color: #555353;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 300;
+`
+
 const Asterisk = styled.span`
   color: #dc3545;
   font-size: 16px;
@@ -66,10 +74,12 @@ const StyledButton = styled.button`
   align-items: center;
 `
 
-const BasicInput = ({ question, children }) => {
+
+const BasicInput = ({ question, children, subtitle }) => {
   return (
     <InputWrapper>
       <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
+      {subtitle && <Subtitle>{subtitle}</Subtitle>}
       {children}
     </InputWrapper>
   )
@@ -167,7 +177,7 @@ const CheckboxInput = ({ question }) => {
   }
 
   return (
-    <BasicInput question={question}>
+    <BasicInput question={question} subtitle="Check all that apply.">
     <AllCheckboxesWrapper>
       <ButtonWrapper>
     {options && options.map((opt) => (
