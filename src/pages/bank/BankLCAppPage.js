@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Formik, Form, Field, useField } from 'formik';
+import { object, string, number, boolean, array, date } from 'yup';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckSquare } from "@fortawesome/free-solid-svg-icons";
 
@@ -76,10 +77,13 @@ const StyledButton = styled.button`
 
 
 const BasicInput = ({ question, children, subtitle }) => {
+  const [, meta] = useField(question.key);
+  const { error, touched } = meta;
   return (
     <InputWrapper>
       <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
+      {error && touched && <Subtitle style={{color: '#dc3545'}}>{error}</Subtitle>}
       {children}
     </InputWrapper>
   )
@@ -209,9 +213,26 @@ const TYPE_TO_DEFAULT = {
   number: 0,
   boolean: null,
   radio: null,
-  date: (new Date()).getTime(),
+  date: (new Date()).toISOString(),
   checkbox: [],
   array_of_objs: [],
+}
+
+const REQUIRED_MSG = "This field is required.";
+
+const TYPE_TO_VALIDATION_SCHEMA = {
+  text: string(),
+  decimal: number(),
+  number: number(),
+  boolean: boolean().nullable(),
+  radio: string().nullable(),
+  date: date(),
+  checkbox: array().of(string()),
+  array_of_objs: array().of(object().shape({
+    docName: string().required(REQUIRED_MSG),
+    requiredValues: string().required(REQUIRED_MSG),
+    dueDate: date().required(REQUIRED_MSG),
+  })),
 }
 
 const BankLCAppPage = ({ match }) => {
@@ -220,13 +241,20 @@ const BankLCAppPage = ({ match }) => {
     makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
       .then(json => setLCApp(json))
   }, [match.params.bankid])
-console.log(lcApp)
-console.log(lcApp && lcApp.map(l => l.type))
 
   const initialValues = {};
+  let validationSchema = null;
 
   if (lcApp) {
-    lcApp.forEach(q => initialValues[q.key] = TYPE_TO_DEFAULT[q.type])
+    const schemaObj = {};
+    lcApp.forEach(q => {
+      initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+      schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
+      if (q.required) {
+        schemaObj[q.key] = schemaObj[q.key].required(REQUIRED_MSG);
+      }
+    });
+    validationSchema = object().shape(schemaObj);
   }
 
   return (
@@ -234,9 +262,19 @@ console.log(lcApp && lcApp.map(l => l.type))
     {lcApp && (
     <Formik
       initialValues={initialValues}
+      validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
-        console.log(values)
+        const app = {};
+        Object.entries(values).forEach((kv) => {
+          const [key, value] = kv;
+          if (value === null) {
+          } else {
+            app[key] = value;
+          }
+        });
+        makeAPIRequest(`/lc/${match.params.bankid}`, 'POST', app)
+          .then(json => console.log(json))
         setSubmitting(false);
       }}
     >
