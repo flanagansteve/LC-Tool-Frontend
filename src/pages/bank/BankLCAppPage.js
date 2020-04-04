@@ -83,7 +83,7 @@ const BasicInput = ({ question, children, subtitle }) => {
     <InputWrapper>
       <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
-      {error && touched && <Subtitle style={{color: '#dc3545'}}>{error}</Subtitle>}
+      {error && touched && <Subtitle style={{color: '#dc3545'}}>{typeof error !== 'object' ? error : null}</Subtitle>}
       {children}
     </InputWrapper>
   )
@@ -196,6 +196,35 @@ const CheckboxInput = ({ question }) => {
   )
 }
 
+const DocReqFieldWrapper = styled.div`
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+  > :first-child {
+    flex-basis: 200px;
+    font-weight: 300;
+    border-bottom: 1px solid #cdcdcd;
+    border-right: 1px solid #cdcdcd;
+    padding: 10px 10px 5px;
+    text-align: right;
+  }
+`
+
+const StyledDocReqField = styled(Field)`
+  padding: 10px 10px 5px;
+  font-size: 16px;
+  border: none;
+  border-bottom: 1px solid #cdcdcd;
+  flex-grow: 1;
+  line-height: 1em;
+`;
+
+const DocReqTitle = styled.h3`
+  text-transform: uppercase;
+  font-weight: 300;
+  letter-spacing: .1em;
+`
+
 const DocReqInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
   const { value } = meta;
@@ -205,18 +234,29 @@ const DocReqInput = ({ question }) => {
     e.preventDefault();
     setValue([...value, { docName: '', dueDate: (new Date()).toISOString(), requiredValues: ''}])
   }
-  console.log(value)
 
   return (
     <BasicInput question={question}>
       {value.map((docReq, i) => (
-        <div style={{margin: "20px"}} key={docReq}>
-          <StyledFormInput type="text" name={`${question.key}[${i}].docName`}/>
-          <StyledFormInput type="date" name={`${question.key}[${i}].dueDate`}/>
-          <StyledFormInput type="text" name={`${question.key}[${i}].requiredValues`}/>
+        <div style={{margin: "20px"}}>
+          <DocReqTitle>Documentary Requirement #{i+1}</DocReqTitle>
+          <DocReqFieldWrapper>
+          <span>Name: </span>
+            <StyledDocReqField type="text" name={`${question.key}[${i}].docName`}/>
+          </DocReqFieldWrapper>
+          <DocReqFieldWrapper>
+          <span>Due Date: </span>
+          <StyledDocReqField type="date" name={`${question.key}[${i}].dueDate`}/>
+          </DocReqFieldWrapper>
+          <DocReqFieldWrapper>
+          <span>Required Values: </span>
+          <StyledDocReqField type="text" name={`${question.key}[${i}].requiredValues`}/>
+          </DocReqFieldWrapper>
         </div>
       ))}
-      <center><StyledButton onClick={handleClick}>Add Documentary Requirement</StyledButton></center>
+      <center style={{ marginTop: '25px'}}>
+        <StyledButton onClick={handleClick}>Add Documentary Requirement</StyledButton>
+      </center>
     </BasicInput>
   )
 }
