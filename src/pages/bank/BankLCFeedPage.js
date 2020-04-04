@@ -37,11 +37,12 @@ const ListEntryWrapper = styled.ul`
 
 const LCListEntry = ({ lc }) => {
   // NOTE: due_date and credit_amt will only be available for DigitalLCs
+  console.log(lc)
   return (
       <StyledLink to={`/bank/lcs/${lc.id}`}>
       <ListEntryWrapper>
-        <ListEntryField>{lc.client}</ListEntryField>
-        <ListEntryField>{lc.beneficiary}</ListEntryField>
+        <ListEntryField>{lc.client.name}</ListEntryField>
+        <ListEntryField>{lc.beneficiary || "Unknown"}</ListEntryField>
         <ListEntryField>{lc.applicationDate}</ListEntryField>
         <ListEntryField>{lc.dueDate || "N/A"}</ListEntryField>
         <ListEntryField>{lc.creditAmt || "N/A"}</ListEntryField>
