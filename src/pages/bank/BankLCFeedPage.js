@@ -57,14 +57,14 @@ const BankLCFeedPage = () => {
   const bankid = get(user, ['bank', 'id']);
 
   useEffect(() => {
+    if (!bankid) return;
     makeAPIRequest(`/lc/by_bank/${bankid}/`)
-      .then(json => console.log(json))
-      .then(() => setLcs([{id: 2, client: "Joe's Business whose name is super long", beneficiary: "Frank's Business", applicationDate: "March 31st, 2020"}]))
-  }, [bankid])
+      .then(json => setLcs(json));
+  }, [bankid]);
 
   return (
     <BasicLayout
-      title="View All LCs"
+      title="View All LCs 📝"
       isLoading={!lcs}
     >
     {/* "Heading" of the feed - delete if you think it unnecessary*/}
@@ -77,9 +77,11 @@ const BankLCFeedPage = () => {
         <ListEntryField>Transaction Size</ListEntryField>
       </ListEntryWrapper>
     </div>
-    {(lcs && user) && <div>
-    {lcs.map(lc => <LCListEntry lc={lc} />)}
-    </div>}
+    {(lcs && (lcs.length > 0 ? (
+      <div>
+    {lcs.map(lc => <LCListEntry lc={lc} key={lc.id}/>)}
+    </div>
+    ) : (<center style={{ marginTop: '30px', fontStyle: 'italic', color: '#888' }}>You don't have any LCs yet.</center>)))}
     </BasicLayout>
   )
 
