@@ -63,7 +63,6 @@ const ButtonHolder = styled.div`
 const BusinessInvitePage = ({ history }) => {
   useAuthentication('/business/invite');
   const [user] = useContext(UserContext);
-  console.log(user)
   const [status, setStatus] = useState({ status: null, message: ""});
   return (
     <BasicLayout

@@ -82,7 +82,7 @@ const BusinessSignUpPage = ({ history }) => {
     >
     <Formik
       initialValues={{
-        newBusinessName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
+        newBusinessName: '', newBusinessAddress: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
