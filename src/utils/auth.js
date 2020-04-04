@@ -30,9 +30,10 @@ export const useAuthentication = nextRoute => {
       history.push("/login", { nextRoute });
     } else {
       makeAPIRequest("/user/this_users_info/")
-        .then(json =>
-          setUser({ ...json.userEmployee, bank: json.usersEmployer })
-        )
+        .then(json => {
+          if (json.userEmployee.employer) setUser({ ...json.userEmployee, business: json.usersEmployer });
+          else setUser({ ...json.userEmployee, bank: json.usersEmployer })
+        })
         .catch(err => {
           console.error(err);
           history.push("/login", { nextRoute });
