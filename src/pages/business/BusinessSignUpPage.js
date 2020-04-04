@@ -48,6 +48,7 @@ const requiredMsg = 'This field is required.';
 
 const signUpFormValidationSchema = object().shape({
   newBusinessName: string().required(requiredMsg),
+  newBusinessAddress: string().required(requiredMsg),
   name: string().required(requiredMsg),
   title: string().required(requiredMsg),
   email: string().email('Please enter a valid email address.').required(requiredMsg),
