@@ -102,6 +102,11 @@ const BusinessSignUpPage = ({ history }) => {
           type="text"
         />
         <FormInput
+            title="Business Address"
+            name="newBusinessAddress"
+            type="text"
+          />
+        <FormInput
           title="Your Name"
           name="name"
           type="text"
