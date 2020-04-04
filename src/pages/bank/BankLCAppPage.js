@@ -238,7 +238,7 @@ const DocReqInput = ({ question }) => {
   return (
     <BasicInput question={question}>
       {value.map((docReq, i) => (
-        <div style={{margin: "20px"}}>
+        <div style={{margin: "20px"}} key={i}>
           <DocReqTitle>Documentary Requirement #{i+1}</DocReqTitle>
           <DocReqFieldWrapper>
           <span>Name: </span>
@@ -338,7 +338,7 @@ const BankLCAppPage = ({ match }) => {
             app[key] = value;
           }
         });
-        makeAPIRequest(`/lc/${match.params.bankid}/`, 'POST', app)
+        makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app)
           .then(json => console.log(json))
         setSubmitting(false);
       }}
