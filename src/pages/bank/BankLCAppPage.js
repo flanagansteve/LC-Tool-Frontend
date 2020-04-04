@@ -302,23 +302,30 @@ const TYPE_TO_VALIDATION_SCHEMA = {
 
 const BankLCAppPage = ({ match }) => {
   const [lcApp, setLCApp] = useState(null);
+  const persistedLcApp = JSON.parse(localStorage.getItem(`lc/${match.params.bankid}`));
   useEffect(() => {
     makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
       .then(json => setLCApp(json))
   }, [match.params.bankid])
 
-  const initialValues = {};
+  let initialValues = {};
   let validationSchema = null;
 
   if (lcApp) {
     const schemaObj = {};
-    lcApp.forEach(q => {
-      initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
-      schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
-      if (q.required) {
-        schemaObj[q.key] = schemaObj[q.key].required(REQUIRED_MSG);
-      }
-    });
+    if (persistedLcApp) {
+      initialValues = persistedLcApp;
+    } else {
+      lcApp.forEach(q => {
+        initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+      });
+    }
+      lcApp.forEach(q => {
+        schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
+        if (q.required) {
+          schemaObj[q.key] = schemaObj[q.key].required(REQUIRED_MSG);
+        }
+      });
     validationSchema = object().shape(schemaObj);
   }
 
@@ -338,8 +345,14 @@ const BankLCAppPage = ({ match }) => {
             app[key] = value;
           }
         });
-        makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app)
-          .then(json => console.log(json))
+        makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app, true)
+          .then(res => {
+            if (res.status === 200) {
+              localStorage.removeItem(`lc/${match.params.bankid}`)
+            } else {
+              localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values));
+            }
+            })
         setSubmitting(false);
       }}
     >
