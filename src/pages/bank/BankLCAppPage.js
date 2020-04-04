@@ -334,7 +334,7 @@ const BankLCAppPage = ({ match }) => {
   }
 
   return (
-    <BasicLayout title={`LC Application`} subtitle={(<span><Asterisk>*</Asterisk> denotes required field.</span>)} isLoading={!lcApp}>
+    <BasicLayout title={`LC Application ✏️`} subtitle={(<span><Asterisk>*</Asterisk> denotes required field.</span>)} isLoading={!lcApp}>
     {lcApp && (
     <Formik
       initialValues={initialValues}
