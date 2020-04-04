@@ -305,7 +305,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
 const BankLCAppPage = ({ match }) => {
   const [lcApp, setLCApp] = useState(null);
   const persistedLcApp = JSON.parse(localStorage.getItem(`lc/${match.params.bankid}`));
-  const [error, setError] = useState(null);
+  const [status, setStatus] = useState({ message: "", status: null });
   useAuthentication(`/bank/${match.params.bankid}/application`);
   useEffect(() => {
     makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
@@ -323,7 +323,6 @@ const BankLCAppPage = ({ match }) => {
       initialValues = persistedLcApp;
     } else {
       lcApp.forEach(q => {
-        console.log(q.key)
         if (user && q.key === 'applicant_name') initialValues[q.key] = user.business.name;
         else if (user && q.key === 'applicant_address') initialValues[q.key] = user.business.address;
         else initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
@@ -356,12 +355,14 @@ const BankLCAppPage = ({ match }) => {
         });
         makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app, true)
           .then(async res => {
+            let text = await res.text();
             if (res.status === 200) {
               localStorage.removeItem(`lc/${match.params.bankid}`);
+              setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
             } else {
+              if (text.length > 100) text = "Unknown server error. Please contact steve@bountium.org."
               localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
-              const text = await res.text();
-              setError(`Error submitting form: ${text}`);
+              setStatus({status: "error", message: `Error submitting form: ${text}`});
             }
             })
         setSubmitting(false);
@@ -373,10 +374,10 @@ const BankLCAppPage = ({ match }) => {
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.id} question={question} />;
       })}
+      {status.status && <StatusMessage status={status.status}>{status.message}</StatusMessage>}
       <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
       <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
       </div>
-      {error && <StatusMessage status={"error"}>{error}</StatusMessage>}
       </Form>
     )}
       </Formik>
