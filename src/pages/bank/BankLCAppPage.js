@@ -8,6 +8,8 @@ import { faCheckSquare } from "@fortawesome/free-solid-svg-icons";
 import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
 import Button from "../../components/ui/Button";
+import StatusMessage from "../../components/ui/StatusMessage";
+import { useAuthentication } from '../../utils/auth';
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -303,6 +305,8 @@ const TYPE_TO_VALIDATION_SCHEMA = {
 const BankLCAppPage = ({ match }) => {
   const [lcApp, setLCApp] = useState(null);
   const persistedLcApp = JSON.parse(localStorage.getItem(`lc/${match.params.bankid}`));
+  const [error, setError] = useState(null);
+  useAuthentication(`/bank/${match.params.bankid}/application`);
   useEffect(() => {
     makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
       .then(json => setLCApp(json))
@@ -346,11 +350,13 @@ const BankLCAppPage = ({ match }) => {
           }
         });
         makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app, true)
-          .then(res => {
+          .then(async res => {
             if (res.status === 200) {
-              localStorage.removeItem(`lc/${match.params.bankid}`)
+              localStorage.removeItem(`lc/${match.params.bankid}`);
             } else {
-              localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values));
+              localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
+              const text = await res.text();
+              setError(`Error submitting form: ${text}`);
             }
             })
         setSubmitting(false);
@@ -365,6 +371,7 @@ const BankLCAppPage = ({ match }) => {
       <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
       <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
       </div>
+      {error && <StatusMessage status={"error"}>{error}</StatusMessage>}
       </Form>
     )}
       </Formik>

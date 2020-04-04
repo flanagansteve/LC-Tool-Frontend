@@ -1,6 +1,6 @@
 import { setSessionExpiry } from "./auth";
 import { snakeCase, camelCase } from "lodash";
-import history from "../history";
+// import history from "../history";
 
 const API_BASEURL = "/api";
 
@@ -48,11 +48,11 @@ export const makeAPIRequest = async (
     body: JSON.stringify(objectToSnakeCase(params))
   });
   if (response.status === 401 || response.status === 403) {
-    history.push("/login");
-    // TODO show this error to the user
-    return Promise.reject(
-      "Error: Attempted to make unauthenticated API request. Redirecting to login."
-    );
+    // history.push("/login");
+    // // TODO show this error to the user
+    // return Promise.reject(
+    //   "Error: Attempted to make unauthenticated API request. Redirecting to login."
+    // );
   } else if (response.status < 200 || response.status >= 400) {
     // TODO show this error to the user
     console.warn(
@@ -79,7 +79,8 @@ export const logIn = async (email, password) => {
   }
   const json = objectToCamelCase(await response.json());
   setSessionExpiry(new Date(json.sessionExpiry).getTime());
-  return { ...json.userEmployee, bank: json.usersEmployer };
+  if (json.userEmployee.employer) return { ...json.userEmployee, business: json.usersEmployer };
+  else return { ...json.userEmployee, bank: json.usersEmployer };
 };
 
 export const logOut = async setUser => {

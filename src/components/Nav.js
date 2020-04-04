@@ -3,7 +3,6 @@ import styled from "styled-components";
 import { NavLink, useHistory } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
-import { get } from "lodash";
 
 // TODO import different sized logos for performance
 import logo from "../images/logo.png";
@@ -123,11 +122,11 @@ const ProfileDropDown = ({ user, setUser, show }) => {
   const history = useHistory();
   return (
     <DropDownWrapper show={show}>
-      <DropDownHeader>{get(user, ["name"])}</DropDownHeader>
-      <DropDownLink>View LC Application</DropDownLink>
-      <DropDownLink>View Bank Profile</DropDownLink>
-      <DropDownHeader>{get(user, ["bank", "name"])}</DropDownHeader>
-      <DropDownNavLink to="/bank/account">View Profile</DropDownNavLink>
+      <DropDownHeader>{user.bank ? user.bank.name : user.business.name}</DropDownHeader>
+      {user.bank && <DropDownLink>View LC Application</DropDownLink>}
+      <DropDownLink>View {user.bank ? "Bank" : "Business"} Profile (Coming soon)</DropDownLink>
+      <DropDownHeader>{user.name}</DropDownHeader>
+      <DropDownNavLink to={`${user.bank ? '/bank' : '/business'}/account`}>View Profile</DropDownNavLink>
       <DropDownLink
         onClick={() => {
           logOut(setUser)
