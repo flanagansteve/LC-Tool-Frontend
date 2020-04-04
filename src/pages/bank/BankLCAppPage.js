@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import { Formik, Form, Field, useField } from 'formik';
 import { object, string, number, boolean, array, date } from 'yup';
@@ -9,7 +9,7 @@ import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
 import Button from "../../components/ui/Button";
 import StatusMessage from "../../components/ui/StatusMessage";
-import { useAuthentication } from '../../utils/auth';
+import { useAuthentication, UserContext } from '../../utils/auth';
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -310,7 +310,9 @@ const BankLCAppPage = ({ match }) => {
   useEffect(() => {
     makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
       .then(json => setLCApp(json))
-  }, [match.params.bankid])
+  }, [match.params.bankid]);
+
+  const [user] = useContext(UserContext);
 
   let initialValues = {};
   let validationSchema = null;
@@ -321,7 +323,10 @@ const BankLCAppPage = ({ match }) => {
       initialValues = persistedLcApp;
     } else {
       lcApp.forEach(q => {
-        initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+        console.log(q.key)
+        if (user && q.key === 'applicant_name') initialValues[q.key] = user.business.name;
+        else if (user && q.key === 'applicant_address') initialValues[q.key] = user.business.address;
+        else initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
       });
     }
       lcApp.forEach(q => {
