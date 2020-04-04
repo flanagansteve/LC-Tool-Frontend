@@ -1,10 +1,11 @@
 import React from "react";
+import { Redirect } from "react-router-dom";
 import { useAuthentication } from "../../utils/auth";
 
 const HomePage = () => {
   useAuthentication('/');
   return (
-      <div>Hello world!</div>
+    <Redirect to="/bank/lcs"/>
   );
 };
 
