@@ -196,6 +196,31 @@ const CheckboxInput = ({ question }) => {
   )
 }
 
+const DocReqInput = ({ question }) => {
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+
+  const handleClick = (e) => {
+    e.preventDefault();
+    setValue([...value, { docName: '', dueDate: (new Date()).toISOString(), requiredValues: ''}])
+  }
+  console.log(value)
+
+  return (
+    <BasicInput question={question}>
+      {value.map((docReq, i) => (
+        <div style={{margin: "20px"}} key={docReq}>
+          <StyledFormInput type="text" name={`${question.key}[${i}].docName`}/>
+          <StyledFormInput type="date" name={`${question.key}[${i}].dueDate`}/>
+          <StyledFormInput type="text" name={`${question.key}[${i}].requiredValues`}/>
+        </div>
+      ))}
+      <center><StyledButton onClick={handleClick}>Add Documentary Requirement</StyledButton></center>
+    </BasicInput>
+  )
+}
+
 const TYPE_TO_COMPONENT = {
   text: TextInput,
   decimal: NumberInput,
@@ -204,7 +229,7 @@ const TYPE_TO_COMPONENT = {
   radio: RadioInput,
   date: DateInput,
   checkbox: CheckboxInput,
-  array_of_objs: TextInput,
+  array_of_objs: DocReqInput,
 };
 
 const TYPE_TO_DEFAULT = {
@@ -273,7 +298,7 @@ const BankLCAppPage = ({ match }) => {
             app[key] = value;
           }
         });
-        makeAPIRequest(`/lc/${match.params.bankid}`, 'POST', app)
+        makeAPIRequest(`/lc/${match.params.bankid}/`, 'POST', app)
           .then(json => console.log(json))
         setSubmitting(false);
       }}

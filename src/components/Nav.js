@@ -190,7 +190,7 @@ const Nav = ({ user, setUser }) => {
         <NavLogo src={logo} alt="Bountium Logo" />
       </StyledNavLink>
       <StyledNavLink to="/create">Create an LC</StyledNavLink>
-      <StyledNavLink to="/review">Review LC Applications</StyledNavLink>
+      <StyledNavLink to="/bank/lcs">Review LC Applications</StyledNavLink>
       <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
       <LoginSection user={user} setUser={setUser} />
     </StyledNav>

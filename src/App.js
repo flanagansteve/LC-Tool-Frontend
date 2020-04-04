@@ -39,7 +39,6 @@ function App() {
         <Nav user={user} setUser={setUser} />
         <Switch>
           <Route path="/create" />
-          <Route path="/review" />
           <Route path="/manage" />
           <Route path="/bank/register/:bankid" component={BankEmployeeSignUpPage} />
           <Route path="/bank/register" component={BankSignUpPage} />
