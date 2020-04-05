@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { NavLink, useHistory } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
+import { get } from "lodash";
 
 // TODO import different sized logos for performance
 import logo from "../images/logo.png";
@@ -122,7 +123,7 @@ const ProfileDropDown = ({ user, setUser, show }) => {
   const history = useHistory();
   return (
     <DropDownWrapper show={show}>
-      <DropDownHeader>{user.bank ? user.bank.name : user.business.name}</DropDownHeader>
+      <DropDownHeader>{user.bank ? get(user, ['bank', 'name']) : get(user, ['business', 'name'])}</DropDownHeader>
       {user.bank && <DropDownLink>View LC Application</DropDownLink>}
       <DropDownLink>View {user.bank ? "Bank" : "Business"} Profile (Coming soon)</DropDownLink>
       <DropDownHeader>{user.name}</DropDownHeader>
@@ -188,9 +189,13 @@ const Nav = ({ user, setUser }) => {
       <StyledNavLink to="/">
         <NavLogo src={logo} alt="Bountium Logo" />
       </StyledNavLink>
-      <StyledNavLink to="/create">Create an LC</StyledNavLink>
-      <StyledNavLink to="/bank/lcs">Review LC Applications</StyledNavLink>
-      <StyledNavLink to="/manage">Manage Live LCs</StyledNavLink>
+      {user && (
+        <>
+        {user.bank && <StyledNavLink to={`/bank/${user.bank.id}/application`}>Create an LC</StyledNavLink>}
+        <StyledNavLink to="/bank/lcs/apps">Review LC Applications</StyledNavLink>
+        <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>
+        </>
+      )}
       <LoginSection user={user} setUser={setUser} />
     </StyledNav>
   );

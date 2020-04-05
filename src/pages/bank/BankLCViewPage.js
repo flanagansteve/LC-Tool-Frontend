@@ -1,11 +1,9 @@
 import React, { useContext, useState, useEffect } from "react";
-import styled from "styled-components";
-import { string, object, ref } from 'yup';
+// import styled from "styled-components";
 
-import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
-import Button from "../../components/ui/Button";
+import LCView from "../../components/lc/LCView";
 
 const BankLCViewPage = ( {match} ) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
@@ -15,18 +13,15 @@ const BankLCViewPage = ( {match} ) => {
   useEffect(() => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
       .then(json => setLc(json))
-  }, [match.params.bankid])
+  }, [match.params.lcid])
   console.log(lc)
 
   return (
-    <BasicLayout
-      title="i dont know what to title this"
-      subtitle="and SURELY dont know what to subtitle it"
-    >
+    <LCView lc={lc}>
     {lc && <div>
-      <p>the lc requested by {lc.client}</p>
+      <p>the lc requested by {lc.client.name} and {user && user.name}</p>
     </div>}
-    </BasicLayout>
+    </LCView>
   )
 
 }

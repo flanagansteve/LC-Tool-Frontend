@@ -360,7 +360,7 @@ const BankLCAppPage = ({ match }) => {
               localStorage.removeItem(`lc/${match.params.bankid}`);
               setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
             } else {
-              if (text.length > 100) text = "Unknown server error. Please contact steve@bountium.org."
+              if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
               localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
               setStatus({status: "error", message: `Error submitting form: ${text}`});
             }
