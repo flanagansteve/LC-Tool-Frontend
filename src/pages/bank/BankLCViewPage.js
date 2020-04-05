@@ -12,6 +12,7 @@ const TwoColumnHolder = styled.div`
 const LeftColumn = styled.div`
   flex-grow: 1;
   margin-right: 20px;
+  min-width: 250px;
 `
 
 const RightColumn = styled.div`
@@ -61,7 +62,7 @@ const AdditionalInformation = () => {
   );
 }
 
-const FlexboxSpaceBetween = styled.div`
+const BigStatsWrapper = styled.div`
   display: flex;
   justify-content: space-between;
   > {
@@ -71,6 +72,8 @@ const FlexboxSpaceBetween = styled.div`
   > :last-child {
     margin-right: 40px;
   }
+
+  border-bottom: 1px solid #cdcdcd;
 `
 
 const BigNumberTitle = styled.div`
@@ -84,10 +87,26 @@ const BigNumber = styled.div`
   margin-bottom: 25px;
 `
 
+const AnalysisWrapper = styled.div`
+  display: flex;
+  align-items: baseline;
+  margin: 10px;
+`
+
+const AnalysisTitle = styled.div`
+  font-size: 12px;
+  min-width: 150px;
+  margin-right: 50px;
+`
+
+const AnalysisBody = styled.div`
+  font-weight: 300;
+`
+
 const Creditworthiness = () => {
   return (
     <Panel title="Creditworthiness">
-      <FlexboxSpaceBetween>
+      <BigStatsWrapper>
         <div>
           <BigNumberTitle>Annual Cashflow</BigNumberTitle>
           <BigNumber>$40,000 <span style={{ fontWeight: "200", fontSize: "16px" }}>yearly</span></BigNumber>
@@ -100,20 +119,119 @@ const Creditworthiness = () => {
           <BigNumberTitle>Tolerance</BigNumberTitle>
           <BigNumber>3%</BigNumber>
         </div>
-      </FlexboxSpaceBetween>
+      </BigStatsWrapper>
+      <div>
+        <AnalysisWrapper>
+          <AnalysisTitle>Cashflow Analysis</AnalysisTitle>
+          <AnalysisBody>Buyers with a comparable annual cashflow have a 2.4% chance of defaulting on a transaction of $60,000.</AnalysisBody>
+        </AnalysisWrapper>
+        <AnalysisWrapper>
+          <AnalysisTitle>Tolerance Analysis</AnalysisTitle>
+          <AnalysisBody>The buyer can tolerate 3% variance in final quality of goods.</AnalysisBody>
+        </AnalysisWrapper>
+      </div>
     </Panel>
   );
 }
 
+const ODColumn = styled.div`
+  flex-basis: 50%;
+`
+
+const ODValue = styled.div`
+  font-weight: 500;
+  font-size: 24px;
+  margin-bottom: 20px;
+  margin-top: 5px;
+`
+
 const OrderDetails = () => {
   return (
-    <Panel title="Order Details">Seller has redlined.</Panel>
+    <Panel title="Order Details">
+      <div style={{display: 'flex'}}>
+        <ODColumn>
+          <AnalysisTitle>Counterparty</AnalysisTitle>
+          <ODValue>Chinese Wholesale Paper</ODValue>
+          <AnalysisTitle>Counterparty's Country</AnalysisTitle>
+          <ODValue>China</ODValue>
+          <AnalysisTitle>Payment Date</AnalysisTitle>
+          <ODValue>February 02, 2020</ODValue>
+        </ODColumn>
+        <ODColumn>
+          <AnalysisTitle>Units of Purchase</AnalysisTitle>
+          <ODValue>Reams</ODValue>
+          <AnalysisTitle>Quantity of Purchase</AnalysisTitle>
+          <ODValue>10,000</ODValue>
+          <AnalysisTitle>Price of Purchase</AnalysisTitle>
+          <ODValue>$60,000</ODValue>
+        </ODColumn>
+      </div>
+    </Panel>
   );
 }
 
-const DocumentaryRequirements = () => {
+const DocumentaryEntryWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  > :nth-child(1) {
+    min-width: 60%;
+  }
+  > :nth-child(2) {
+    min-width: 20%;
+  }
+  > :nth-child(3) {
+    min-width: 20%;
+  }
+
+  ${props => props.border && `
+    border-bottom: 1px solid #cdcdcd;
+  `}
+`
+
+const DocReqTitle = ODValue;
+
+const DocReqDate = styled.div`
+  font-size: 14px;
+
+`
+
+const DocReqStatus = styled.div`
+  font-size: 14px;
+  font-weight: 500;
+`
+
+const DocumentaryRequirement = ({ title, dueDate, status }) => {
   return (
-    <Panel title="Documentary Requirements">Seller has redlined.</Panel>
+    <DocumentaryEntryWrapper border>
+      <DocReqTitle style={{ margin: "15px 0" }}>{title}</DocReqTitle>
+      <DocReqDate>{dueDate}</DocReqDate>
+      <DocReqStatus>{status}</DocReqStatus>
+    </DocumentaryEntryWrapper>
+  )
+}
+
+const DocumentaryRequirements = () => {
+  const docReqs = [
+    {
+      title: 'Commercial Invoice',
+      dueDate: '02/15/20',
+      status: 'Incomplete',
+    },
+    {
+      title: 'Airway Bill',
+      dueDate: '02/15/20',
+      status: 'Incomplete',
+    }
+  ]
+  return (
+    <Panel title="Documentary Requirements">
+      <DocumentaryEntryWrapper>
+        <AnalysisTitle style={{margin: "0"}}>Document Title</AnalysisTitle>
+        <AnalysisTitle style={{margin: "0"}}>Recieve By</AnalysisTitle>
+        <AnalysisTitle style={{margin: "0"}}>Status</AnalysisTitle>
+      </DocumentaryEntryWrapper>
+      {docReqs.map(d => <DocumentaryRequirement title={d.title} dueDate={d.dueDate} status={d.status}/>)}
+    </Panel>
   );
 }
 
