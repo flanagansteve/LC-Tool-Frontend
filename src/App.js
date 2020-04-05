@@ -9,6 +9,7 @@ import GlobalStyle, { CSSReset } from './GlobalStyle'
 import HomePage from './pages/HomePage/HomePage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import Nav from './components/Nav';
+import { UserContext } from './utils/auth';
 import BankSignUpPage from './pages/bank/BankSignUpPage';
 import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
@@ -23,7 +24,7 @@ import BusinessSignUpPage from './pages/business/BusinessSignUpPage';
 import BusinessInvitePage from './pages/business/BusinessInvitePage';
 import BusinessManageAccountPage from './pages/business/BusinessManageAccountPage';
 import BusinessEmployeeSignUpPage from './pages/business/BusinessEmployeeSignUpPage';
-import { UserContext } from './utils/auth';
+import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBeneficiaryStatusPage';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -57,6 +58,7 @@ function App() {
           <Route path="/business/register" component={BusinessSignUpPage} />
           <Route path="/business/invite" component={BusinessInvitePage} />
           <Route path="/business/account" component={BusinessManageAccountPage} />
+          <Route path="/business/claimBeneficiary/:lcid" component={ClaimBeneficiaryStatusPage} />
           <Route path="/login" component={LoginPage}/>
           <Route path="/" component={HomePage} />
         </Switch>
