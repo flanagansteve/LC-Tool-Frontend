@@ -1,5 +1,8 @@
 import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
+import { get } from "lodash";
+// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+// import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
@@ -56,21 +59,40 @@ const OrderStatus = () => {
   );
 }
 
-const AdditionalInformationWrapper = styled.div`
+const ClientInformationWrapper = styled.div`
   font-weight: 300;
   font-size: 14px;
+  line-height: 1.5;
 `
 
-const AdditionalInformation = () => {
+const HistoryOrder = styled.div`
+  display: flex;
+  justify-content: space-between;
+`
+
+const ClientInformation = ({ lc }) => {
+  const employee = get(lc, 'taskedClientEmployees[0]');
+  const client = get(lc, 'client');
+  const [clientOrders, setClientOrders] = useState(null);
+  useEffect(() => {
+    makeAPIRequest(`/lc/by_client/${client.id}/`)
+      .then(json => setClientOrders(json));
+  }, [client.id])
+
   return (
-    <Panel title="Additional Information">
-      <AdditionalInformationWrapper>
-        Order ID: 82197429
+    <Panel title="Client Information">
+      <ClientInformationWrapper>
+        POC: {employee.name}
         <br/>
-        POC: Dwight Schrute
-        <br/>
-        Restrictions: None
-      </AdditionalInformationWrapper>
+        Email: <a href={`mailto:${employee.email}`}>{employee.email}</a>
+        <h1 style={{ fontWeight: "500", margin: "15px 0"}}>Order History</h1>
+        {clientOrders && clientOrders.map(order => (
+          <HistoryOrder key={order.id}>
+            <a href={`/bank/lc/${order.id}`}>{order.purchasedItem || `LC #${order.id}`}</a>
+            {lc.paidOut ? <span>{order.dueDate}</span> : <span>{order.applicationDate}</span>}
+          </HistoryOrder>
+        ))}
+      </ClientInformationWrapper>
     </Panel>
   );
 }
@@ -158,25 +180,30 @@ const ODValue = styled.div`
   margin-top: 5px;
 `
 
+const OrderDetail = ({ title, value }) => (
+  <>
+    <AnalysisTitle>{title}</AnalysisTitle>
+    <ODValue>{value}</ODValue>
+  </>
+);
+
 const OrderDetails = () => {
+  const details = [
+    {title: "Counterparty", value: "Chinese Wholesale Paper"},
+    {title: "Counterparty's Country", value: "China"},
+    {title: "Payment Date", value: "February 02, 2020"},
+    {title: "Units of Purchase", value: "Quantity of Purchase"},
+    {title: "Quantity of Purchase", value: "10,000"},
+    {title: "Price of Purchase", value: "$60,000"},
+  ];
   return (
     <Panel title="Order Details">
       <div style={{display: 'flex'}}>
         <ODColumn>
-          <AnalysisTitle>Counterparty</AnalysisTitle>
-          <ODValue>Chinese Wholesale Paper</ODValue>
-          <AnalysisTitle>Counterparty's Country</AnalysisTitle>
-          <ODValue>China</ODValue>
-          <AnalysisTitle>Payment Date</AnalysisTitle>
-          <ODValue>February 02, 2020</ODValue>
+          {details.slice(0,3).map((d) => <OrderDetail title={d.title} value={d.value} key={d.title}/>)}
         </ODColumn>
         <ODColumn>
-          <AnalysisTitle>Units of Purchase</AnalysisTitle>
-          <ODValue>Reams</ODValue>
-          <AnalysisTitle>Quantity of Purchase</AnalysisTitle>
-          <ODValue>10,000</ODValue>
-          <AnalysisTitle>Price of Purchase</AnalysisTitle>
-          <ODValue>$60,000</ODValue>
+          {details.slice(3,6).map((d) =><OrderDetail title={d.title} value={d.value} key={d.title}/>)}
         </ODColumn>
       </div>
     </Panel>
@@ -266,7 +293,7 @@ const BankLCViewPage = ( {match} ) => {
       <TwoColumnHolder>
         <LeftColumn>
           <OrderStatus/>
-          <AdditionalInformation/>
+          <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
           <Creditworthiness/>
