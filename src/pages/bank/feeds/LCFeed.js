@@ -17,6 +17,8 @@ const StyledLink = styled(Link)`
 const ListEntryField = styled.li`
   flex-grow: 1;
   flex-basis: 20%;
+  padding-left: 10px;
+  padding-right: 10px;
 `
 
 const ListEntryWrapper = styled.ul`
@@ -82,7 +84,7 @@ const LCListEntry = ({ lc }) => {
       <StyledLink to={`/bank/lc/${lc.id}`}>
       <ListEntryWrapper>
         <ListEntryField>{lc.client.name}</ListEntryField>
-        <ListEntryField>{lc.beneficiary || "Unknown"}</ListEntryField>
+        <ListEntryField>{get(lc, 'beneficiary.name') || "Unknown"}</ListEntryField>
         <ListEntryField>{lc.applicationDate}</ListEntryField>
         <ListEntryField>{lc.dueDate || "N/A"}</ListEntryField>
         <ListEntryField>{lc.creditAmt || "N/A"}</ListEntryField>
