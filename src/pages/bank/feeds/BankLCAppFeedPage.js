@@ -9,7 +9,7 @@ const BankLCAppFeedPage = () => {
   const bankid = get(user, ['bank', 'id']);
   return <LCFeed 
     title="All LC Applications 📝" 
-    url={`/lc/by_bank/${bankid}/`}
+    url={`/lc/by_bank/${bankid}/awaiting_issuer_approval/`}
     user={user}
     />
 }
