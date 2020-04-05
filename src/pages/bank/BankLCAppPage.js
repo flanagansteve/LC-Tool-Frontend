@@ -280,7 +280,7 @@ const TYPE_TO_DEFAULT = {
   number: 0,
   boolean: null,
   radio: null,
-  date: (new Date()).toISOString(),
+  date: (new Date()).toISOString().slice(0, 10),
   checkbox: [],
   array_of_objs: [],
 }
