@@ -22,7 +22,7 @@ const RightColumn = styled.div`
 const BasicView = styled.div`
   border: 1px solid #dfdfdf;
   background-color: #fff;
-  border-radius: 0 0 10px 10px;
+  border-radius: 0 0 20px 20px;
   margin-bottom: 30px;
 `
 
@@ -56,9 +56,22 @@ const OrderStatus = () => {
   );
 }
 
+const AdditionalInformationWrapper = styled.div`
+  font-weight: 300;
+  font-size: 14px;
+`
+
 const AdditionalInformation = () => {
   return (
-    <Panel title="Additional Information">Seller has redlined.</Panel>
+    <Panel title="Additional Information">
+      <AdditionalInformationWrapper>
+        Order ID: 82197429
+        <br/>
+        POC: Dwight Schrute
+        <br/>
+        Restrictions: None
+      </AdditionalInformationWrapper>
+    </Panel>
   );
 }
 
@@ -230,7 +243,9 @@ const DocumentaryRequirements = () => {
         <AnalysisTitle style={{margin: "0"}}>Recieve By</AnalysisTitle>
         <AnalysisTitle style={{margin: "0"}}>Status</AnalysisTitle>
       </DocumentaryEntryWrapper>
-      {docReqs.map(d => <DocumentaryRequirement title={d.title} dueDate={d.dueDate} status={d.status}/>)}
+      {docReqs.map(d => 
+        <DocumentaryRequirement title={d.title} dueDate={d.dueDate} status={d.status} key={d.title}/>
+        )}
     </Panel>
   );
 }
