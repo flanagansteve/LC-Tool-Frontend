@@ -3,8 +3,9 @@ import LCFeed from "./LCFeed";
 import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
-const BankLCAppFeedPage = () => {
-  useAuthentication('/bank/lcs/apps');
+const BankLCAppFeedPage = ({ match }) => {
+  console.log(match)
+  useAuthentication('/bank/lcs');
   const [user] = useContext(UserContext);
   const bankid = get(user, ['bank', 'id']);
   return <LCFeed 

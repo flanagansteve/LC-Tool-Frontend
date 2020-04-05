@@ -18,9 +18,11 @@ const TitleWrapper = styled.div`
   font-size: 24px;
 `
 
-const LCTitle = styled.h1`
+const LCTitle = styled(Link)`
   margin-right: 15px;
   font-weight: 500;
+  text-decoration: none;
+  color: #000;
 `
 
 const Subtitle = styled.h2`
@@ -57,8 +59,10 @@ const LCView = ({ lc, children }) => {
         ) : (
           <>
       <TitleWrapper>
-        <LCTitle>{lc.client ? lc.client.name : "LC"}</LCTitle>
-        <Subtitle>{`${"Paper Order"} — ${1234}`}</Subtitle>
+      {lc.client &&
+          <LCTitle to={`/bank/lcs/client/${lc.client.id}`}>{lc.client.name}</LCTitle>
+      }
+        <Subtitle>{`LC #${lc.id}`}</Subtitle>
       </TitleWrapper>
       <Content>
           {children}

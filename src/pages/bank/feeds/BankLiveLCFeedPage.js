@@ -4,7 +4,7 @@ import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
 const BankLCAppFeedPage = () => {
-  useAuthentication('/bank/lcs/apps');
+  useAuthentication('/bank/lcs/live');
   const [user] = useContext(UserContext);
   const bankid = get(user, ['bank', 'id']);
   return <LCFeed 

@@ -61,9 +61,47 @@ const AdditionalInformation = () => {
   );
 }
 
+const FlexboxSpaceBetween = styled.div`
+  display: flex;
+  justify-content: space-between;
+  > {
+    flex-grow: 1;
+  }
+
+  > :last-child {
+    margin-right: 40px;
+  }
+`
+
+const BigNumberTitle = styled.div`
+  font-size: 14px;
+  margin: 10px 0 15px;
+`
+
+const BigNumber = styled.div`
+  font-weight: 600;
+  font-size: 36px;
+  margin-bottom: 25px;
+`
+
 const Creditworthiness = () => {
   return (
-    <Panel title="Creditworthiness">Seller has redlined.</Panel>
+    <Panel title="Creditworthiness">
+      <FlexboxSpaceBetween>
+        <div>
+          <BigNumberTitle>Annual Cashflow</BigNumberTitle>
+          <BigNumber>$40,000 <span style={{ fontWeight: "200", fontSize: "16px" }}>yearly</span></BigNumber>
+        </div>
+        <div>
+          <BigNumberTitle>Savings Available</BigNumberTitle>
+          <BigNumber>$200,000</BigNumber>
+        </div>
+        <div>
+          <BigNumberTitle>Tolerance</BigNumberTitle>
+          <BigNumber>3%</BigNumber>
+        </div>
+      </FlexboxSpaceBetween>
+    </Panel>
   );
 }
 

@@ -91,7 +91,7 @@ const LCListEntry = ({ lc }) => {
   )
 }
 
-const LCFeed = ({ title, user, url }) => {
+const LCFeed = ({ title, user, url, hideSearch }) => {
   const [lcs, setLcs] = useState(null);
   const [shownLcs, setShownLcs] = useState(null);
   const bankid = get(user, ['bank', 'id']);
@@ -112,7 +112,7 @@ const LCFeed = ({ title, user, url }) => {
     >
     {/* "Heading" of the feed - delete if you think it unnecessary*/}
     <div>
-      <Filter lcs={lcs} setShownLcs={setShownLcs} />
+      {!hideSearch && <Filter lcs={lcs} setShownLcs={setShownLcs} />}
       <ListEntryWrapper header>
         <ListEntryField>Client</ListEntryField>
         <ListEntryField>Beneficiary</ListEntryField>

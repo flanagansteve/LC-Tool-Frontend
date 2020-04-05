@@ -15,6 +15,7 @@ import BankManageAccountPage from './pages/bank/BankManageAccountPage';
 import BankLCAppFeedPage from './pages/bank/feeds/BankLCAppFeedPage';
 import BankLiveLCFeedPage from './pages/bank/feeds/BankLiveLCFeedPage';
 import BankLCFeedPage from './pages/bank/feeds/BankLCFeedPage';
+import BankLCFeedPageByClient from './pages/bank/feeds/BankLCFeedPageByClient';
 import BankLCViewPage from './pages/bank/BankLCViewPage';
 import BankEmployeeSignUpPage from './pages/bank/BankEmployeeSignUpPage';
 import BankLCAppPage from './pages/bank/BankLCAppPage';
@@ -47,6 +48,7 @@ function App() {
           <Route path="/bank/invite" component={BankInvitePage} />
           <Route path="/bank/account" component={BankManageAccountPage} />
           <Route path="/bank/lc/:lcid" component={BankLCViewPage} />
+          <Route path="/bank/lcs/client/:clientid" component={BankLCFeedPageByClient} />
           <Route path="/bank/lcs/live" component={BankLiveLCFeedPage} />
           <Route path="/bank/lcs/apps" component={BankLCAppFeedPage} />
           <Route path="/bank/lcs" component={BankLCFeedPage} />
