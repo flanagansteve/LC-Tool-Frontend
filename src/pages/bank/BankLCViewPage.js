@@ -154,7 +154,6 @@ const AnalysisBody = styled.div`
 `
 
 const Financials = ({ lc }) => {
-  const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
   return (
     <Panel title="Financials">
@@ -178,11 +177,21 @@ const Financials = ({ lc }) => {
       <div>
         <AnalysisWrapper>
           <AnalysisTitle>Cashflow Analysis</AnalysisTitle>
-          <AnalysisBody>Bountium will provide intelligent analysis and predictions to help assess letters of credit.</AnalysisBody>
+          <AnalysisBody>
+            Bountium will provide intelligent analysis and predictions to help assess letters of credit.
+            <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
+              &nbsp;Coming soon
+            </span>
+          </AnalysisBody>
         </AnalysisWrapper>
         <AnalysisWrapper>
           <AnalysisTitle>Tolerance Analysis</AnalysisTitle>
-          <AnalysisBody>Bountium will provide tools to help understand tolerance values within a letter of credit.</AnalysisBody>
+          <AnalysisBody>
+            Bountium will provide tools to help understand tolerance values within a letter of credit.
+            <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
+              &nbsp;Coming soon
+            </span>
+          </AnalysisBody>
         </AnalysisWrapper>
       </div>
     </Panel>
@@ -226,7 +235,7 @@ const OrderDetails = ({ lc }) => {
     {title: "Credit Amount", value: lc.creditAmtVerbal},
     {title: "Credit Delivery Means", value: lc.creditDeliveryMeans},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
-    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue},
+    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue + "%"},
     {title: "Credit Availability", value: lc.creditAvailability},
     {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No"},
     {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No"},
@@ -281,7 +290,7 @@ const DocumentaryEntryWrapper = styled.div`
   > :nth-child(3) {
     min-width: 20%;
   }
-
+  cursor: pointer;
   ${props => props.border && `
     border-bottom: 1px solid #cdcdcd;
   `}
@@ -299,29 +308,31 @@ const DocReqStatus = styled.div`
   font-weight: 500;
 `
 
-const DocumentaryRequirement = ({ title, dueDate, status }) => {
+const DocumentaryRequirement = ({ title, dueDate, status, ...props }) => {
+  const [expanded, setExpanded] = useState(false);
   return (
-    <DocumentaryEntryWrapper border>
-      <DocReqTitle style={{ margin: "15px 0" }}>{title}</DocReqTitle>
+    <DocumentaryEntryWrapper border onClick={() => setExpanded(e => !e)} {...props}>
+      <DocReqTitle style={{ margin: "15px 0" }}>
+        {title} 
+          <FontAwesomeIcon 
+            icon={expanded ? faChevronDown : faChevronRight} 
+            style={{color: 'rgb(27, 108, 255)', marginLeft: '10px'}}
+            />
+      </DocReqTitle>
       <DocReqDate>{dueDate}</DocReqDate>
       <DocReqStatus>{status}</DocReqStatus>
     </DocumentaryEntryWrapper>
   )
 }
 
-const DocumentaryRequirements = () => {
-  const docReqs = [
-    {
-      title: 'Commercial Invoice',
-      dueDate: '02/15/20',
-      status: 'Incomplete',
-    },
-    {
-      title: 'Airway Bill',
-      dueDate: '02/15/20',
-      status: 'Incomplete',
-    }
-  ]
+const DocumentaryRequirements = ({ lc }) => {
+  const docReqs = lc.documentaryRequirements;
+  // const docReqs = [{
+  //   docName: "Buyer Agreement",
+  //   dueDate: "February 2, 2020",
+  //   satisfied: true,
+  //   additionalRequirements: "Passport, Photo ID"
+  // }]
   return (
     <Panel title="Documentary Requirements">
       <DocumentaryEntryWrapper>
@@ -329,9 +340,19 @@ const DocumentaryRequirements = () => {
         <AnalysisTitle style={{margin: "0"}}>Recieve By</AnalysisTitle>
         <AnalysisTitle style={{margin: "0"}}>Status</AnalysisTitle>
       </DocumentaryEntryWrapper>
-      {docReqs.map(d => 
-        <DocumentaryRequirement title={d.title} dueDate={d.dueDate} status={d.status} key={d.title}/>
-        )}
+      {docReqs ? docReqs.map(d => 
+        <DocumentaryRequirement 
+          title={d.docName} 
+          dueDate={d.dueDate} 
+          status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"} 
+          key={d.docName}/>
+        ) : (
+          <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
+            There are no documentary requirements for this LC.
+          </div>
+        )
+      }
+
     </Panel>
   );
 }
@@ -357,7 +378,7 @@ const BankLCViewPage = ( {match} ) => {
         <RightColumn>
           <Financials lc={lc}/>
           <OrderDetails lc={lc}/>
-          <DocumentaryRequirements/>
+          <DocumentaryRequirements lc={lc}/>
         </RightColumn>
       </TwoColumnHolder>
     </LCView>
