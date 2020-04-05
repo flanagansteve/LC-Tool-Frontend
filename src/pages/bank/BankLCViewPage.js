@@ -1,8 +1,8 @@
 import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import { get } from "lodash";
-// import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-// import { faChevronDown, faChevronUp } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faChevronDown, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
@@ -33,6 +33,11 @@ const PanelTitle = styled.h2`
   background-color: ${(props) => props.highlight ? `rgb(27, 108, 255)` : `rgb(199, 222, 255)`};
   border-bottom: 1px solid #dfdfdf;
   padding: 15px 20px;
+  display: flex;
+  justify-content: space-between;
+  ${(props) => props.clickable && `
+    cursor: pointer;
+  `}
   ${(props) => props.highlight && `
     font-weight: 500;
     color: #fff;
@@ -44,10 +49,20 @@ const PanelBody = styled.div`
   line-height: 1.25;
 `
 
-const Panel = ({ title, children, highlight, ...props }) => {
+const Panel = ({ title, children, highlight, expand, setExpand, ...props }) => {
+  const expandEnabled = [true, false].includes(expand);
   return (
     <BasicView {...props}>
-      <PanelTitle highlight={highlight}>{title}</PanelTitle>
+      <PanelTitle highlight={highlight} clickable={expandEnabled}
+        onClick={expandEnabled ? () => setExpand(e => !e) : () => null}>
+        {title}
+        {expandEnabled && 
+          <FontAwesomeIcon 
+            icon={expand ? faChevronDown : faChevronRight} 
+            style={{color: 'rgb(27, 108, 255)'}}
+            />
+        }
+      </PanelTitle>
       <PanelBody>{children}</PanelBody>
     </BasicView>
   )
@@ -138,31 +153,36 @@ const AnalysisBody = styled.div`
   font-weight: 300;
 `
 
-const Creditworthiness = () => {
+const Financials = ({ lc }) => {
+  const employee = get(lc, 'taskedClientEmployees[0]');
+  const client = get(lc, 'client');
   return (
-    <Panel title="Creditworthiness">
+    <Panel title="Financials">
       <BigStatsWrapper>
         <div>
           <BigNumberTitle>Annual Cashflow</BigNumberTitle>
-          <BigNumber>$40,000 <span style={{ fontWeight: "200", fontSize: "16px" }}>yearly</span></BigNumber>
+          <BigNumber>
+            {client.annualCashflow || "N/A"} 
+            <span style={{ fontWeight: "200", fontSize: "16px" }}> yearly</span>
+           </BigNumber>
         </div>
         <div>
           <BigNumberTitle>Savings Available</BigNumberTitle>
-          <BigNumber>$200,000</BigNumber>
+          <BigNumber>{client.balanceAvailable || "N/A"}</BigNumber>
         </div>
         <div>
-          <BigNumberTitle>Tolerance</BigNumberTitle>
-          <BigNumber>3%</BigNumber>
+          <BigNumberTitle>Approved Credit</BigNumberTitle>
+          <BigNumber>{client.approvedCredit || "N/A"}</BigNumber>
         </div>
       </BigStatsWrapper>
       <div>
         <AnalysisWrapper>
           <AnalysisTitle>Cashflow Analysis</AnalysisTitle>
-          <AnalysisBody>Buyers with a comparable annual cashflow have a 2.4% chance of defaulting on a transaction of $60,000.</AnalysisBody>
+          <AnalysisBody>Bountium will provide intelligent analysis and predictions to help assess letters of credit.</AnalysisBody>
         </AnalysisWrapper>
         <AnalysisWrapper>
           <AnalysisTitle>Tolerance Analysis</AnalysisTitle>
-          <AnalysisBody>The buyer can tolerate 3% variance in final quality of goods.</AnalysisBody>
+          <AnalysisBody>Bountium will provide tools to help understand tolerance values within a letter of credit.</AnalysisBody>
         </AnalysisWrapper>
       </div>
     </Panel>
@@ -180,30 +200,69 @@ const ODValue = styled.div`
   margin-top: 5px;
 `
 
-const OrderDetail = ({ title, value }) => (
+const OrderDetail = ({ title, value, units }) => (
   <>
     <AnalysisTitle>{title}</AnalysisTitle>
-    <ODValue>{value}</ODValue>
+    <ODValue>
+      {value || "N/A"}
+      {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
+    </ODValue>
   </>
 );
 
-const OrderDetails = () => {
+const OrderDetails = ({ lc }) => {
+  const [showExtra, setShowExtra] = useState(false);
   const details = [
-    {title: "Counterparty", value: "Chinese Wholesale Paper"},
-    {title: "Counterparty's Country", value: "China"},
-    {title: "Payment Date", value: "February 02, 2020"},
-    {title: "Units of Purchase", value: "Quantity of Purchase"},
-    {title: "Quantity of Purchase", value: "10,000"},
-    {title: "Price of Purchase", value: "$60,000"},
+    {title: "Counterparty", value: get(lc, 'beneficiary.name')},
+    {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')},
+    {title: "Payment Date", value: lc.dueDate},
+    {title: "Draft Presentation Date", value: lc.draftPresentationDate},
+    {title: "Units of Measure", value: lc.unitsOfMeasure},
+    {title: "Units Purchased", value: lc.unitsPurchased},
+    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination},
+    {title: "Credit Expiration Date", value: lc.creditExpirationDate},
   ];
+  const extraDetails = [
+    {title: "Credit Amount", value: lc.creditAmtVerbal},
+    {title: "Credit Delivery Means", value: lc.creditDeliveryMeans},
+    // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
+    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue},
+    {title: "Credit Availability", value: lc.creditAvailability},
+    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No"},
+    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No"},
+    {title: "Merch Charge Location", value: lc.merchChargeLocation},
+    {title: "Late Charge Date", value: lc.lateChargeDate},
+    {title: "Charg Transportation Location", value: lc.chargeTransportationLocation},
+    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination},
+    // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
+    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No"},
+    {title: "Other Instructions", value: lc.otherInstructions},
+    {title: "Merch Description", value: lc.merchDescription},
+    {title: "Transferable", value: (lc.transferableToClient
+      ? `Yes, to ${lc.client.name}`
+      : (lc.transferableToBeneficiary 
+        ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
+        : "No"))
+    }
+  ]
   return (
-    <Panel title="Order Details">
+    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra}>
       <div style={{display: 'flex'}}>
         <ODColumn>
-          {details.slice(0,3).map((d) => <OrderDetail title={d.title} value={d.value} key={d.title}/>)}
+          {details.slice(0,details.length/2).map((d) => 
+            <OrderDetail key={d.title} {...d}/>
+          )}
+          {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) => 
+            <OrderDetail key={d.title} {...d}/>
+          )}
         </ODColumn>
         <ODColumn>
-          {details.slice(3,6).map((d) =><OrderDetail title={d.title} value={d.value} key={d.title}/>)}
+          {details.slice(details.length/2).map((d) =>
+            <OrderDetail key={d.title} {...d}/>
+          )}
+          {showExtra && extraDetails.slice(extraDetails.length/2).map((d) => 
+            <OrderDetail key={d.title} {...d}/>
+          )}
         </ODColumn>
       </div>
     </Panel>
@@ -296,8 +355,8 @@ const BankLCViewPage = ( {match} ) => {
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
-          <Creditworthiness/>
-          <OrderDetails/>
+          <Financials lc={lc}/>
+          <OrderDetails lc={lc}/>
           <DocumentaryRequirements/>
         </RightColumn>
       </TwoColumnHolder>
