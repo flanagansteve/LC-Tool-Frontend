@@ -2,9 +2,12 @@ import React from "react";
 import styled from "styled-components";
 import MoonLoader from "react-spinners/MoonLoader";
 import { css } from "@emotion/core";
+import { Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
 const Margin = styled.div`
-  margin: 80px auto 40px;
+  margin: 40px auto;
   max-width: 1000px;
 `;
 
@@ -15,22 +18,33 @@ const TitleWrapper = styled.div`
   font-size: 24px;
 `
 
+const LCTitle = styled.h1`
+  margin-right: 15px;
+  font-weight: 500;
+`
+
 const Subtitle = styled.h2`
-  font-weight: 300;
+  font-weight: 200;
 `;
 
 const Content = styled.div`
   margin: 40px 0 0;
 `;
 
+const StyledLink = styled(Link)`
+  text-decoration: none;
+  color: #454545;
+  margin: 20px 0;
+  display: block;
+`
+
 const LCView = ({ lc, children }) => {
   return (
     <Margin>
-      <TitleWrapper>
-        <span>{lc ? lc.client.name : "LC"}</span>
-        <Subtitle>{`${"Paper Order"} — ${1234}`}</Subtitle>
-      </TitleWrapper>
-      <Content>
+      <StyledLink to="/">
+        <FontAwesomeIcon icon={faArrowLeft} color="rgb(27, 108, 255)" style={{ paddingRight: "10px"}} /> 
+        Back to LCs
+      </StyledLink>
         {!lc ? (
           <MoonLoader
             size={45}
@@ -41,9 +55,16 @@ const LCView = ({ lc, children }) => {
             `}
           />
         ) : (
-          children
-        )}
+          <>
+      <TitleWrapper>
+        <LCTitle>{lc.client ? lc.client.name : "LC"}</LCTitle>
+        <Subtitle>{`${"Paper Order"} — ${1234}`}</Subtitle>
+      </TitleWrapper>
+      <Content>
+          {children}
       </Content>
+      </>
+        )}
     </Margin>
   );
 };

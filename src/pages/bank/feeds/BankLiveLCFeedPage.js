@@ -9,7 +9,7 @@ const BankLCAppFeedPage = () => {
   const bankid = get(user, ['bank', 'id']);
   return <LCFeed 
     title="All Live LCs 📄" 
-    url={`/lc/by_bank/${bankid}/`}
+    url={`/lc/by_bank/${bankid}/live/`}
     user={user}
     />
 }
