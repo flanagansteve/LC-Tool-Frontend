@@ -68,6 +68,39 @@ export const makeAPIRequest = async (
   return objectToCamelCase(await response.json());
 };
 
+export const postFile = async (
+  url,
+  file,
+  returnFullResponse
+) => {
+  const requestURL = API_BASEURL + url;
+  const form = new FormData();
+  form.append('file', file);
+  const response = await fetch(requestURL, {
+    method: 'POST',
+    body: form
+  });
+  if (response.status === 401 || response.status === 403) {
+    // history.push("/login");
+    // // TODO show this error to the user
+    // return Promise.reject(
+    //   "Error: Attempted to make unauthenticated API request. Redirecting to login."
+    // );
+  } else if (response.status < 200 || response.status >= 400) {
+    // TODO show this error to the user
+    if (returnFullResponse) {
+      return response;
+    } else {
+      return Promise.reject(
+        response
+      );
+    }
+  }
+
+  if (returnFullResponse) return response;
+  return objectToCamelCase(await response.json());
+};
+
 export const logIn = async (email, password) => {
   const requestURL = "/api/user/login/";
   const response = await fetch(requestURL, {

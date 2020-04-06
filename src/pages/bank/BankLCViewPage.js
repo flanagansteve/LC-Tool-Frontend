@@ -4,7 +4,7 @@ import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 
-import { makeAPIRequest } from '../../utils/api';
+import { makeAPIRequest, postFile } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
 import LCView from "../../components/lc/LCView";
 import Button from "../../components/ui/Button";
@@ -343,7 +343,14 @@ const DocumentaryEntryWrapper = styled.div`
   border-bottom: 1px solid #cdcdcd;
 `
 
-const DocReqTitle = ODValue;
+const DocReqTitle = styled.div`
+  font-weight: 500;
+  font-size: 24px;
+  margin-bottom: 20px;
+  margin-top: 5px; 
+  display: flex;
+  align-items: center;
+`
 
 const DocReqDate = styled.div`
   font-size: 14px;
@@ -362,8 +369,17 @@ const ExpandedDocumentaryEntry = styled.div`
   line-height: 1.5;
 `
 
-const DocumentaryRequirement = ({ title, dueDate, status, requiredValues, ...props }) => {
+const DocumentaryRequirement = ({ title, dueDate, status, linkToSubmittedDoc, requiredValues, id, lcid, userType, ...props }) => {
   const [expanded, setExpanded] = useState(false);
+  const [file, setFile] = useState(null);
+
+  const uploadFile = () => {
+    if (!file) {
+      console.error('No file found.');
+      return;
+    }
+    postFile(`/lc/${lcid}/doc_req/${id}/`, file)
+  }
   return (
     <DocumentaryEntryWrapper>
     <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
@@ -381,25 +397,35 @@ const DocumentaryRequirement = ({ title, dueDate, status, requiredValues, ...pro
     <DocumentaryEntryFlex>
     <div>
       Required Values: {requiredValues}
-
     </div>
-      <div>
-        File: <a href="/">order.pdf</a>
-      </div>
+    {
+      linkToSubmittedDoc ? (
+        <div>
+          File: <a href={linkToSubmittedDoc}>order.pdf</a>
+        </div>
+      ) : (
+        <>
+        <div>
+        <label>
+          <input type="file" onChange={e => setFile(e.target.files[0])}/>
+          Upload
+        </label>
+        </div>
+        <div>
+          <Button onClick={uploadFile}>Upload</Button>
+        </div>
+        </>
+      )
+    }
     </DocumentaryEntryFlex>
     </ExpandedDocumentaryEntry>}
     </DocumentaryEntryWrapper>
   )
 }
 
-const DocumentaryRequirements = ({ lc }) => {
+const DocumentaryRequirements = ({ lc, userType }) => {
   const docReqs = lc.documentaryrequirementSet;
-  // const docReqs = [{
-  //   docName: "Buyer Agreement",
-  //   dueDate: "February 2, 2020",
-  //   satisfied: true,
-  //   additionalRequirements: "Passport, Photo ID"
-  // }]
+  console.log(docReqs)
   return (
     <Panel title="Documentary Requirements">
       <DocumentaryEntryFlex>
@@ -411,8 +437,12 @@ const DocumentaryRequirements = ({ lc }) => {
         <DocumentaryRequirement 
           title={d.docName} 
           dueDate={d.dueDate} 
+          linkToSubmittedDoc={d.linkToSubmittedDoc}
           status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
           requiredValues={d.requiredValues}
+          id={d.id}
+          lcid={lc.id}
+          userType={userType}
           key={d.docName}/>
         ) : (
           <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
@@ -436,6 +466,7 @@ const BankLCViewPage = ( {match} ) => {
     if (get(user, 'business.id') === get(lc, 'client.id')) userType = 'client';
     else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
   }
+  // const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
 
   useEffect(() => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
@@ -453,7 +484,7 @@ const BankLCViewPage = ( {match} ) => {
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
           <OrderDetails lc={lc}/>
-          <DocumentaryRequirements lc={lc}/>
+          <DocumentaryRequirements lc={lc} userType={userType}/>
         </RightColumn>
       </TwoColumnHolder>
     </LCView>
