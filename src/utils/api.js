@@ -77,7 +77,7 @@ export const postFile = async (
   const form = new FormData();
   form.append('file', file);
   const response = await fetch(requestURL, {
-    method: 'POST',
+    method: 'PUT',
     body: form
   });
   if (response.status === 401 || response.status === 403) {

@@ -369,17 +369,33 @@ const ExpandedDocumentaryEntry = styled.div`
   line-height: 1.5;
 `
 
-const DocumentaryRequirement = ({ title, dueDate, status, linkToSubmittedDoc, requiredValues, id, lcid, userType, ...props }) => {
+const FileUpload = styled.label`
+  padding: 5px 10px;
+  border: 1px solid #dcdcdc;
+  max-width: 70%;
+  cursor: pointer;
+`
+
+const DocumentaryRequirement = ({ documentaryRequirement, lcid, userType, status, live, ...props }) => {
+  const [docReq, setDocReq] = useState(documentaryRequirement);
+  const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues } = docReq;
   const [expanded, setExpanded] = useState(false);
   const [file, setFile] = useState(null);
 
-  const uploadFile = () => {
+  useEffect(() => {
+    fetch(`/lc/${lcid}/doc_req/${id}/file/`)
+      .then(res => console.log(res))
+  }, [lcid, id])
+
+  const uploadFile = (file) => {
     if (!file) {
       console.error('No file found.');
       return;
     }
     postFile(`/lc/${lcid}/doc_req/${id}/`, file)
+      .then(json => setDocReq(json.docReq));
   }
+
   return (
     <DocumentaryEntryWrapper>
     <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
@@ -403,16 +419,18 @@ const DocumentaryRequirement = ({ title, dueDate, status, linkToSubmittedDoc, re
         <div>
           File: <a href={linkToSubmittedDoc}>order.pdf</a>
         </div>
-      ) : (
+      ) : live && (
         <>
-        <div>
-        <label>
-          <input type="file" onChange={e => setFile(e.target.files[0])}/>
-          Upload
-        </label>
-        </div>
-        <div>
-          <Button onClick={uploadFile}>Upload</Button>
+        <div style={{display: 'flex', flexDirection: 'column'}}>
+        <FileUpload>
+          
+          {file ? file.name : (
+            <>
+            Upload File
+            <input type="file" onChange={e => uploadFile(e.target.files[0])} style={{display: 'none'}}/>
+            </>
+          )}
+        </FileUpload>
         </div>
         </>
       )
@@ -423,7 +441,7 @@ const DocumentaryRequirement = ({ title, dueDate, status, linkToSubmittedDoc, re
   )
 }
 
-const DocumentaryRequirements = ({ lc, userType }) => {
+const DocumentaryRequirements = ({ lc, userType, live }) => {
   const docReqs = lc.documentaryrequirementSet;
   console.log(docReqs)
   return (
@@ -435,13 +453,10 @@ const DocumentaryRequirements = ({ lc, userType }) => {
       </DocumentaryEntryFlex>
       {docReqs ? docReqs.map(d => 
         <DocumentaryRequirement 
-          title={d.docName} 
-          dueDate={d.dueDate} 
-          linkToSubmittedDoc={d.linkToSubmittedDoc}
+          documentaryRequirement={d}
           status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
-          requiredValues={d.requiredValues}
-          id={d.id}
           lcid={lc.id}
+          live={live}
           userType={userType}
           key={d.docName}/>
         ) : (
@@ -466,7 +481,7 @@ const BankLCViewPage = ( {match} ) => {
     if (get(user, 'business.id') === get(lc, 'client.id')) userType = 'client';
     else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
   }
-  // const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
+  const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
 
   useEffect(() => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
@@ -484,7 +499,7 @@ const BankLCViewPage = ( {match} ) => {
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
           <OrderDetails lc={lc}/>
-          <DocumentaryRequirements lc={lc} userType={userType}/>
+          <DocumentaryRequirements lc={lc} userType={userType} live={live}/>
         </RightColumn>
       </TwoColumnHolder>
     </LCView>
