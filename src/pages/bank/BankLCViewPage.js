@@ -2,11 +2,12 @@ import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
 import LCView from "../../components/lc/LCView";
+import Button from "../../components/ui/Button";
 
 const TwoColumnHolder = styled.div`
   display: flex;
@@ -68,9 +69,54 @@ const Panel = ({ title, children, highlight, expand, setExpand, ...props }) => {
   )
 }
 
-const OrderStatus = () => {
+const OrderStatusWrapper = styled.div`
+  font-weight: 300;
+
+`
+
+const PartyDisplayMessage = styled.div`
+  font-weight: 300;
+  margin: 15px 0;
+  text-align: center;
+`
+
+const OrderStatus = ({ lc, setLc, userType }) => {
+  const approvals = [
+    {name: 'Issuer:', value: get(lc, 'issuerApproved')},
+    {name: 'Client:', value: get(lc, 'clientApproved')},
+    {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
+  ]
+  const Approved = ({ children }) => (
+    <div>
+    {children}
+    <FontAwesomeIcon icon={faCheckCircle} color="#4bb759" style={{ marginLeft: "10px"}}/>
+    </div>
+  )
+  const Pending = ({ children }) => (
+    <div>
+    {children}
+      <FontAwesomeIcon icon={faQuestionCircle} color="rgb(27, 108, 255)" style={{ marginLeft: "10px"}}/>
+    </div>
+  )
+  const handleClick = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true, complaints: '' })
+      .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
+
+  }
+  const userApproved = get(lc, `${userType}Approved`);
+  const allApproved = approvals.every(a => a.value);
   return (
-    <Panel title="Order Status" highlight>Seller has redlined.</Panel>
+    <Panel title="Order Status" highlight>
+      <OrderStatusWrapper>
+      {!userApproved && !allApproved && <center><Button onClick={handleClick}>Approve</Button></center>}
+      {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
+      <PartyDisplayMessage>You are the {userType}.</PartyDisplayMessage>
+      <div style={{fontWeight: "500", fontSize: '14px', margin: '10px 0'}}>Approvals</div>
+        {approvals.map(a => (
+          a.value === true ? <Approved key={a.name}>{a.name}</Approved> : <Pending key={a.name}>{a.name}</Pending>
+        ))}
+      </OrderStatusWrapper>
+    </Panel>
   );
 }
 
@@ -232,7 +278,7 @@ const OrderDetails = ({ lc }) => {
     {title: "Credit Expiration Date", value: lc.creditExpirationDate},
   ];
   const extraDetails = [
-    {title: "Credit Amount", value: lc.creditAmtVerbal},
+    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal},
     {title: "Credit Delivery Means", value: lc.creditDeliveryMeans},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
     {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue + "%"},
@@ -241,7 +287,7 @@ const OrderDetails = ({ lc }) => {
     {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No"},
     {title: "Merch Charge Location", value: lc.merchChargeLocation},
     {title: "Late Charge Date", value: lc.lateChargeDate},
-    {title: "Charg Transportation Location", value: lc.chargeTransportationLocation},
+    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation},
     {title: "Named Place of Destination", value: lc.namedPlaceOfDestination},
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
     {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No"},
@@ -278,7 +324,7 @@ const OrderDetails = ({ lc }) => {
   );
 }
 
-const DocumentaryEntryWrapper = styled.div`
+const DocumentaryEntryFlex = styled.div`
   display: flex;
   align-items: center;
   > :nth-child(1) {
@@ -290,10 +336,11 @@ const DocumentaryEntryWrapper = styled.div`
   > :nth-child(3) {
     min-width: 20%;
   }
-  cursor: pointer;
-  ${props => props.border && `
-    border-bottom: 1px solid #cdcdcd;
-  `}
+  ${props => props.clickable && `cursor: pointer;`}
+`
+
+const DocumentaryEntryWrapper = styled.div`
+  border-bottom: 1px solid #cdcdcd;
 `
 
 const DocReqTitle = ODValue;
@@ -308,10 +355,18 @@ const DocReqStatus = styled.div`
   font-weight: 500;
 `
 
-const DocumentaryRequirement = ({ title, dueDate, status, ...props }) => {
+const ExpandedDocumentaryEntry = styled.div`
+  padding-bottom: 10px;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.5;
+`
+
+const DocumentaryRequirement = ({ title, dueDate, status, requiredValues, ...props }) => {
   const [expanded, setExpanded] = useState(false);
   return (
-    <DocumentaryEntryWrapper border onClick={() => setExpanded(e => !e)} {...props}>
+    <DocumentaryEntryWrapper>
+    <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
       <DocReqTitle style={{ margin: "15px 0" }}>
         {title} 
           <FontAwesomeIcon 
@@ -321,12 +376,24 @@ const DocumentaryRequirement = ({ title, dueDate, status, ...props }) => {
       </DocReqTitle>
       <DocReqDate>{dueDate}</DocReqDate>
       <DocReqStatus>{status}</DocReqStatus>
+    </DocumentaryEntryFlex>
+    {expanded && <ExpandedDocumentaryEntry>
+    <DocumentaryEntryFlex>
+    <div>
+      Required Values: {requiredValues}
+
+    </div>
+      <div>
+        File: <a href="/">order.pdf</a>
+      </div>
+    </DocumentaryEntryFlex>
+    </ExpandedDocumentaryEntry>}
     </DocumentaryEntryWrapper>
   )
 }
 
 const DocumentaryRequirements = ({ lc }) => {
-  const docReqs = lc.documentaryRequirements;
+  const docReqs = lc.documentaryrequirementSet;
   // const docReqs = [{
   //   docName: "Buyer Agreement",
   //   dueDate: "February 2, 2020",
@@ -335,16 +402,17 @@ const DocumentaryRequirements = ({ lc }) => {
   // }]
   return (
     <Panel title="Documentary Requirements">
-      <DocumentaryEntryWrapper>
+      <DocumentaryEntryFlex>
         <AnalysisTitle style={{margin: "0"}}>Document Title</AnalysisTitle>
         <AnalysisTitle style={{margin: "0"}}>Recieve By</AnalysisTitle>
         <AnalysisTitle style={{margin: "0"}}>Status</AnalysisTitle>
-      </DocumentaryEntryWrapper>
+      </DocumentaryEntryFlex>
       {docReqs ? docReqs.map(d => 
         <DocumentaryRequirement 
           title={d.docName} 
           dueDate={d.dueDate} 
-          status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"} 
+          status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
+          requiredValues={d.requiredValues}
           key={d.docName}/>
         ) : (
           <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
@@ -361,6 +429,13 @@ const BankLCViewPage = ( {match} ) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
   const [user] = useContext(UserContext);
   const [lc, setLc] = useState(null);
+  let userType = 'unknown';
+  if (get(user, 'bank')) {
+    userType = 'issuer';
+  } else if (get(user, 'business')) {
+    if (get(user, 'business.id') === get(lc, 'client.id')) userType = 'client';
+    else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
+  }
 
   useEffect(() => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
@@ -372,11 +447,11 @@ const BankLCViewPage = ( {match} ) => {
     <LCView lc={lc}>
       <TwoColumnHolder>
         <LeftColumn>
-          <OrderStatus/>
+          <OrderStatus lc={lc} userType={userType} setLc={setLc}/>
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
-          <Financials lc={lc}/>
+          {userType === 'issuer' && <Financials lc={lc}/>}
           <OrderDetails lc={lc}/>
           <DocumentaryRequirements lc={lc}/>
         </RightColumn>
