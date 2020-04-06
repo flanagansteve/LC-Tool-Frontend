@@ -58,9 +58,7 @@ export const makeAPIRequest = async (
     if (returnFullResponse) {
       return response;
     } else {
-      return Promise.reject(
-        response
-      );
+      return Promise.reject(response);
     }
   }
 
@@ -68,20 +66,16 @@ export const makeAPIRequest = async (
   return objectToCamelCase(await response.json());
 };
 
-export const postFile = async (
-  url,
-  file,
-  returnFullResponse
-) => {
+export const postFile = async (url, file, returnFullResponse) => {
   const requestURL = API_BASEURL + url;
   const form = new FormData();
-  form.append('file', file);
+  form.append("file", file);
   const headers = new Headers();
-  headers.append('Content-Type', 'application/pdf');
+  headers.append("Content-Type", "application/pdf");
   const response = await fetch(requestURL, {
-    method: 'PUT',
+    method: "PUT",
     body: form,
-    headers,
+    headers
   });
   if (response.status === 401 || response.status === 403) {
     // history.push("/login");
@@ -94,9 +88,7 @@ export const postFile = async (
     if (returnFullResponse) {
       return response;
     } else {
-      return Promise.reject(
-        response
-      );
+      return Promise.reject(response);
     }
   }
 
@@ -117,7 +109,8 @@ export const logIn = async (email, password) => {
   }
   const json = objectToCamelCase(await response.json());
   setSessionExpiry(new Date(json.sessionExpiry).getTime());
-  if (json.userEmployee.employer) return { ...json.userEmployee, business: json.usersEmployer };
+  if (json.userEmployee.employer)
+    return { ...json.userEmployee, business: json.usersEmployer };
   else return { ...json.userEmployee, bank: json.usersEmployer };
 };
 

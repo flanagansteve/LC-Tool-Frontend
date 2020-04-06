@@ -123,11 +123,19 @@ const ProfileDropDown = ({ user, setUser, show }) => {
   const history = useHistory();
   return (
     <DropDownWrapper show={show}>
-      <DropDownHeader>{user.bank ? get(user, ['bank', 'name']) : get(user, ['business', 'name'])}</DropDownHeader>
+      <DropDownHeader>
+        {user.bank
+          ? get(user, ["bank", "name"])
+          : get(user, ["business", "name"])}
+      </DropDownHeader>
       {user.bank && <DropDownLink>View LC Application</DropDownLink>}
-      <DropDownLink>View {user.bank ? "Bank" : "Business"} Profile (Coming soon)</DropDownLink>
+      <DropDownLink>
+        View {user.bank ? "Bank" : "Business"} Profile (Coming soon)
+      </DropDownLink>
       <DropDownHeader>{user.name}</DropDownHeader>
-      <DropDownNavLink to={`${user.bank ? '/bank' : '/business'}/account`}>View Profile</DropDownNavLink>
+      <DropDownNavLink to={`${user.bank ? "/bank" : "/business"}/account`}>
+        View Profile
+      </DropDownNavLink>
       <DropDownLink
         onClick={() => {
           logOut(setUser)
@@ -191,9 +199,15 @@ const Nav = ({ user, setUser }) => {
       </StyledNavLink>
       {user && (
         <>
-        {user.bank && <StyledNavLink to={`/bank/${user.bank.id}/application`}>Create an LC</StyledNavLink>}
-        <StyledNavLink to="/bank/lcs/apps">Review LC Applications</StyledNavLink>
-        <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>
+          {user.bank && (
+            <StyledNavLink to={`/bank/${user.bank.id}/application`}>
+              Create an LC
+            </StyledNavLink>
+          )}
+          <StyledNavLink to="/bank/lcs/apps">
+            Review LC Applications
+          </StyledNavLink>
+          <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>
         </>
       )}
       <LoginSection user={user} setUser={setUser} />
