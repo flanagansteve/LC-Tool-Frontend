@@ -76,9 +76,12 @@ export const postFile = async (
   const requestURL = API_BASEURL + url;
   const form = new FormData();
   form.append('file', file);
+  const headers = new Headers();
+  headers.append('Content-Type', 'application/pdf');
   const response = await fetch(requestURL, {
     method: 'PUT',
-    body: form
+    body: form,
+    headers,
   });
   if (response.status === 401 || response.status === 403) {
     // history.push("/login");
