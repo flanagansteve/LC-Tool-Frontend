@@ -376,11 +376,9 @@ const FileUpload = styled.label`
   cursor: pointer;
 `
 
-const DocumentaryRequirement = ({ documentaryRequirement, lcid, userType, status, live, ...props }) => {
-  const [docReq, setDocReq] = useState(documentaryRequirement);
+const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, ...props }) => {
   const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues } = docReq;
   const [expanded, setExpanded] = useState(false);
-  const [file, setFile] = useState(null);
 
   useEffect(() => {
     fetch(`/lc/${lcid}/doc_req/${id}/file/`)
@@ -393,7 +391,7 @@ const DocumentaryRequirement = ({ documentaryRequirement, lcid, userType, status
       return;
     }
     postFile(`/lc/${lcid}/doc_req/${id}/`, file)
-      .then(json => setDocReq(json.docReq));
+      .then(() => refreshLc());
   }
 
   return (
@@ -423,13 +421,8 @@ const DocumentaryRequirement = ({ documentaryRequirement, lcid, userType, status
         <>
         <div style={{display: 'flex', flexDirection: 'column'}}>
         <FileUpload>
-          
-          {file ? file.name : (
-            <>
             Upload File
             <input type="file" onChange={e => uploadFile(e.target.files[0])} style={{display: 'none'}}/>
-            </>
-          )}
         </FileUpload>
         </div>
         </>
@@ -441,9 +434,8 @@ const DocumentaryRequirement = ({ documentaryRequirement, lcid, userType, status
   )
 }
 
-const DocumentaryRequirements = ({ lc, userType, live }) => {
+const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
   const docReqs = lc.documentaryrequirementSet;
-  console.log(docReqs)
   return (
     <Panel title="Documentary Requirements">
       <DocumentaryEntryFlex>
@@ -458,6 +450,7 @@ const DocumentaryRequirements = ({ lc, userType, live }) => {
           lcid={lc.id}
           live={live}
           userType={userType}
+          refreshLc={refreshLc}
           key={d.docName}/>
         ) : (
           <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
@@ -483,11 +476,15 @@ const BankLCViewPage = ( {match} ) => {
   }
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
 
+  const refreshLc = () => {
+    makeAPIRequest(`/lc/${match.params.lcid}/`)
+      .then(json => setLc(json))
+  }
+
   useEffect(() => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
       .then(json => setLc(json))
   }, [match.params.lcid])
-  console.log(lc)
 
   return (
     <LCView lc={lc}>
@@ -499,7 +496,7 @@ const BankLCViewPage = ( {match} ) => {
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
           <OrderDetails lc={lc}/>
-          <DocumentaryRequirements lc={lc} userType={userType} live={live}/>
+          <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
     </LCView>
