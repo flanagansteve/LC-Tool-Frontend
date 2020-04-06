@@ -98,23 +98,45 @@ const OrderStatus = ({ lc, setLc, userType }) => {
       <FontAwesomeIcon icon={faQuestionCircle} color="rgb(27, 108, 255)" style={{ marginLeft: "10px"}}/>
     </div>
   )
-  const handleClick = () => {
+  const handleClickApprove = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true, complaints: '' })
       .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
-
+  }
+  const handleClickPayout = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', { approve: true, complaints: '' })
+      .then(json => setLc({ ...lc, paidOut: true })); // TODO fix
+  }
+  const handleClickRequest = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', { approve: true, complaints: '' })
+      .then(json => setLc({ ...lc, requested: true })); // TODO fix
+  }
+  const handleClickDraw = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true, complaints: '' })
+      .then(json => setLc({ ...lc, drawn: true })); // TODO fix
   }
   const userApproved = get(lc, `${userType}Approved`);
   const allApproved = approvals.every(a => a.value);
+  const { paidOut, drawn, requested } = lc;
   return (
     <Panel title="Order Status" highlight>
       <OrderStatusWrapper>
-      {!userApproved && !allApproved && <center><Button onClick={handleClick}>Approve</Button></center>}
+      {!userApproved && !allApproved && <center><Button onClick={handleClickApprove}>Approve</Button></center>}
+      {allApproved && !paidOut && userType === "issuer" && <center><Button onClick={handleClickPayout} style={{marginBottom: '10px'}}>Pay Out</Button></center>}
+      {allApproved && !requested && userType === "beneficiary" && <center><Button onClick={handleClickRequest}>Request</Button></center>}
+      {allApproved && !drawn && userType === "beneficiary" && <center><Button onClick={handleClickDraw}>Draw</Button></center>}
       {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
+      {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid out.</PartyDisplayMessage>
+        : drawn ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been drawn.</PartyDisplayMessage>
+        : requested ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been requested.</PartyDisplayMessage> : null}
       <PartyDisplayMessage>You are the {userType}.</PartyDisplayMessage>
+      {!allApproved && (
+        <>
       <div style={{fontWeight: "500", fontSize: '14px', margin: '10px 0'}}>Approvals</div>
         {approvals.map(a => (
           a.value === true ? <Approved key={a.name}>{a.name}</Approved> : <Pending key={a.name}>{a.name}</Pending>
         ))}
+        </>
+      )}
       </OrderStatusWrapper>
     </Panel>
   );
@@ -380,11 +402,6 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
   const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues } = docReq;
   const [expanded, setExpanded] = useState(false);
 
-  useEffect(() => {
-    fetch(`/lc/${lcid}/doc_req/${id}/file/`)
-      .then(res => console.log(res))
-  }, [lcid, id])
-
   const uploadFile = (file) => {
     if (!file) {
       console.error('No file found.');
@@ -475,6 +492,7 @@ const BankLCViewPage = ( {match} ) => {
     else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
   }
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
+  console.log(lc)
 
   const refreshLc = () => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
@@ -490,7 +508,7 @@ const BankLCViewPage = ( {match} ) => {
     <LCView lc={lc}>
       <TwoColumnHolder>
         <LeftColumn>
-          <OrderStatus lc={lc} userType={userType} setLc={setLc}/>
+          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live}/>
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
