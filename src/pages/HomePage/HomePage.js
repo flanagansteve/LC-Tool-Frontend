@@ -1,11 +1,13 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Redirect } from "react-router-dom";
-import { useAuthentication } from "../../utils/auth";
+import { useAuthentication, UserContext } from "../../utils/auth";
 
 const HomePage = () => {
   useAuthentication('/');
+  const [user] = useContext(UserContext);
+
   return (
-    <Redirect to="/bank/lcs"/>
+    user ? <Redirect to={`/${user.business ? "business" : "bank"}/lcs`}/> : <div></div>
   );
 };
 

@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   BrowserRouter as Router,
   Switch,
-  Route
+  Route,
+  Redirect
 } from 'react-router-dom';
 
 import GlobalStyle, { CSSReset } from './GlobalStyle'
@@ -25,6 +26,8 @@ import BusinessInvitePage from './pages/business/BusinessInvitePage';
 import BusinessManageAccountPage from './pages/business/BusinessManageAccountPage';
 import BusinessEmployeeSignUpPage from './pages/business/BusinessEmployeeSignUpPage';
 import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBeneficiaryStatusPage';
+import ClientLCFeedPage from './pages/business/feeds/ClientLCFeedPage';
+import BeneficiaryLCFeedPage from './pages/business/feeds/BeneficiaryLCFeedPage';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -59,6 +62,9 @@ function App() {
           <Route path="/business/invite" component={BusinessInvitePage} />
           <Route path="/business/account" component={BusinessManageAccountPage} />
           <Route path="/business/claimBeneficiary/:lcid" component={ClaimBeneficiaryStatusPage} />
+          <Route path="/business/lcs/client/" component={ClientLCFeedPage} />
+          <Route path="/business/lcs/beneficiary/" component={BeneficiaryLCFeedPage} />
+          <Route path="/business/lcs/" component={ClientLCFeedPage} />
           <Route path="/login" component={LoginPage}/>
           <Route path="/" component={HomePage} />
         </Switch>
