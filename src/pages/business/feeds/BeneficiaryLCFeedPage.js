@@ -1,7 +1,6 @@
-import React, { useState, useContext, useEffect } from "react";
+import React, { useContext } from "react";
 import BusinessLCFeed from "./BusinessLCFeed";
 import { useAuthentication, UserContext } from "../../../utils/auth";
-import { makeAPIRequest } from "../../../utils/api";
 import { get } from 'lodash'
 
 const BeneficiaryLCFeedPage = ({ match }) => {
