@@ -1,6 +1,6 @@
 import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
-import { Formik, Field, Form } from "formik";
+import { Formik, Field, Form, useField } from "formik";
 import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
@@ -326,11 +326,52 @@ const StyledInput = styled(Field)`
 	font-size: 18px;
 `
 
+const ButtonWrapper = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+
+  > :not(:last-child) {
+    margin-right: 20px;
+  }
+`
+
+const StyledButton = styled.button`
+  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  border-radius: 5px;
+  padding: 5px 10px;
+  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
+  border: 1px solid rgb(27, 108, 255);
+  font-size: 16px;
+  cursor: pointer;
+  margin: 10px 0;
+  max-width: 45%;
+  display: flex;
+  align-items: center;
+`
+
+const YesNoInput = ({ name }) => {
+  const [, meta, helpers] = useField(name);
+  const { value } = meta;
+  const { setValue } = helpers;
+
+  const handleClick = (val) => (e) => {
+    e.preventDefault();
+    setValue(val);
+  }
+
+  return (
+      <ButtonWrapper>
+        <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
+        <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
+      </ButtonWrapper>
+  )
+}
+
 const TYPE_TO_COMPONENT = {
   text: (props) => (<StyledInput type="text" {...props}/>),
   number: (props) => (<StyledInput type="number" {...props}/>),
   date: (props) => (<StyledInput type="date" {...props}/>),
-  boolean: (props) => (<StyledInput type="text" {...props}/>),
+  boolean: (props) => (<YesNoInput type="text" {...props}/>),
 }
 
 const SubmitWrapper = styled.div`
@@ -409,7 +450,18 @@ const OrderDetails = ({ lc, refreshLc }) => {
   // setup initial values
   const initialValues = { latestVersionNotes: '' };
   const allDetails = ([...details, ...extraDetails]);
-  allDetails.forEach(d => d.name && d.type && (initialValues[d.name] = d.value));
+  console.log(allDetails)
+  allDetails.forEach(d => {
+    if (!d.name) return;
+    switch (d.type) {
+      case 'boolean':
+        if (d.value.toLowerCase() === 'yes') initialValues[d.name] = true;
+        else if (d.value.toLowerCase() === 'no') initialValues[d.name] = false;
+        break;
+      default:
+        d.type && (initialValues[d.name] = d.value);
+    }
+  });
 
   return (
     <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}>
