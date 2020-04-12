@@ -76,16 +76,16 @@ const Panel = ({ title, children, highlight, expand, setExpand, editing, setEdit
             </>
           )
           : <FontAwesomeIcon
-            icon={faPencilAlt} 
+            icon={faPencilAlt}
             onClick={() => setEditing(true)}
             style={{
               color: 'rgb(27, 108, 255)',
             }}
             />
         )}
-        {expandEnabled && 
+        {expandEnabled &&
           <FontAwesomeIcon
-            icon={expand ? faChevronDown : faChevronRight} 
+            icon={expand ? faChevronDown : faChevronRight}
             onClick={() => setExpand(e => !e)}
             style={{
               color: 'rgb(27, 108, 255)',
@@ -270,7 +270,7 @@ const Financials = ({ lc }) => {
         <div>
           <BigNumberTitle>Annual Cashflow</BigNumberTitle>
           <BigNumber>
-            {client.annualCashflow || "N/A"} 
+            {client.annualCashflow || "N/A"}
             <span style={{ fontWeight: "200", fontSize: "16px" }}> yearly</span>
            </BigNumber>
         </div>
@@ -421,7 +421,7 @@ const OrderDetails = ({ lc, refreshLc }) => {
     {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', name: 'unitsOfMeasure'},
     {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased', type: 'number'},
     {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt', type: 'number'},
-    {title: "Credit Expiration Date", value: lc.creditExpirationDate, name: 'creditExpirationDate', type: 'date'},
+    {title: "Credit Expiration Date", value: lc.expirationDate, name: 'expirationDate', type: 'date'},
   ];
   const extraDetails = [
     {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'},
@@ -441,7 +441,7 @@ const OrderDetails = ({ lc, refreshLc }) => {
     {title: "Merch Description", value: lc.merchDescription, type: 'text', name: 'merchDescription'},
     {title: "Transferable", value: (lc.transferableToClient
       ? `Yes, to ${lc.client.name}`
-      : (lc.transferableToBeneficiary 
+      : (lc.transferableToBeneficiary
         ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
         : "No")) // not editable for now
     }
@@ -490,10 +490,10 @@ const OrderDetails = ({ lc, refreshLc }) => {
       {editing && <SubmitSection />}
       <div style={{display: 'flex'}}>
         <ODColumn>
-          {details.slice(0,details.length/2).map((d) => 
+          {details.slice(0,details.length/2).map((d) =>
             <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
-          {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) => 
+          {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) =>
             <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
         </ODColumn>
@@ -501,7 +501,7 @@ const OrderDetails = ({ lc, refreshLc }) => {
           {details.slice(details.length/2).map((d) =>
             <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
-          {showExtra && extraDetails.slice(extraDetails.length/2).map((d) => 
+          {showExtra && extraDetails.slice(extraDetails.length/2).map((d) =>
             <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
         </ODColumn>
@@ -536,7 +536,7 @@ const DocReqTitle = styled.div`
   font-weight: 500;
   font-size: 24px;
   margin-bottom: 20px;
-  margin-top: 5px; 
+  margin-top: 5px;
   display: flex;
   align-items: center;
 `
@@ -582,9 +582,9 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
     <DocumentaryEntryWrapper>
     <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
       <DocReqTitle style={{ margin: "15px 0" }}>
-        {title} 
-          <FontAwesomeIcon 
-            icon={expanded ? faChevronDown : faChevronRight} 
+        {title}
+          <FontAwesomeIcon
+            icon={expanded ? faChevronDown : faChevronRight}
             style={{color: 'rgb(27, 108, 255)', marginLeft: '10px'}}
             />
       </DocReqTitle>
@@ -627,8 +627,8 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
         <SmallHeader style={{margin: "0"}}>Recieve By</SmallHeader>
         <SmallHeader style={{margin: "0"}}>Status</SmallHeader>
       </DocumentaryEntryFlex>
-      {docReqs ? docReqs.map(d => 
-        <DocumentaryRequirement 
+      {docReqs ? docReqs.map(d =>
+        <DocumentaryRequirement
           documentaryRequirement={d}
           status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
           lcid={lc.id}
