@@ -1,8 +1,9 @@
 import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
+import { Formik, Field, Form } from "formik";
 import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest, postFile } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
@@ -50,19 +51,39 @@ const PanelBody = styled.div`
   line-height: 1.25;
 `
 
-const Panel = ({ title, children, highlight, expand, setExpand, ...props }) => {
+const PanelTitleAlt = styled.div`
+  color: rgb(27, 108, 255);
+`
+
+const Panel = ({ title, children, highlight, expand, setExpand, editing, setEditing, ...props }) => {
   const expandEnabled = [true, false].includes(expand);
+  const editingEnabled = [true, false].includes(editing);
   return (
     <BasicView {...props}>
-      <PanelTitle highlight={highlight} clickable={expandEnabled}
-        onClick={expandEnabled ? () => setExpand(e => !e) : () => null}>
+      <PanelTitle highlight={highlight} clickable={expandEnabled}>
         {title}
+        <div style={{ display: 'flex' }}>
+        {editingEnabled && (editing
+          ? <PanelTitleAlt>Editing</PanelTitleAlt>
+          : <FontAwesomeIcon
+            icon={faPencilAlt} 
+            onClick={() => setEditing(true)}
+            style={{
+              color: 'rgb(27, 108, 255)',
+            }}
+            />
+        )}
         {expandEnabled && 
-          <FontAwesomeIcon 
+          <FontAwesomeIcon
             icon={expand ? faChevronDown : faChevronRight} 
-            style={{color: 'rgb(27, 108, 255)'}}
+            onClick={() => setExpand(e => !e)}
+            style={{
+              color: 'rgb(27, 108, 255)',
+              padding: '0 10px'
+            }}
             />
         }
+        </div>
       </PanelTitle>
       <PanelBody>{children}</PanelBody>
     </BasicView>
@@ -277,44 +298,56 @@ const ODValue = styled.div`
   margin-top: 5px;
 `
 
-const OrderDetail = ({ title, value, units }) => (
+const TextInput = styled(Field).attrs({type: 'text'})`
+  
+`
+
+const TYPE_TO_COMPONENT = {
+  text: TextInput,
+}
+
+const OrderDetail = ({ title, value, units, type, editing }) => {
+  const Input = TYPE_TO_COMPONENT[type];
+  return (
   <>
     <AnalysisTitle>{title}</AnalysisTitle>
     <ODValue>
-      {value || "N/A"}
+      {editing && type ? <Input /> : (value || "N/A")}
       {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
     </ODValue>
   </>
-);
+  )
+}
 
 const OrderDetails = ({ lc }) => {
   const [showExtra, setShowExtra] = useState(false);
+  const [editing, setEditing] = useState(false);
   const details = [
     {title: "Counterparty", value: get(lc, 'beneficiary.name')},
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')},
-    {title: "Payment Date", value: lc.dueDate},
-    {title: "Draft Presentation Date", value: lc.draftPresentationDate},
-    {title: "Units of Measure", value: lc.unitsOfMeasure},
-    {title: "Units Purchased", value: lc.unitsPurchased},
-    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination},
-    {title: "Credit Expiration Date", value: lc.creditExpirationDate},
+    {title: "Payment Date", value: lc.dueDate, key: 'dueDate'},
+    {title: "Draft Presentation Date", value: lc.draftPresentationDate, key: 'draftPresentationDate'},
+    {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', key: 'unitsOfMeasure'},
+    {title: "Units Purchased", value: lc.unitsPurchased, key: 'unitsPurchased'},
+    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, key: 'creditAmt'},
+    {title: "Credit Expiration Date", value: lc.creditExpirationDate, key: 'creditExpirationDate'},
   ];
   const extraDetails = [
-    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal},
-    {title: "Credit Delivery Means", value: lc.creditDeliveryMeans},
+    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', key: 'creditAmtVerbal'},
+    {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, key: 'creditDeliveryMeans', type: 'text'},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
-    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue + "%"},
-    {title: "Credit Availability", value: lc.creditAvailability},
-    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No"},
-    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No"},
-    {title: "Merch Charge Location", value: lc.merchChargeLocation},
-    {title: "Late Charge Date", value: lc.lateChargeDate},
-    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation},
-    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination},
+    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, key: 'draftsInvoiceValue', units: '%'},
+    {title: "Credit Availability", value: lc.creditAvailability, key: 'creditAvailability', type: 'text'},
+    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", key: 'partialShipmentAllowed'},
+    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", key: 'transshipmentAllowed'},
+    {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', key: 'merchChargeLocation'},
+    {title: "Late Charge Date", value: lc.lateChargeDate, key: 'lateChargeDate'},
+    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', key: 'chargeTransportationLocation'},
+    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', key: 'namedPlaceOfDestination'},
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
-    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No"},
-    {title: "Other Instructions", value: lc.otherInstructions},
-    {title: "Merch Description", value: lc.merchDescription},
+    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", key: 'arrangingOwnInsurance'},
+    {title: "Other Instructions", value: lc.otherInstructions, type: 'text', key: 'otherInstructions'},
+    {title: "Merch Description", value: lc.merchDescription, type: 'text', key: 'merchDescription'},
     {title: "Transferable", value: (lc.transferableToClient
       ? `Yes, to ${lc.client.name}`
       : (lc.transferableToBeneficiary 
@@ -323,25 +356,32 @@ const OrderDetails = ({ lc }) => {
     }
   ]
   return (
-    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra}>
+    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}>
+    <Formik>
+    {() => (
+    <Form>
+      {editing && <button type="submit">Submit Changes</button>}
       <div style={{display: 'flex'}}>
         <ODColumn>
           {details.slice(0,details.length/2).map((d) => 
-            <OrderDetail key={d.title} {...d}/>
+            <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
           {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) => 
-            <OrderDetail key={d.title} {...d}/>
+            <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
         </ODColumn>
         <ODColumn>
           {details.slice(details.length/2).map((d) =>
-            <OrderDetail key={d.title} {...d}/>
+            <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
           {showExtra && extraDetails.slice(extraDetails.length/2).map((d) => 
-            <OrderDetail key={d.title} {...d}/>
+            <OrderDetail key={d.title} {...d} editing={editing}/>
           )}
         </ODColumn>
       </div>
+    </Form>
+    )}
+    </Formik>
     </Panel>
   );
 }
