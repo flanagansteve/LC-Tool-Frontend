@@ -119,11 +119,16 @@ const APPROVALS_TO_STATE = {
     canApprove: ['issuer'],
   },
   clientIssuer: {
-    message: "LC has been sent to beneficiary and is awaiting approval.",
+    message: "LC has been sent to beneficiary and is awaiting approval or proposed changes.",
     canEdit: ['beneficiary'],
     canApprove: ['beneficiary'],
   },
   // clientBene is not possible
+  bene: {
+    message: "LC has been resubmitted to issuer with beneficiary redlining and is awaiting their approval.",
+    canEdit: ['issuer'],
+    canApprove: ['issuer'],
+  },
   issuer: {
     message: "LC has been resent to client with issuer edits and is awaiting client approval.",
     canEdit: ['client'],
@@ -134,11 +139,6 @@ const APPROVALS_TO_STATE = {
     canEdit: ['client'],
     canApprove: ['client'],
   },
-  bene: {
-    message: "LC has been resubmitted to issuer with beneficiary redlining and is awaiting their approval.",
-    canEdit: ['issuer'],
-    canApprove: ['issuer'],
-  }
 }
 
 const OrderStatusMessage = ({ stateName }) => {
@@ -153,19 +153,19 @@ const OrderStatus = ({ lc, setLc, userType, stateName }) => {
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ]
   const handleClickApprove = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true, complaints: '' })
+    makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
   }
   const handleClickPayout = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', { approve: true, complaints: '' })
+    makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, paidOut: true })); // TODO fix
   }
   const handleClickRequest = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', { approve: true, complaints: '' })
+    makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, requested: true })); // TODO fix
   }
   const handleClickDraw = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true, complaints: '' })
+    makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, drawn: true })); // TODO fix
   }
   const allApproved = approvals.every(a => a.value);
