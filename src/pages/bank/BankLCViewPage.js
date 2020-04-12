@@ -18,6 +18,7 @@ const LeftColumn = styled.div`
   flex-grow: 1;
   margin-right: 20px;
   min-width: 250px;
+  max-width: 250px;
 `
 
 const RightColumn = styled.div`
@@ -163,6 +164,16 @@ const OrderStatus = ({ lc, setLc, userType }) => {
   );
 }
 
+const OrderNotes = ({ lc }) => {
+  return (
+    <Panel title="Revision Notes">
+      <OrderStatusWrapper>
+        {lc.latestVersionNotes}
+      </OrderStatusWrapper>
+    </Panel>
+  )
+}
+
 const ClientInformationWrapper = styled.div`
   font-weight: 300;
   font-size: 14px;
@@ -232,7 +243,7 @@ const AnalysisWrapper = styled.div`
   margin: 10px;
 `
 
-const AnalysisTitle = styled.div`
+const SmallHeader = styled.div`
   font-size: 12px;
   min-width: 150px;
   margin-right: 50px;
@@ -265,7 +276,7 @@ const Financials = ({ lc }) => {
       </BigStatsWrapper>
       <div>
         <AnalysisWrapper>
-          <AnalysisTitle>Cashflow Analysis</AnalysisTitle>
+          <SmallHeader>Cashflow Analysis</SmallHeader>
           <AnalysisBody>
             Bountium will provide intelligent analysis and predictions to help assess letters of credit.
             <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
@@ -274,7 +285,7 @@ const Financials = ({ lc }) => {
           </AnalysisBody>
         </AnalysisWrapper>
         <AnalysisWrapper>
-          <AnalysisTitle>Tolerance Analysis</AnalysisTitle>
+          <SmallHeader>Tolerance Analysis</SmallHeader>
           <AnalysisBody>
             Bountium will provide tools to help understand tolerance values within a letter of credit.
             <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
@@ -306,11 +317,34 @@ const TYPE_TO_COMPONENT = {
   text: TextInput,
 }
 
+const SubmitWrapper = styled.div`
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #cdcdcd;
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+  align-items: center;
+`
+
+const SubmitSection = () => {
+  return (
+    <SubmitWrapper>
+    <ODColumn>
+      <Button type="submit">Submit Revisions</Button>
+    </ODColumn>
+    <ODColumn>
+      <SmallHeader style={{marginBottom: '5px'}}>Revision Comments</SmallHeader>
+      <TextInput name="latestVersionNotes" />
+    </ODColumn>
+    </SubmitWrapper>
+  )
+}
+
 const OrderDetail = ({ title, value, units, type, name, editing }) => {
   const Input = TYPE_TO_COMPONENT[type];
   return (
   <>
-    <AnalysisTitle>{title}</AnalysisTitle>
+    <SmallHeader>{title}</SmallHeader>
     <ODValue>
       {editing && type ? <Input name={name}/> : (value || "N/A")}
       {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
@@ -319,7 +353,7 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
   )
 }
 
-const OrderDetails = ({ lc, setLc }) => {
+const OrderDetails = ({ lc, setLc, refreshLc }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
   const details = [
@@ -357,8 +391,9 @@ const OrderDetails = ({ lc, setLc }) => {
   ]
 
   // setup initial values
-  const initialValues = {};
-  ([...details, ...extraDetails]).forEach(d => d.name && d.type && (initialValues[d.name] = d.value));
+  const initialValues = { latestVersionNotes: '' };
+  const allDetails = ([...details, ...extraDetails]);
+  allDetails.forEach(d => d.name && d.type && (initialValues[d.name] = d.value));
 
   return (
     <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}>
@@ -367,18 +402,24 @@ const OrderDetails = ({ lc, setLc }) => {
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
         console.log(values)
+        const { latestVersionNotes } = values;
+        const newLc = {};
+        Object.entries(values).forEach(pair => {
+          const [k, v] = pair;
+          if (v !== initialValues[k]) newLc[k] = v;
+        })
         makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
-          lc: values, latestVersionNotes: '',
+          lc: newLc, latestVersionNotes,
         }).then(() => {
             setSubmitting(false);
-            setLc(lc => ({ ...lc, ...values }));
+            refreshLc();
             setEditing(false);
           })
       }}
     >
     {() => (
     <Form>
-      {editing && <button type="submit">Submit Changes</button>}
+      {editing && <SubmitSection />}
       <div style={{display: 'flex'}}>
         <ODColumn>
           {details.slice(0,details.length/2).map((d) => 
@@ -514,9 +555,9 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
   return (
     <Panel title="Documentary Requirements">
       <DocumentaryEntryFlex>
-        <AnalysisTitle style={{margin: "0"}}>Document Title</AnalysisTitle>
-        <AnalysisTitle style={{margin: "0"}}>Recieve By</AnalysisTitle>
-        <AnalysisTitle style={{margin: "0"}}>Status</AnalysisTitle>
+        <SmallHeader style={{margin: "0"}}>Document Title</SmallHeader>
+        <SmallHeader style={{margin: "0"}}>Recieve By</SmallHeader>
+        <SmallHeader style={{margin: "0"}}>Status</SmallHeader>
       </DocumentaryEntryFlex>
       {docReqs ? docReqs.map(d => 
         <DocumentaryRequirement 
@@ -568,11 +609,12 @@ const BankLCViewPage = ( {match} ) => {
       <TwoColumnHolder>
         <LeftColumn>
           <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live}/>
+          {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
-          <OrderDetails lc={lc} setLc={setLc}/>
+          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
