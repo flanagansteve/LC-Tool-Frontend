@@ -54,6 +54,7 @@ const PanelBody = styled.div`
 
 const PanelTitleAlt = styled.div`
   color: rgb(27, 108, 255);
+  margin-right: 5px;
 `
 
 const Panel = ({ title, children, highlight, expand, setExpand, editing, setEditing, ...props }) => {
@@ -63,9 +64,17 @@ const Panel = ({ title, children, highlight, expand, setExpand, editing, setEdit
     <BasicView {...props}>
       <PanelTitle highlight={highlight} clickable={expandEnabled}>
         {title}
-        <div style={{ display: 'flex' }}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
         {editingEnabled && (editing
-          ? <PanelTitleAlt>Editing</PanelTitleAlt>
+          ? (
+            <>
+            <PanelTitleAlt>Editing</PanelTitleAlt>
+            <span
+              style={{fontStyle: 'italic', fontSize: '14px', color: '#555'}}
+              onClick={() => setEditing(false)}
+              >Cancel</span>
+            </>
+          )
           : <FontAwesomeIcon
             icon={faPencilAlt} 
             onClick={() => setEditing(true)}
@@ -309,12 +318,19 @@ const ODValue = styled.div`
   margin-top: 5px;
 `
 
-const TextInput = styled(Field).attrs({type: 'text'})`
-  
+const StyledInput = styled(Field)`
+	border: none;
+	background-color: #eee;
+	padding: 10px;
+	border-radius: 10px;
+	font-size: 18px;
 `
 
 const TYPE_TO_COMPONENT = {
-  text: TextInput,
+  text: (props) => (<StyledInput type="text" {...props}/>),
+  number: (props) => (<StyledInput type="number" {...props}/>),
+  date: (props) => (<StyledInput type="date" {...props}/>),
+  boolean: (props) => (<StyledInput type="text" {...props}/>),
 }
 
 const SubmitWrapper = styled.div`
@@ -334,7 +350,7 @@ const SubmitSection = () => {
     </ODColumn>
     <ODColumn>
       <SmallHeader style={{marginBottom: '5px'}}>Revision Comments</SmallHeader>
-      <TextInput name="latestVersionNotes" />
+      <Field name="latestVersionNotes" type="text"/>
     </ODColumn>
     </SubmitWrapper>
   )
@@ -353,40 +369,40 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
   )
 }
 
-const OrderDetails = ({ lc, setLc, refreshLc }) => {
+const OrderDetails = ({ lc, refreshLc }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
   const details = [
-    {title: "Counterparty", value: get(lc, 'beneficiary.name')},
-    {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')},
-    {title: "Payment Date", value: lc.dueDate, name: 'dueDate'},
-    {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate'},
+    {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
+    {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
+    {title: "Payment Date", value: lc.dueDate, name: 'dueDate', type: 'date'},
+    {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate', type: 'date'},
     {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', name: 'unitsOfMeasure'},
-    {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased'},
-    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt'},
-    {title: "Credit Expiration Date", value: lc.creditExpirationDate, name: 'creditExpirationDate'},
+    {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased', type: 'number'},
+    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt', type: 'number'},
+    {title: "Credit Expiration Date", value: lc.creditExpirationDate, name: 'creditExpirationDate', type: 'date'},
   ];
   const extraDetails = [
     {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'},
     {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, name: 'creditDeliveryMeans', type: 'text'},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
-    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, name: 'draftsInvoiceValue', units: '%'},
+    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, name: 'draftsInvoiceValue', units: '%', type: 'number'},
     {title: "Credit Availability", value: lc.creditAvailability, name: 'creditAvailability', type: 'text'},
-    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", name: 'partialShipmentAllowed'},
-    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", name: 'transshipmentAllowed'},
+    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", name: 'partialShipmentAllowed', type: 'boolean'},
+    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", name: 'transshipmentAllowed', type: 'boolean'},
     {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', name: 'merchChargeLocation'},
-    {title: "Late Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate'},
+    {title: "Late Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate', type: 'date'},
     {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', name: 'chargeTransportationLocation'},
     {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', name: 'namedPlaceOfDestination'},
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
-    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", name: 'arrangingOwnInsurance'},
+    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", name: 'arrangingOwnInsurance', type: 'boolean'},
     {title: "Other Instructions", value: lc.otherInstructions, type: 'text', name: 'otherInstructions'},
     {title: "Merch Description", value: lc.merchDescription, type: 'text', name: 'merchDescription'},
     {title: "Transferable", value: (lc.transferableToClient
       ? `Yes, to ${lc.client.name}`
       : (lc.transferableToBeneficiary 
         ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
-        : "No"))
+        : "No")) // not editable for now
     }
   ]
 
@@ -401,13 +417,13 @@ const OrderDetails = ({ lc, setLc, refreshLc }) => {
       initialValues={initialValues}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
-        console.log(values)
-        const { latestVersionNotes } = values;
+        const { latestVersionNotes, ...lcValues } = values;
         const newLc = {};
-        Object.entries(values).forEach(pair => {
+        Object.entries(lcValues).forEach(pair => {
           const [k, v] = pair;
           if (v !== initialValues[k]) newLc[k] = v;
         })
+        console.log(newLc)
         makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
           lc: newLc, latestVersionNotes,
         }).then(() => {
