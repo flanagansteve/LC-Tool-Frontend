@@ -306,48 +306,48 @@ const TYPE_TO_COMPONENT = {
   text: TextInput,
 }
 
-const OrderDetail = ({ title, value, units, type, editing }) => {
+const OrderDetail = ({ title, value, units, type, name, editing }) => {
   const Input = TYPE_TO_COMPONENT[type];
   return (
   <>
     <AnalysisTitle>{title}</AnalysisTitle>
     <ODValue>
-      {editing && type ? <Input /> : (value || "N/A")}
+      {editing && type ? <Input name={name}/> : (value || "N/A")}
       {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
     </ODValue>
   </>
   )
 }
 
-const OrderDetails = ({ lc }) => {
+const OrderDetails = ({ lc, setLc }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
   const details = [
     {title: "Counterparty", value: get(lc, 'beneficiary.name')},
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')},
-    {title: "Payment Date", value: lc.dueDate, key: 'dueDate'},
-    {title: "Draft Presentation Date", value: lc.draftPresentationDate, key: 'draftPresentationDate'},
-    {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', key: 'unitsOfMeasure'},
-    {title: "Units Purchased", value: lc.unitsPurchased, key: 'unitsPurchased'},
-    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, key: 'creditAmt'},
-    {title: "Credit Expiration Date", value: lc.creditExpirationDate, key: 'creditExpirationDate'},
+    {title: "Payment Date", value: lc.dueDate, name: 'dueDate'},
+    {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate'},
+    {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', name: 'unitsOfMeasure'},
+    {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased'},
+    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt'},
+    {title: "Credit Expiration Date", value: lc.creditExpirationDate, name: 'creditExpirationDate'},
   ];
   const extraDetails = [
-    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', key: 'creditAmtVerbal'},
-    {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, key: 'creditDeliveryMeans', type: 'text'},
+    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'},
+    {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, name: 'creditDeliveryMeans', type: 'text'},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
-    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, key: 'draftsInvoiceValue', units: '%'},
-    {title: "Credit Availability", value: lc.creditAvailability, key: 'creditAvailability', type: 'text'},
-    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", key: 'partialShipmentAllowed'},
-    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", key: 'transshipmentAllowed'},
-    {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', key: 'merchChargeLocation'},
-    {title: "Late Charge Date", value: lc.lateChargeDate, key: 'lateChargeDate'},
-    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', key: 'chargeTransportationLocation'},
-    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', key: 'namedPlaceOfDestination'},
+    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, name: 'draftsInvoiceValue', units: '%'},
+    {title: "Credit Availability", value: lc.creditAvailability, name: 'creditAvailability', type: 'text'},
+    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", name: 'partialShipmentAllowed'},
+    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", name: 'transshipmentAllowed'},
+    {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', name: 'merchChargeLocation'},
+    {title: "Late Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate'},
+    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', name: 'chargeTransportationLocation'},
+    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', name: 'namedPlaceOfDestination'},
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
-    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", key: 'arrangingOwnInsurance'},
-    {title: "Other Instructions", value: lc.otherInstructions, type: 'text', key: 'otherInstructions'},
-    {title: "Merch Description", value: lc.merchDescription, type: 'text', key: 'merchDescription'},
+    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", name: 'arrangingOwnInsurance'},
+    {title: "Other Instructions", value: lc.otherInstructions, type: 'text', name: 'otherInstructions'},
+    {title: "Merch Description", value: lc.merchDescription, type: 'text', name: 'merchDescription'},
     {title: "Transferable", value: (lc.transferableToClient
       ? `Yes, to ${lc.client.name}`
       : (lc.transferableToBeneficiary 
@@ -355,9 +355,27 @@ const OrderDetails = ({ lc }) => {
         : "No"))
     }
   ]
+
+  // setup initial values
+  const initialValues = {};
+  ([...details, ...extraDetails]).forEach(d => d.name && d.type && (initialValues[d.name] = d.value));
+
   return (
     <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}>
-    <Formik>
+    <Formik
+      initialValues={initialValues}
+      onSubmit={(values, { setSubmitting }) => {
+        setSubmitting(true);
+        console.log(values)
+        makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+          lc: values, latestVersionNotes: '',
+        }).then(() => {
+            setSubmitting(false);
+            setLc(lc => ({ ...lc, ...values }));
+            setEditing(false);
+          })
+      }}
+    >
     {() => (
     <Form>
       {editing && <button type="submit">Submit Changes</button>}
@@ -532,8 +550,9 @@ const BankLCViewPage = ( {match} ) => {
     else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
   }
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
-  console.log(lc)
+  // console.log(lc)
 
+  // TODO change API to just return the new LC after we update it
   const refreshLc = () => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
       .then(json => setLc(json))
@@ -553,7 +572,7 @@ const BankLCViewPage = ( {match} ) => {
         </LeftColumn>
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
-          <OrderDetails lc={lc}/>
+          <OrderDetails lc={lc} setLc={setLc}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
