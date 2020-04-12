@@ -1,4 +1,5 @@
 import React, { useState, useContext } from "react";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
@@ -113,7 +114,7 @@ const LoginPage = ({ history, location }) => {
           onKey
         />
         <HelpEmail>
-          
+          New Here? <Link to="/bank/register">Create Account</Link>
         </HelpEmail>
         <FormFooter>
         <LoginErrorMessage showError={error}>

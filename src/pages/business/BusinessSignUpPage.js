@@ -7,6 +7,7 @@ import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { UserContext } from "../../utils/auth";
 import Button from "../../components/ui/Button";
+import { Link } from "react-router-dom";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -78,7 +79,14 @@ const BusinessSignUpPage = ({ history }) => {
   return (
     <BasicLayout
       title="Welcome! 🎉"
-      subtitle="Get your team up & running with lightning-fast LC processing."
+      subtitle={
+        <>
+      Get your team up & running with lightning-fast LC processing.
+      <br/><br/>
+      <span style={{fontStyle: 'italic'}}>Not a business? </span>
+      <Link to="/bank/register">Register as a bank</Link>
+      </>
+      }
     >
     <Formik
       initialValues={{
