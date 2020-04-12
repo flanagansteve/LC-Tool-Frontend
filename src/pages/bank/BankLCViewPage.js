@@ -3,12 +3,14 @@ import styled from "styled-components";
 import { Formik, Field, Form, useField } from "formik";
 import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faCheckCircle, faQuestionCircle, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
+import { faChevronDown, faChevronRight, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest, postFile } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
 import LCView from "../../components/lc/LCView";
 import Button from "../../components/ui/Button";
+
+// TODO break this file up into multiple files
 
 const TwoColumnHolder = styled.div`
   display: flex;
@@ -57,15 +59,14 @@ const PanelTitleAlt = styled.div`
   margin-right: 5px;
 `
 
-const Panel = ({ title, children, highlight, expand, setExpand, editing, setEditing, ...props }) => {
+const Panel = ({ title, children, highlight, expand, setExpand, editing, setEditing, canEdit, ...props }) => {
   const expandEnabled = [true, false].includes(expand);
-  const editingEnabled = [true, false].includes(editing);
   return (
     <BasicView {...props}>
       <PanelTitle highlight={highlight} clickable={expandEnabled}>
         {title}
         <div style={{ display: 'flex', alignItems: 'center' }}>
-        {editingEnabled && (editing
+        {canEdit && (editing
           ? (
             <>
             <PanelTitleAlt>Editing</PanelTitleAlt>
@@ -111,24 +112,46 @@ const PartyDisplayMessage = styled.div`
   text-align: center;
 `
 
-const OrderStatus = ({ lc, setLc, userType }) => {
+const APPROVALS_TO_STATE = {
+  client: {
+    message: "LC Application has been submitted and is waiting on issuer review.",
+    canEdit: ['issuer'],
+    canApprove: ['issuer'],
+  },
+  clientIssuer: {
+    message: "LC has been sent to beneficiary and is awaiting approval.",
+    canEdit: ['beneficiary'],
+    canApprove: ['beneficiary'],
+  },
+  // clientBene is not possible
+  issuer: {
+    message: "LC has been resent to client with issuer edits and is awaiting client approval.",
+    canEdit: ['client'],
+    canApprove: ['client'],
+  },
+  issuerBene: {
+    message: "LC has been resent to client with issuer and beneficiary edits and is awaiting client approval.",
+    canEdit: ['client'],
+    canApprove: ['client'],
+  },
+  bene: {
+    message: "LC has been resubmitted to issuer with beneficiary redlining and is awaiting their approval.",
+    canEdit: ['issuer'],
+    canApprove: ['issuer'],
+  }
+}
+
+const OrderStatusMessage = ({ stateName }) => {
+  const message = APPROVALS_TO_STATE[stateName].message;
+  return <div>{message}</div>
+}
+
+const OrderStatus = ({ lc, setLc, userType, stateName }) => {
   const approvals = [
     {name: 'Issuer:', value: get(lc, 'issuerApproved')},
     {name: 'Client:', value: get(lc, 'clientApproved')},
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ]
-  const Approved = ({ children }) => (
-    <div>
-    {children}
-    <FontAwesomeIcon icon={faCheckCircle} color="#4bb759" style={{ marginLeft: "10px"}}/>
-    </div>
-  )
-  const Pending = ({ children }) => (
-    <div>
-    {children}
-      <FontAwesomeIcon icon={faQuestionCircle} color="rgb(27, 108, 255)" style={{ marginLeft: "10px"}}/>
-    </div>
-  )
   const handleClickApprove = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true, complaints: '' })
       .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
@@ -145,13 +168,13 @@ const OrderStatus = ({ lc, setLc, userType }) => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true, complaints: '' })
       .then(json => setLc({ ...lc, drawn: true })); // TODO fix
   }
-  const userApproved = get(lc, `${userType}Approved`);
   const allApproved = approvals.every(a => a.value);
   const { paidOut, drawn, requested } = lc;
   return (
     <Panel title="Order Status" highlight>
       <OrderStatusWrapper>
-      {!userApproved && !allApproved && <center><Button onClick={handleClickApprove}>Approve</Button></center>}
+      {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
+        <center><Button onClick={handleClickApprove}>Approve</Button></center>}
       {allApproved && !paidOut && userType === "issuer" && <center><Button onClick={handleClickPayout} style={{marginBottom: '10px'}}>Pay Out</Button></center>}
       {allApproved && !requested && userType === "beneficiary" && <center><Button onClick={handleClickRequest}>Request</Button></center>}
       {allApproved && !drawn && userType === "beneficiary" && <center><Button onClick={handleClickDraw}>Draw</Button></center>}
@@ -159,14 +182,9 @@ const OrderStatus = ({ lc, setLc, userType }) => {
       {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid out.</PartyDisplayMessage>
         : drawn ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been drawn.</PartyDisplayMessage>
         : requested ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been requested.</PartyDisplayMessage> : null}
-      <PartyDisplayMessage>You are the {userType}.</PartyDisplayMessage>
+      <PartyDisplayMessage style={{fontWeight: '500'}}>You are the {userType}.</PartyDisplayMessage>
       {!allApproved && (
-        <>
-      <div style={{fontWeight: "500", fontSize: '14px', margin: '10px 0'}}>Approvals</div>
-        {approvals.map(a => (
-          a.value === true ? <Approved key={a.name}>{a.name}</Approved> : <Pending key={a.name}>{a.name}</Pending>
-        ))}
-        </>
+        <OrderStatusMessage stateName={stateName} />
       )}
       </OrderStatusWrapper>
     </Panel>
@@ -410,9 +428,10 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
   )
 }
 
-const OrderDetails = ({ lc, refreshLc }) => {
+const OrderDetails = ({ lc, refreshLc, stateName, userType }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
+  const canEdit = APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
   const details = [
     {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
@@ -464,7 +483,7 @@ const OrderDetails = ({ lc, refreshLc }) => {
   });
 
   return (
-    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}>
+    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing} canEdit={canEdit}>
     <Formik
       initialValues={initialValues}
       onSubmit={(values, { setSubmitting }) => {
@@ -659,6 +678,30 @@ const BankLCViewPage = ( {match} ) => {
     else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
   }
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
+  // get state of order
+  const a = {
+    issuer: get(lc, 'issuerApproved'),
+    client: get(lc, 'clientApproved'),
+    beneficiary: get(lc, 'beneficiaryApproved')
+  }
+  let stateName = 'all';
+  if (a.issuer === true) {
+    if (a.client === true) {
+      stateName = 'clientIssuer';
+    } else if (a.beneficiary === true) {
+      stateName = 'issuerBene';
+    } else {
+      stateName = 'issuer';
+    }
+  } else if (a.client === true) {
+    if (!a.beneficiary && !a.issuer) {
+      stateName = 'client';
+    }
+  } else if (a.beneficiary === true) {
+    if (!a.client && !a.issuer) {
+      stateName = 'beneficiary';
+    }
+  }
   // console.log(lc)
 
   // TODO change API to just return the new LC after we update it
@@ -676,13 +719,13 @@ const BankLCViewPage = ( {match} ) => {
     <LCView lc={lc}>
       <TwoColumnHolder>
         <LeftColumn>
-          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live}/>
+          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live} stateName={stateName}/>
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
-          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc}/>
+          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName} userType={userType}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
