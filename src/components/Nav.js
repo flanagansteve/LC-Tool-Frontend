@@ -199,15 +199,18 @@ const Nav = ({ user, setUser }) => {
       </StyledNavLink>
       {user && (
         <>
-          {user.bank && (
-            <StyledNavLink to={`/bank/${user.bank.id}/application`}>
-              Create an LC
+          {user.business &&
+            <StyledNavLink to={`/banks/`}>
+              Apply for an LC
             </StyledNavLink>
-          )}
-          <StyledNavLink to="/bank/lcs/apps">
+          }
+          {user.business &&<StyledNavLink to={`/business/lcs/`}>
+            Manage your LCs and Applications
+          </StyledNavLink>}
+          {user.bank && <StyledNavLink to="/bank/lcs/apps">
             Review LC Applications
-          </StyledNavLink>
-          <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>
+          </StyledNavLink>}
+          {user.bank && <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>}
         </>
       )}
       <LoginSection user={user} setUser={setUser} />
