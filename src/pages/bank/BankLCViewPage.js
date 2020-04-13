@@ -637,12 +637,11 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
     <div>
       Required Values: {requiredValues}
     </div>
-    {
-      linkToSubmittedDoc ? (
-        <div>
-          File: <a href={linkToSubmittedDoc}>order.pdf</a>
-        </div>
-      ) : live && (
+    <div>
+      {linkToSubmittedDoc && <div>
+        File: <a href={linkToSubmittedDoc}>order.pdf</a>
+      </div>}
+      {live && status !== "Approved" && (!linkToSubmittedDoc || rejected) && (
         <>
         <div style={{display: 'flex', flexDirection: 'column'}}>
         <FileUpload>
@@ -651,10 +650,10 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
         </FileUpload>
         </div>
         </>
-      )
-    }
+      )}
+    </div>
     </DocumentaryEntryFlex>
-    {live && userType === 'issuer' && !rejected && linkToSubmittedDoc &&
+    {live && userType === 'issuer' && status !== "Approved" && !rejected && linkToSubmittedDoc &&
       <DocumentaryEntryEvaluation>
         <Button onClick={approve}>Approve</Button>
         <Button onClick={reject}>Reject</Button>
