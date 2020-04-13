@@ -610,13 +610,13 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
   const approve = () => {
     makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
       approve: true, complaints: comments,
-    })
+    }).then(() => refreshLc());
   }
 
   const reject = () => {
     makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
       approve: false, complaints: comments,
-    })
+    }).then(() => refreshLc());
   }
 
   return (
