@@ -27,6 +27,7 @@ import BusinessEmployeeSignUpPage from './pages/business/BusinessEmployeeSignUpP
 import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBeneficiaryStatusPage';
 import ClientLCFeedPage from './pages/business/feeds/ClientLCFeedPage';
 import BeneficiaryLCFeedPage from './pages/business/feeds/BeneficiaryLCFeedPage';
+import BankDirectoryPage from './pages/business/feeds/BankDirectoryPage';
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -64,6 +65,7 @@ function App() {
           <Route path="/business/lcs/client/" component={ClientLCFeedPage} />
           <Route path="/business/lcs/beneficiary/" component={BeneficiaryLCFeedPage} />
           <Route path="/business/lcs/" component={ClientLCFeedPage} />
+          <Route path="/banks" component={BankDirectoryPage} />
           <Route path="/login" component={LoginPage}/>
           <Route path="/" component={HomePage} />
         </Switch>
