@@ -175,9 +175,9 @@ const OrderStatus = ({ lc, setLc, userType, stateName }) => {
       <OrderStatusWrapper>
       {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
         <center><Button onClick={handleClickApprove}>Approve</Button></center>}
-      {allApproved && !paidOut && userType === "issuer" && <center><Button onClick={handleClickPayout} style={{marginBottom: '10px'}}>Pay Out</Button></center>}
-      {allApproved && !requested && userType === "beneficiary" && <center><Button onClick={handleClickRequest}>Request</Button></center>}
-      {allApproved && !drawn && userType === "beneficiary" && <center><Button onClick={handleClickDraw}>Draw</Button></center>}
+      {allApproved && !paidOut && userType === "issuer" && <center><Button onClick={handleClickPayout} style={{marginBottom: '15px'}}>Pay Out</Button></center>}
+      {allApproved && !requested && userType === "beneficiary" && <center><Button onClick={handleClickRequest} style={{marginBottom: '15px'}}>Request</Button></center>}
+      {allApproved && !drawn && userType === "beneficiary" && <center><Button onClick={handleClickDraw} style={{marginBottom: '15px'}}>Draw</Button></center>}
       {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
       {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid out.</PartyDisplayMessage>
         : drawn ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been drawn.</PartyDisplayMessage>
@@ -584,9 +584,19 @@ const FileUpload = styled.label`
   cursor: pointer;
 `
 
+const DocumentaryEntryEvaluation = styled.div`
+  display: flex;
+  margin-top: 10px;
+
+  > :not(:last-child) {
+    margin-right: 10px;
+  }
+`
+
 const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, ...props }) => {
-  const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues } = docReq;
+  const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected } = docReq;
   const [expanded, setExpanded] = useState(false);
+  const [comments, setComments] = useState('');
 
   const uploadFile = (file) => {
     if (!file) {
@@ -595,6 +605,18 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
     }
     postFile(`/lc/${lcid}/doc_req/${id}/`, file)
       .then(() => refreshLc());
+  }
+
+  const approve = () => {
+    makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
+      approve: true, complaints: comments,
+    })
+  }
+
+  const reject = () => {
+    makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
+      approve: false, complaints: comments,
+    })
   }
 
   return (
@@ -632,6 +654,16 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
       )
     }
     </DocumentaryEntryFlex>
+    {live && userType === 'issuer' && !rejected && linkToSubmittedDoc &&
+      <DocumentaryEntryEvaluation>
+        <Button onClick={approve}>Approve</Button>
+        <Button onClick={reject}>Reject</Button>
+        <div>
+          <SmallHeader>Comments</SmallHeader>
+          <input type="text" value={comments} onChange={(e) => setComments(e.target.value)}/>
+        </div>
+      </DocumentaryEntryEvaluation>
+    }
     </ExpandedDocumentaryEntry>}
     </DocumentaryEntryWrapper>
   )
