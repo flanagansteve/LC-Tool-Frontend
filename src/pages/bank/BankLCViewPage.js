@@ -730,7 +730,7 @@ const BankLCViewPage = ( {match} ) => {
     }
   } else if (a.beneficiary === true) {
     if (!a.client && !a.issuer) {
-      stateName = 'beneficiary';
+      stateName = 'bene';
     }
   }
   // console.log(lc)
