@@ -62,19 +62,19 @@ const SearchWrapper = styled.div`
   border: 1px solid #cdcdcd;
 `
 
-const Filter = ({ lcs, setShownLcs }) => {
+const Filter = ({ banks, setShownBanks }) => {
   const [filter, setFilter] = useState(null);
   useDebouncedEffect(() => {
     if (filter === null) return;
-    setShownLcs(lcs.filter(lc => lc.client.name.toLowerCase().includes(filter.toLowerCase())));
-  }, [filter, lcs], 200)
+    setShownBanks(banks.filter(bank => bank.name.toLowerCase().includes(filter.toLowerCase())));
+  }, [filter, banks], 200)
   return (
     <div style={{ display: 'flex', alignItems: 'center' }}>
     <SearchWrapper>
     <FontAwesomeIcon icon={faSearch}  style={{ padding: "0 10px"}} />
       <Search type="text" onChange={(e) => setFilter(e.target.value)} />
     </SearchWrapper>
-      <span style={{ fontStyle: 'italic', marginLeft: '10px', fontWeight: 300, color: '#454545' }}>Start typing to filter by client</span>
+      <span style={{ fontStyle: 'italic', marginLeft: '10px', fontWeight: 300, color: '#454545' }}>Start typing to filter by name</span>
     </div>
   )
 }
@@ -89,10 +89,6 @@ const BankListEntry = ({ bank }) => {
   )
 }
 
-// The only different between this and the bank lc feed
-// is setting business id based on the user's business field
-// + addition of link to client or bene view
-// This could almost certainly be abstracted
 const BankDirectory = ({ title, user, url, hideSearch }) => {
   const [banks, setBanks] = useState(null);
   const [shownBanks, setShownBanks] = useState(null);
