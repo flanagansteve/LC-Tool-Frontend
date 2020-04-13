@@ -681,7 +681,7 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
       {docReqs ? docReqs.map(d =>
         <DocumentaryRequirement
           documentaryRequirement={d}
-          status={d.satisfied ? "Approved" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
+          status={d.satisfied ? "Approved" : d.rejected ? "Rejected" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
           lcid={lc.id}
           live={live}
           userType={userType}
