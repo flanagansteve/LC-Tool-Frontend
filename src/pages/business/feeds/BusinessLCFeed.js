@@ -86,7 +86,7 @@ const LCListEntry = ({ lc }) => {
         <ListEntryField>{lc.client.name}</ListEntryField>
         <ListEntryField>{get(lc, 'beneficiary.name') || "Unknown"}</ListEntryField>
         <ListEntryField>{lc.applicationDate}</ListEntryField>
-        <ListEntryField>{lc.dueDate || "N/A"}</ListEntryField>
+        <ListEntryField>{lc.draftPresentationDate || "N/A"}</ListEntryField>
         <ListEntryField>{lc.creditAmt || "N/A"}</ListEntryField>
       </ListEntryWrapper>
       </StyledLink>
@@ -125,7 +125,7 @@ const BusinessLCFeed = ({ title, user, url, hideSearch, currentlyOnClient }) => 
         <ListEntryField>Client</ListEntryField>
         <ListEntryField>Beneficiary</ListEntryField>
         <ListEntryField>Applied</ListEntryField>
-        <ListEntryField>Due</ListEntryField>
+        <ListEntryField>Drafts Due</ListEntryField>
         <ListEntryField>Transaction Size</ListEntryField>
       </ListEntryWrapper>
     </div>
