@@ -2,13 +2,13 @@ import React, { useContext, useState, useEffect } from "react";
 import styled from "styled-components";
 import { Formik, Field, Form, useField } from "formik";
 import { get } from "lodash";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
-import { makeAPIRequest, postFile } from '../../utils/api';
+import { makeAPIRequest } from '../../utils/api';
 import { useAuthentication, UserContext } from "../../utils/auth";
 import LCView from "../../components/lc/LCView";
 import Button from "../../components/ui/Button";
+import DocumentaryRequirements from './DocumentaryRequirements';
+import Panel from './Panel';
 
 // TODO break this file up into multiple files
 
@@ -27,83 +27,8 @@ const RightColumn = styled.div`
   flex-grow: 6;
 `
 
-const BasicView = styled.div`
-  border: 1px solid #dfdfdf;
-  background-color: #fff;
-  border-radius: 0 0 20px 20px;
-  margin-bottom: 30px;
-`
-
-const PanelTitle = styled.h2`
-  background-color: ${(props) => props.highlight ? `rgb(27, 108, 255)` : `rgb(199, 222, 255)`};
-  border-bottom: 1px solid #dfdfdf;
-  padding: 15px 20px;
-  display: flex;
-  justify-content: space-between;
-  ${(props) => props.clickable && `
-    cursor: pointer;
-  `}
-  ${(props) => props.highlight && `
-    font-weight: 500;
-    color: #fff;
-  `}
-`
-
-const PanelBody = styled.div`
-  padding: 15px 20px;
-  line-height: 1.25;
-`
-
-const PanelTitleAlt = styled.div`
-  color: rgb(27, 108, 255);
-  margin-right: 5px;
-`
-
-const Panel = ({ title, children, highlight, expand, setExpand, editing, setEditing, canEdit, ...props }) => {
-  const expandEnabled = [true, false].includes(expand);
-  return (
-    <BasicView {...props}>
-      <PanelTitle highlight={highlight} clickable={expandEnabled}>
-        {title}
-        <div style={{ display: 'flex', alignItems: 'center' }}>
-        {canEdit && (editing
-          ? (
-            <>
-            <PanelTitleAlt>Editing</PanelTitleAlt>
-            <span
-              style={{fontStyle: 'italic', fontSize: '14px', color: '#555'}}
-              onClick={() => setEditing(false)}
-              >Cancel</span>
-            </>
-          )
-          : <FontAwesomeIcon
-            icon={faPencilAlt}
-            onClick={() => setEditing(true)}
-            style={{
-              color: 'rgb(27, 108, 255)',
-            }}
-            />
-        )}
-        {expandEnabled &&
-          <FontAwesomeIcon
-            icon={expand ? faChevronDown : faChevronRight}
-            onClick={() => setExpand(e => !e)}
-            style={{
-              color: 'rgb(27, 108, 255)',
-              padding: '0 10px'
-            }}
-            />
-        }
-        </div>
-      </PanelTitle>
-      <PanelBody>{children}</PanelBody>
-    </BasicView>
-  )
-}
-
 const OrderStatusWrapper = styled.div`
   font-weight: 300;
-
 `
 
 const PartyDisplayMessage = styled.div`
@@ -230,7 +155,7 @@ const ClientInformation = ({ lc }) => {
         <h1 style={{ fontWeight: "500", margin: "15px 0"}}>Order History</h1>
         {clientOrders && clientOrders.map(order => (
           <HistoryOrder key={order.id}>
-            <a href={`/bank/lc/${order.id}`}>{order.purchasedItem || `LC #${order.id}`}</a>
+            <a href={`/lc/${order.id}`}>{order.purchasedItem || `LC #${order.id}`}</a>
             {lc.paidOut ? <span>{order.dueDate}</span> : <span>{order.applicationDate}</span>}
           </HistoryOrder>
         ))}
@@ -531,172 +456,7 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
   );
 }
 
-const DocumentaryEntryFlex = styled.div`
-  display: flex;
-  align-items: center;
-  > :nth-child(1) {
-    min-width: 60%;
-  }
-  > :nth-child(2) {
-    min-width: 20%;
-  }
-  > :nth-child(3) {
-    min-width: 20%;
-  }
-  ${props => props.clickable && `cursor: pointer;`}
-`
-
-const DocumentaryEntryWrapper = styled.div`
-  border-bottom: 1px solid #cdcdcd;
-`
-
-const DocReqTitle = styled.div`
-  font-weight: 500;
-  font-size: 24px;
-  margin-bottom: 20px;
-  margin-top: 5px;
-  display: flex;
-  align-items: center;
-`
-
-const DocReqDate = styled.div`
-  font-size: 14px;
-
-`
-
-const DocReqStatus = styled.div`
-  font-size: 14px;
-  font-weight: 500;
-`
-
-const ExpandedDocumentaryEntry = styled.div`
-  padding-bottom: 10px;
-  font-size: 14px;
-  font-weight: 300;
-  line-height: 1.5;
-`
-
-const FileUpload = styled.label`
-  padding: 5px 10px;
-  border: 1px solid #dcdcdc;
-  max-width: 70%;
-  cursor: pointer;
-`
-
-const DocumentaryEntryEvaluation = styled.div`
-  display: flex;
-  margin-top: 10px;
-
-  > :not(:last-child) {
-    margin-right: 10px;
-  }
-`
-
-const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, ...props }) => {
-  const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected } = docReq;
-  const [expanded, setExpanded] = useState(false);
-  const [comments, setComments] = useState('');
-
-  const uploadFile = (file) => {
-    if (!file) {
-      console.error('No file found.');
-      return;
-    }
-    postFile(`/lc/${lcid}/doc_req/${id}/`, file)
-      .then(() => refreshLc());
-  }
-
-  const approve = () => {
-    makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
-      approve: true, complaints: comments,
-    }).then(() => refreshLc());
-  }
-
-  const reject = () => {
-    makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
-      approve: false, complaints: comments,
-    }).then(() => refreshLc());
-  }
-
-  return (
-    <DocumentaryEntryWrapper>
-    <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
-      <DocReqTitle style={{ margin: "15px 0" }}>
-        {title}
-          <FontAwesomeIcon
-            icon={expanded ? faChevronDown : faChevronRight}
-            style={{color: 'rgb(27, 108, 255)', marginLeft: '10px'}}
-            />
-      </DocReqTitle>
-      <DocReqDate>{dueDate}</DocReqDate>
-      <DocReqStatus>{status}</DocReqStatus>
-    </DocumentaryEntryFlex>
-    {expanded && <ExpandedDocumentaryEntry>
-    <DocumentaryEntryFlex>
-    <div>
-      Required Values: {requiredValues}
-    </div>
-    <div>
-      {linkToSubmittedDoc && <div>
-        File: <a href={linkToSubmittedDoc}>order.pdf</a>
-      </div>}
-      {live && status !== "Approved" && (!linkToSubmittedDoc || rejected) && (
-        <>
-        <div style={{display: 'flex', flexDirection: 'column'}}>
-        <FileUpload>
-            Upload File
-            <input type="file" onChange={e => uploadFile(e.target.files[0])} style={{display: 'none'}}/>
-        </FileUpload>
-        </div>
-        </>
-      )}
-    </div>
-    </DocumentaryEntryFlex>
-    {live && userType === 'issuer' && status !== "Approved" && !rejected && linkToSubmittedDoc &&
-      <DocumentaryEntryEvaluation>
-        <Button onClick={approve}>Approve</Button>
-        <Button onClick={reject}>Reject</Button>
-        <div>
-          <SmallHeader>Comments</SmallHeader>
-          <input type="text" value={comments} onChange={(e) => setComments(e.target.value)}/>
-        </div>
-      </DocumentaryEntryEvaluation>
-    }
-    </ExpandedDocumentaryEntry>}
-    </DocumentaryEntryWrapper>
-  )
-}
-
-const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
-  const docReqs = lc.documentaryrequirementSet;
-  return (
-    <Panel title="Documentary Requirements">
-      <DocumentaryEntryFlex>
-        <SmallHeader style={{margin: "0"}}>Document Title</SmallHeader>
-        <SmallHeader style={{margin: "0"}}>Recieve By</SmallHeader>
-        <SmallHeader style={{margin: "0"}}>Status</SmallHeader>
-      </DocumentaryEntryFlex>
-      {docReqs ? docReqs.map(d =>
-        <DocumentaryRequirement
-          documentaryRequirement={d}
-          status={d.satisfied ? "Approved" : d.rejected ? "Rejected" : d.linkToSubmittedDoc ? "Pending" : "Incomplete"}
-          lcid={lc.id}
-          live={live}
-          userType={userType}
-          refreshLc={refreshLc}
-          key={d.docName}/>
-        ) : (
-          <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
-            There are no documentary requirements for this LC.
-          </div>
-        )
-      }
-
-    </Panel>
-  );
-}
-
-const BankLCViewPage = ( {match} ) => {
+const LCViewPage = ( {match} ) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
   const [user] = useContext(UserContext);
   const [lc, setLc] = useState(null);
@@ -764,4 +524,4 @@ const BankLCViewPage = ( {match} ) => {
 
 }
 
-export default BankLCViewPage
+export default LCViewPage;

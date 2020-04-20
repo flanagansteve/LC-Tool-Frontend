@@ -81,7 +81,7 @@ const Filter = ({ lcs, setShownLcs }) => {
 const LCListEntry = ({ lc }) => {
   // NOTE: due_date and credit_amt will only be available for DigitalLCs
   return (
-      <StyledLink to={`/bank/lc/${lc.id}`}>
+      <StyledLink to={`/lc/${lc.id}`}>
       <ListEntryWrapper>
         <ListEntryField>{lc.client.name}</ListEntryField>
         <ListEntryField>{get(lc, 'beneficiary.name') || "Unknown"}</ListEntryField>
