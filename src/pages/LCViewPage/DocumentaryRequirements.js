@@ -7,6 +7,38 @@ import { makeAPIRequest, postFile } from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
 
+const ModalBackground = styled.div`
+  ${props => !props.show && `display: none;`}
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0,0,0,0.4); 
+`
+
+const ModalWrapper = styled.div`
+  max-width: 70%;
+  background-color: #fff;
+  border-radius: 10px;
+  margin: 20% auto;
+  padding: 20px;
+`
+
+const Modal = ({ show, docReq, hideModal }) => {
+  if (!docReq) return null;
+  return (
+    <ModalBackground show={show}>
+      <ModalWrapper>
+        <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
+        Here's some text about the doc req.
+        <Button onClick={hideModal}>Hide</Button>
+      </ModalWrapper>
+    </ModalBackground>
+  )
+}
+
 const DocumentaryEntryFlex = styled.div`
   display: flex;
   align-items: center;
@@ -37,7 +69,6 @@ const DocReqTitle = styled.div`
 
 const DocReqDate = styled.div`
   font-size: 14px;
-
 `
 
 const DocReqStatus = styled.div`
@@ -74,7 +105,7 @@ const SmallHeader = styled.div`
   margin-right: 50px;
 `
 
-const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, ...props }) => {
+const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, showModal, ...props }) => {
   const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected } = docReq;
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState('');
@@ -102,54 +133,98 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
 
   return (
     <DocumentaryEntryWrapper>
-    <DocumentaryEntryFlex clickable onClick={() => setExpanded(e => !e)} {...props}>
-      <DocReqTitle style={{ margin: "15px 0" }}>
-        {title}
+      <DocumentaryEntryFlex
+        clickable
+        onClick={() => setExpanded((e) => !e)}
+        {...props}
+      >
+        <DocReqTitle style={{ margin: "15px 0" }}>
+          {title}
           <FontAwesomeIcon
             icon={expanded ? faChevronDown : faChevronRight}
-            style={{color: 'rgb(27, 108, 255)', marginLeft: '10px'}}
-            />
-      </DocReqTitle>
-      <DocReqDate>{dueDate}</DocReqDate>
-      <DocReqStatus>{status}</DocReqStatus>
-    </DocumentaryEntryFlex>
-    {expanded && <ExpandedDocumentaryEntry>
-    <DocumentaryEntryFlex>
-    <div>
-      Required Values: {requiredValues}
-    </div>
-    <div>
-      {linkToSubmittedDoc && <div>
-        File: <a href={linkToSubmittedDoc}>order.pdf</a>
-      </div>}
-      {live && status !== "Approved" && (!linkToSubmittedDoc || rejected) && (
-        <>
-        <div style={{display: 'flex', flexDirection: 'column'}}>
-        <FileUpload>
-            Upload File
-            <input type="file" onChange={e => uploadFile(e.target.files[0])} style={{display: 'none'}}/>
-        </FileUpload>
-        </div>
-        </>
+            style={{ color: "rgb(27, 108, 255)", marginLeft: "10px" }}
+          />
+        </DocReqTitle>
+        <DocReqDate>{dueDate}</DocReqDate>
+        <DocReqStatus>{status}</DocReqStatus>
+      </DocumentaryEntryFlex>
+      {expanded && (
+        <ExpandedDocumentaryEntry>
+          <DocumentaryEntryFlex>
+            <div>
+              <div style={{ marginRight: "30px" }}>
+                Required Values: {requiredValues}
+              </div>
+            </div>
+            <div>
+              <Button style={{ marginRight: "10px", minWidth: '80px' }}
+                onClick={() => showModal(docReq)}>View</Button>
+            </div>
+            <div>
+              {linkToSubmittedDoc && (
+                <div>
+                  File: <a href={linkToSubmittedDoc}>order.pdf</a>
+                </div>
+              )}
+              {live &&
+                status !== "Approved" &&
+                (!linkToSubmittedDoc || rejected) && (
+                  <>
+                    <div style={{ display: "flex", flexDirection: "column" }}>
+                      <FileUpload>
+                        Upload File
+                        <input
+                          type="file"
+                          onChange={(e) => uploadFile(e.target.files[0])}
+                          style={{ display: "none" }}
+                        />
+                      </FileUpload>
+                    </div>
+                  </>
+                )}
+            </div>
+          </DocumentaryEntryFlex>
+          {live &&
+            userType === "issuer" &&
+            status !== "Approved" &&
+            !rejected &&
+            linkToSubmittedDoc && (
+              <DocumentaryEntryEvaluation>
+                <Button onClick={approve}>Approve</Button>
+                <Button onClick={reject}>Reject</Button>
+                <div>
+                  <SmallHeader>Comments</SmallHeader>
+                  <input
+                    type="text"
+                    value={comments}
+                    onChange={(e) => setComments(e.target.value)}
+                  />
+                </div>
+              </DocumentaryEntryEvaluation>
+            )}
+        </ExpandedDocumentaryEntry>
       )}
-    </div>
-    </DocumentaryEntryFlex>
-    {live && userType === 'issuer' && status !== "Approved" && !rejected && linkToSubmittedDoc &&
-      <DocumentaryEntryEvaluation>
-        <Button onClick={approve}>Approve</Button>
-        <Button onClick={reject}>Reject</Button>
-        <div>
-          <SmallHeader>Comments</SmallHeader>
-          <input type="text" value={comments} onChange={(e) => setComments(e.target.value)}/>
-        </div>
-      </DocumentaryEntryEvaluation>
-    }
-    </ExpandedDocumentaryEntry>}
     </DocumentaryEntryWrapper>
-  )
+  );
+}
+
+const useModal = () => {
+  const [isModalShowing, setIsModalShowing] = useState(false);
+  const [modalDocReq, setModalDocReq] = useState(null);
+
+  return {
+    showModal: (docReq) => {
+      setIsModalShowing(true);
+      setModalDocReq(docReq);
+    },
+    hideModal: () => setIsModalShowing(false),
+    isModalShowing,
+    modalDocReq
+  }
 }
 
 const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
+  const { showModal, hideModal, isModalShowing, modalDocReq } = useModal();
   const docReqs = lc.documentaryrequirementSet;
   return (
     <Panel title="Documentary Requirements">
@@ -166,14 +241,16 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
           live={live}
           userType={userType}
           refreshLc={refreshLc}
-          key={d.docName}/>
+          key={d.docName}
+          showModal={showModal}
+          />
         ) : (
           <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
             There are no documentary requirements for this LC.
           </div>
         )
       }
-
+      <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal}/>
     </Panel>
   );
 }
