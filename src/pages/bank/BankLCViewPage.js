@@ -428,10 +428,10 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
   )
 }
 
-const OrderDetails = ({ lc, refreshLc, stateName, userType }) => {
+const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
-  const canEdit = APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
+  const canEdit = !live && APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
   const details = [
     {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
@@ -469,7 +469,6 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType }) => {
   // setup initial values
   const initialValues = { latestVersionNotes: '' };
   const allDetails = ([...details, ...extraDetails]);
-  console.log(allDetails)
   allDetails.forEach(d => {
     if (!d.name) return;
     switch (d.type) {
@@ -756,7 +755,7 @@ const BankLCViewPage = ( {match} ) => {
         </LeftColumn>
         <RightColumn>
           {userType === 'issuer' && <Financials lc={lc}/>}
-          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName} userType={userType}/>
+          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName} userType={userType} live={live}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
