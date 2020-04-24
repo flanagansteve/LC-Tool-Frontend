@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
+import { Document } from 'react-pdf';
+import { pdfjs } from 'react-pdf';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 
 import { makeAPIRequest, postFile } from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
+pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const ModalBackground = styled.div`
   ${props => !props.show && `display: none;`}
@@ -23,17 +26,71 @@ const ModalWrapper = styled.div`
   background-color: #fff;
   border-radius: 10px;
   margin: 20% auto;
-  padding: 20px;
+  padding: 20px 30px;
+  display: flex;
+  justify-content: space-around;
+`
+
+const ModalLeftColumn = styled.div`
+  flex-grow: 1;
+  flex-basis: 40%;
+`
+
+const ModalRightColumn = styled.div`
+  flex-grow: 1;
+  flex-basis: 50%;
 `
 
 const Modal = ({ show, docReq, hideModal }) => {
+  const [file, setFile] = useState(null);
+  const lcid = docReq && docReq.lcid;
+  useEffect(() => {
+    if (!docReq) return;
+    makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/file/`, 'GET', {}, true)
+      // .then(res => console.log(res.body))
+      .then((response) => {
+        const reader = response.body.getReader();
+        let buffer = new Uint8Array();
+        const push = () => {
+          // "done" is a Boolean and value a "Uint8Array"
+          return reader.read().then(({ done, value }) => {
+            // Is there no more data to read?
+            if (done) {
+              // Tell the browser that we have finished sending data
+              setFile({data: buffer})
+              return;
+            }
+  
+            // Get the data and send it to the browser via the controller
+            let newBuffer = new Uint8Array(buffer.length + value.length);
+            newBuffer.set(buffer);
+            newBuffer.set(value, buffer.length);
+            buffer = newBuffer;
+            push();
+          });
+        };
+        push();
+      })
+  }, [docReq, lcid])
   if (!docReq) return null;
+  const link = docReq.linkToSubmittedDoc;
   return (
     <ModalBackground show={show}>
       <ModalWrapper>
-        <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
-        Here's some text about the doc req.
-        <Button onClick={hideModal}>Hide</Button>
+        <ModalLeftColumn>
+          <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
+          Here's some text about the doc req.
+        </ModalLeftColumn>
+        <ModalRightColumn>
+          <DocReqTitle style={{marginTop: '0'}}>PDF File</DocReqTitle>
+          {file && <Document file={file} />}
+          <div>
+            <a href={link}>order.pdf</a>
+          </div>
+          <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
+            <Button onClick={hideModal}>Close</Button>
+          </div>
+        </ModalRightColumn>
       </ModalWrapper>
     </ModalBackground>
   )
@@ -157,8 +214,8 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
               </div>
             </div>
             <div>
-              <Button style={{ marginRight: "10px", minWidth: '80px' }}
-                onClick={() => showModal(docReq)}>View</Button>
+              {live && linkToSubmittedDoc && <Button style={{ marginRight: "10px", minWidth: '80px' }}
+                onClick={() => showModal(docReq, lcid)}>View</Button>}
             </div>
             <div>
               {linkToSubmittedDoc && (
@@ -213,9 +270,9 @@ const useModal = () => {
   const [modalDocReq, setModalDocReq] = useState(null);
 
   return {
-    showModal: (docReq) => {
+    showModal: (docReq, lcid) => {
       setIsModalShowing(true);
-      setModalDocReq(docReq);
+      setModalDocReq({...docReq, lcid});
     },
     hideModal: () => setIsModalShowing(false),
     isModalShowing,

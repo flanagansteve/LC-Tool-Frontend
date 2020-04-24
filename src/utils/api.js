@@ -43,10 +43,13 @@ export const makeAPIRequest = async (
   returnFullResponse
 ) => {
   const requestURL = API_BASEURL + url;
-  const response = await fetch(requestURL, {
+  const fetchParams = {
     method: requestType,
-    body: JSON.stringify(objectToSnakeCase(params))
-  });
+  };
+  if (requestType && requestType !== "GET") {
+    fetchParams.body = JSON.stringify(objectToSnakeCase(params));
+  }
+  const response = await fetch(requestURL, fetchParams);
   if (response.status === 401 || response.status === 403) {
     // history.push("/login");
     // // TODO show this error to the user

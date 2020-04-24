@@ -4,7 +4,6 @@ import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
 const BankLCAppFeedPage = ({ match }) => {
-  console.log(match)
   useAuthentication('/bank/lcs');
   const [user] = useContext(UserContext);
   const bankid = get(user, ['bank', 'id']);
