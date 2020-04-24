@@ -4,11 +4,11 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 
 const StyledButton = styled.button`
-  background-color: ${(props) => props.disabled ? `rgb(124, 165, 255)` : `rgb(27, 108, 255)`};
+  background-color: ${(props) => props.unselected ? `#fff`:`rgb(27, 108, 255)`};
+  color: ${(props) => props.unselected ? `rgb(27, 108, 255)`:`#fff`};
   border-radius: 5px;
   padding: 10px;
-  color: #fff;
-  border: none;
+  border: 1px solid rgb(27, 108, 255);
   font-size: 16px;
   cursor: pointer;
 `
