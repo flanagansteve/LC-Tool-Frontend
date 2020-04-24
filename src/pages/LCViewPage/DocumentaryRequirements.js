@@ -88,7 +88,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc }) => {
           <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF DocReq</Button>
         </ModalButtonsWrapper>
         {type === MODAL_TYPES.CREATE
-          ? <CreateModal docReq={docReq}/>
+          ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
           : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
         }
         <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
@@ -368,7 +368,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   checkbox: array().of(string()),
 }
 
-const CreateModal = ({ docReq }) => {
+const CreateModal = ({ docReq, hideModal, refreshLc }) => {
   const [fields, setFields] = useState([]);
   useEffect(() => {
     if (!docReq) return undefined;
@@ -395,30 +395,41 @@ const CreateModal = ({ docReq }) => {
       validationSchema={validationSchema}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
-        // const app = {};
-        // Object.entries(values).forEach((kv) => {
-        //   const [key, value] = kv;
-        //   if (value === null) {
-        //   } else {
-        //     app[key] = value;
-        //   }
-        // });
-        // makeAPIRequest(`/lc/by_bank/${match.params.bankid}/`, 'POST', app, true)
-        //   .then(async res => {
-        //     let text = await res.text();
-        //     if (res.status === 200) {
-        //       localStorage.removeItem(`lc/${match.params.bankid}`);
-        //       setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
-        //     } else {
-        //       if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
-        //       localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
-        //       setStatus({status: "error", message: `Error submitting form: ${text}`});
-        //     }
-        //     })
-        setSubmitting(false);
+        const app = {};
+        Object.entries(values).forEach((kv) => {
+          const [key, value] = kv;
+          if (value === null) {
+          } else {
+            app[key] = value;
+          }
+        });
+        const { lcid, id } = docReq;
+        makeAPIRequest(`/lc/${lcid}/doc_req/${id}/`, 'POST', app, true)
+          .then(() => hideModal())
+          .then(() => refreshLc())
+          .then(() => setSubmitting(false));
+          // .then(async res => {
+          //   let text = await res.text();
+          //   if (res.status === 200) {
+          //     localStorage.removeItem(`lc/${match.params.bankid}`);
+          //     setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
+          //   } else {
+          //     if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
+          //     localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
+          //     setStatus({status: "error", message: `Error submitting form: ${text}`});
+          //   }
+          //   })
       }}
     >
     {({ isSubmitting }) => (
+      isSubmitting ? <MoonLoader
+            size={45}
+            color={"rgb(27, 108, 255)"}
+            loading={true}
+            css={css`
+              margin: 0 auto;
+            `}
+          /> : (
       <Form>
       <DocReqTitle>Create {docReq.docName}</DocReqTitle>
       {fields && fields.map(question => {
@@ -429,6 +440,8 @@ const CreateModal = ({ docReq }) => {
       <Button disabled={isSubmitting} type="submit">Create</Button>
       </div>
       </Form>
+
+          )
     )}
       </Formik>
   )
