@@ -4,6 +4,8 @@ import { Formik, Field, Form, useField } from 'formik';
 import { object, string, number, boolean, array, date } from 'yup';
 import { Document } from 'react-pdf';
 import { pdfjs } from 'react-pdf';
+import MoonLoader from 'react-spinners/MoonLoader'
+import { css } from "@emotion/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faCheckSquare } from "@fortawesome/free-solid-svg-icons";
 
@@ -21,6 +23,7 @@ const ModalBackground = styled.div`
   width: 100%;
   height: 100%;
   background-color: rgba(0,0,0,0.4); 
+  overflow: scroll;
 `
 
 const ModalWrapper = styled.div`
@@ -52,13 +55,23 @@ const ModalButtonsWrapper = styled.div`
   > :not(:last-child) {
     margin-right: 10px;
   }
-  margin-bottom: 20px;
+  margin: 20px auto 30px;
 `
 
 const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'}
 
 const Modal = ({ show, docReq, hideModal, refreshLc }) => {
   const [type, setType] = useState(MODAL_TYPES.CREATE);
+  if (docReq && docReq.type === 'generic') return (
+    <ModalBackground show={show}>
+    <ModalWrapper>
+      <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
+      <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
+        <Button onClick={hideModal}>Close</Button>
+      </div>
+    </ModalWrapper>
+    </ModalBackground>
+  );
   return (
     <ModalBackground show={show}>
       {docReq && docReq.linkToSubmittedDoc ? (
@@ -79,7 +92,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc }) => {
           : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
         }
         <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-          <Button onClick={hideModal}>Close</Button>
+          <Button onClick={hideModal}>Cancel</Button>
         </div>
       </ModalWrapper>
       )}
@@ -356,37 +369,16 @@ const TYPE_TO_VALIDATION_SCHEMA = {
 }
 
 const CreateModal = ({ docReq }) => {
+  const [fields, setFields] = useState([]);
   useEffect(() => {
     if (!docReq) return undefined;
-    makeAPIRequest(`/lc/supported_createable_docs/${docReq.type}/`)
-      .then(d => console.log(d))
-  })
+    makeAPIRequest(`/lc/supported_creatable_docs/${docReq.type}/`)
+      .then(d => setFields(d));
+  }, [docReq])
   if (!docReq) return null;
   const schemaObj = {};
   let initialValues = {};
   let validationSchema = null;
-  const fields = [
-    {
-      questionText: 'Billing Name',
-      key: 'b1',
-      type: 'text'
-    },
-    {
-      questionText: 'Billing Name',
-      key: 'b2',
-      type: 'decimal'
-    },
-    {
-      questionText: 'Billing Name',
-      key: 'b3',
-      type: 'boolean'
-    },
-    {
-      questionText: 'Billing Name',
-      key: 'b4',
-      type: 'date'
-    },
-  ]
   fields.forEach(q => {
     initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
   });
@@ -397,7 +389,7 @@ const CreateModal = ({ docReq }) => {
     }
   });
   validationSchema = object().shape(schemaObj);
-  return (
+  return fields.length > 0 && (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
@@ -428,12 +420,13 @@ const CreateModal = ({ docReq }) => {
     >
     {({ isSubmitting }) => (
       <Form>
+      <DocReqTitle>Create {docReq.docName}</DocReqTitle>
       {fields && fields.map(question => {
         const Component = TYPE_TO_COMPONENT[question.type];
         return <Component key={question.key} question={question} />;
       })}
       <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
-      <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
+      <Button disabled={isSubmitting} type="submit">Create</Button>
       </div>
       </Form>
     )}
@@ -442,20 +435,32 @@ const CreateModal = ({ docReq }) => {
 }
 
 const UploadModal = ({ docReq, refreshLc, hideModal }) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const uploadFile = (file) => {
     if (!file) {
       console.error('No file found.');
       return;
     }
+    setIsSubmitting(true);
     const { lcid, id } = docReq;
     postFile(`/lc/${lcid}/doc_req/${id}/`, file)
       .then(() => hideModal())
-      .then(() => refreshLc());
+      .then(() => refreshLc())
+      .then(() => setIsSubmitting(false));
   }
 
   return (
     <>
-      <div style={{ display: "flex", flexDirection: "column" }}>
+      <DocReqTitle>Upload {docReq.docName}</DocReqTitle>
+      <div style={{ display: "flex", flexDirection: "column", maxWidth: '700px' , margin: 'auto'}}>
+        {isSubmitting ? <MoonLoader
+            size={45}
+            color={"rgb(27, 108, 255)"}
+            loading={true}
+            css={css`
+              margin: 0 auto;
+            `}
+          /> : (
         <FileUpload>
           Upload File
           <input
@@ -464,6 +469,7 @@ const UploadModal = ({ docReq, refreshLc, hideModal }) => {
             style={{ display: "none" }}
           />
         </FileUpload>
+        )}
       </div>
     </>
   );
@@ -491,8 +497,8 @@ const DocumentaryEntryWrapper = styled.div`
 const DocReqTitle = styled.div`
   font-weight: 500;
   font-size: 24px;
-  margin-bottom: 20px;
-  margin-top: 5px;
+  max-width: 700px;
+  margin: 5px auto 20px;
   display: flex;
   align-items: center;
 `
@@ -516,7 +522,7 @@ const ExpandedDocumentaryEntry = styled.div`
 const FileUpload = styled.label`
   padding: 5px 10px;
   border: 1px solid #dcdcdc;
-  max-width: 70%;
+  margin-right: auto;
   cursor: pointer;
 `
 
