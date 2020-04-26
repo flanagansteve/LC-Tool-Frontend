@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { Formik, Field, Form, useField } from 'formik';
 import { object, string, number, boolean, array, date } from 'yup';
-import { Document } from 'react-pdf';
-import { pdfjs } from 'react-pdf';
+import Pdf from './Pdf';
 import MoonLoader from 'react-spinners/MoonLoader'
 import { css } from "@emotion/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -13,7 +12,6 @@ import { makeAPIRequest, postFile } from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
 import config from "../../config";
-pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const ModalBackground = styled.div`
   ${props => !props.show && `display: none;`}
@@ -42,6 +40,7 @@ const ModalFlex = styled.div`
 
 const ModalLeftColumn = styled.div`
   flex-grow: 1;
+  min-width: 30%;
   flex-basis: 40%;
 `
 
@@ -102,36 +101,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc }) => {
 }
 
 const ViewModal = ({ docReq }) => {
-  const [file, setFile] = useState(null);
   const lcid = docReq && docReq.lcid;
-  useEffect(() => {
-    if (!docReq) return;
-    makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/file/`, 'GET', {}, true)
-      // .then(res => console.log(res.body))
-      .then((response) => {
-        const reader = response.body.getReader();
-        let buffer = new Uint8Array();
-        const push = () => {
-          // "done" is a Boolean and value a "Uint8Array"
-          return reader.read().then(({ done, value }) => {
-            // Is there no more data to read?
-            if (done) {
-              // Tell the browser that we have finished sending data
-              setFile({data: buffer})
-              return;
-            }
-  
-            // Get the data and send it to the browser via the controller
-            let newBuffer = new Uint8Array(buffer.length + value.length);
-            newBuffer.set(buffer);
-            newBuffer.set(value, buffer.length);
-            buffer = newBuffer;
-            push();
-          });
-        };
-        push();
-      })
-  }, [docReq, lcid])
   if (!docReq) return null;
   const link = docReq.linkToSubmittedDoc;
   return (
@@ -140,12 +110,14 @@ const ViewModal = ({ docReq }) => {
           <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
           Here's some text about the doc req.
         </ModalLeftColumn>
-        <ModalRightColumn>
-          <DocReqTitle style={{marginTop: '0'}}>PDF File</DocReqTitle>
-          {file && <Document file={file} />}
-          <div>
-            <a href={link}>order.pdf</a>
+        <ModalRightColumn >
+          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+          <DocReqTitle style={{margin: '0'}}>PDF File</DocReqTitle>
+          <Button style={{padding: '5px 10px'}}>
+            <a href={link} style={{color: "#fff", fontSize: '14px', textDecoration: 'none'}}>Download PDF</a>
+          </Button>
           </div>
+          {link && <Pdf src={`/api/lc/${lcid}/doc_req/${docReq.id}/file/`} />}
         </ModalRightColumn>
         </ModalFlex>
   )
