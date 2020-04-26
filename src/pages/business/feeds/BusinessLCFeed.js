@@ -7,6 +7,7 @@ import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayoutWithLink from "../../../components/BasicLayoutWithLink";
 import { makeAPIRequest } from '../../../utils/api';
+import config from "../../../config";
 
 const StyledLink = styled(Link)`
   text-decoration: none;
@@ -32,7 +33,7 @@ const ListEntryWrapper = styled.ul`
   ${(props) => !props.header && `
   font-weight: 400;
   &:hover {
-    border: 1px solid rgb(27, 108, 255);
+    border: 1px solid ${config.accentColor};
   }`}
   transition: border 0.3s;
   background-color: #fff;

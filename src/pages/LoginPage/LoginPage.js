@@ -8,6 +8,7 @@ import { get } from "lodash";
 import BasicLayout from "../../components/BasicLayout";
 import { logIn } from "../../utils/api";
 import { UserContext } from "../../utils/auth";
+import config from '../../config';
 
 const LoginForm = styled.form`
   background-color: #fff;
@@ -66,7 +67,7 @@ const LogInButton = styled.button`
   background-color: #fff;
 
   &:hover {
-    color: rgb(34, 103, 255);
+    color: ${config.accentColor};
   }
 `;
 
@@ -125,7 +126,7 @@ const LoginPage = ({ history, location }) => {
             <FontAwesomeIcon
               icon={faArrowRight}
               size="lg"
-              color="rgb(34, 103, 255)"
+              color={config.accentColor}
               style={{ marginLeft: "10px" }}
             />
           </LogInButton>

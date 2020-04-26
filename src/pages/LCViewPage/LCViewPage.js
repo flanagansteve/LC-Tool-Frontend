@@ -9,6 +9,7 @@ import LCView from "../../components/lc/LCView";
 import Button from "../../components/ui/Button";
 import DocumentaryRequirements from './DocumentaryRequirements';
 import Panel from './Panel';
+import config from '../../config';
 
 // TODO break this file up into multiple files
 
@@ -279,11 +280,11 @@ const ButtonWrapper = styled.div`
 `
 
 const StyledButton = styled.button`
-  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
   border-radius: 5px;
   padding: 5px 10px;
-  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
-  border: 1px solid rgb(27, 108, 255);
+  color: ${(props) => props.selected ? `#fff` : config.accentColor};
+  border: 1px solid ${config.accentColor};
   font-size: 16px;
   cursor: pointer;
   margin: 10px 0;

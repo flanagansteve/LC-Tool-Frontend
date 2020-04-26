@@ -11,6 +11,8 @@ import Button from "../../components/ui/Button";
 import StatusMessage from "../../components/ui/StatusMessage";
 import { useAuthentication, UserContext } from '../../utils/auth';
 
+import config from '../../config';
+
 const InputWrapper = styled.div`
   max-width: 700px;
   margin: 10px auto;
@@ -19,7 +21,7 @@ const InputWrapper = styled.div`
   border: 1px solid #cdcdcd;
 
   &:hover {
-    border: 1px solid rgb(27, 108, 255);
+    border: 1px solid ${config.accentColor};
   }
   transition: border 0.3s;
   background-color: #fff;
@@ -64,11 +66,11 @@ const ButtonWrapper = styled.div`
 `
 
 const StyledButton = styled.button`
-  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
   border-radius: 5px;
   padding: 5px 10px;
-  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
-  border: 1px solid rgb(27, 108, 255);
+  color: ${(props) => props.selected ? `#fff` : config.accentColor};
+  border: 1px solid ${config.accentColor};
   font-size: 16px;
   cursor: pointer;
   margin: 10px 0;

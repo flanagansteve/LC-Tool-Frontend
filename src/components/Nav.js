@@ -6,7 +6,7 @@ import { faUserCircle } from "@fortawesome/free-solid-svg-icons";
 import { get } from "lodash";
 
 // TODO import different sized logos for performance
-import logo from "../images/logo.png";
+import config from "../config";
 import { logOut } from "../utils/api";
 
 const StyledNav = styled.nav`
@@ -38,7 +38,7 @@ const StyledLoginLink = styled(NavLink)`
   transition: color 0.3s;
 
   &:hover {
-    color: rgb(34, 103, 255);
+    color: ${config.accentColor};
   }
 `;
 
@@ -49,7 +49,7 @@ const StyledProfileLink = styled.a`
   cursor: pointer;
 
   &:hover {
-    color: rgb(34, 103, 255);
+    color: ${config.accentColor};
   }
 `;
 
@@ -65,10 +65,10 @@ const ProfileLinkWrapper = styled.button`
   background-color: #fff;
   font-size: 14px;
   &:hover {
-    border: 1px solid rgb(27, 108, 255);
+    border: 1px solid ${config.accentColor};
   }
   transition: border 0.3s;
-  ${props => props.show && `border: 1px solid rgb(27, 108, 255);`}
+  ${props => props.show && `border: 1px solid ${config.accentColor};`}
 `;
 
 const DropDownWrapper = styled.div`
@@ -87,7 +87,7 @@ const DropDownWrapper = styled.div`
 `;
 
 const DropDownHeader = styled.div`
-  color: rgb(27, 108, 255);
+  color: ${config.accentColor};
   font-size: 16px;
   margin-bottom: 10px;
   :not(:first-child) {
@@ -187,7 +187,7 @@ const LoginSection = ({ user, setUser }) => {
   );
 };
 
-const NavLogo = styled.img.attrs({ src: logo, alt: "Bountium Logo" })`
+const NavLogo = styled.img.attrs({ src: config.logo, alt: "Bountium Logo" })`
   max-height: 50px;
 `;
 
@@ -195,7 +195,7 @@ const Nav = ({ user, setUser }) => {
   return (
     <StyledNav>
       <StyledNavLink to="/">
-        <NavLogo src={logo} alt="Bountium Logo" />
+        <NavLogo />
       </StyledNavLink>
       {user && (
         <>

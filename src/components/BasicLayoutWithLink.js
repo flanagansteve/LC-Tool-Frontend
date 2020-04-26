@@ -3,6 +3,8 @@ import styled from "styled-components";
 import MoonLoader from "react-spinners/MoonLoader";
 import { css } from "@emotion/core";
 
+import config from '../config';
+
 const Margin = styled.div`
   margin: 80px auto 40px;
   max-width: 1000px;
@@ -41,7 +43,7 @@ const BasicLayoutWithLink = ({ title, subtitle, link, linktext, isLoading, child
         {isLoading ? (
           <MoonLoader
             size={45}
-            color={"rgb(27, 108, 255)"}
+            color={config.accentColor}
             loading={true}
             css={css`
               margin: 0 auto;

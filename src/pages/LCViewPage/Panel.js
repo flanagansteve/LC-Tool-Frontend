@@ -3,6 +3,8 @@ import styled from 'styled-components';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
+import config from '../../config';
+
 const BasicView = styled.div`
   border: 1px solid #dfdfdf;
   background-color: #fff;
@@ -11,14 +13,11 @@ const BasicView = styled.div`
 `
 
 const PanelTitle = styled.h2`
-  background-color: ${(props) => props.highlight ? `rgb(27, 108, 255)` : `rgb(199, 222, 255)`};
+  background-color: ${(props) => props.highlight ? config.accentColor : `rgb(199, 222, 255)`};
   border-bottom: 1px solid #dfdfdf;
   padding: 15px 20px;
   display: flex;
   justify-content: space-between;
-  ${(props) => props.clickable && `
-    cursor: pointer;
-  `}
   ${(props) => props.highlight && `
     font-weight: 500;
     color: #fff;
@@ -31,7 +30,7 @@ const PanelBody = styled.div`
 `
 
 const PanelTitleAlt = styled.div`
-  color: rgb(27, 108, 255);
+  color: ${config.accentColor};
   margin-right: 5px;
 `
 
@@ -56,7 +55,7 @@ const Panel = ({ title, children, highlight, expand, setExpand, editing, setEdit
             icon={faPencilAlt}
             onClick={() => setEditing(true)}
             style={{
-              color: 'rgb(27, 108, 255)',
+              color: config.accentColor,
             }}
             />
         )}
@@ -65,8 +64,9 @@ const Panel = ({ title, children, highlight, expand, setExpand, editing, setEdit
             icon={expand ? faChevronDown : faChevronRight}
             onClick={() => setExpand(e => !e)}
             style={{
-              color: 'rgb(27, 108, 255)',
-              padding: '0 10px'
+              color: config.accentColor,
+              padding: '0 10px',
+              cursor: 'pointer',
             }}
             />
         }

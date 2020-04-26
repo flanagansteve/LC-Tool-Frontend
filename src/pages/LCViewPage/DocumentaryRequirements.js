@@ -12,6 +12,7 @@ import { faChevronDown, faChevronRight, faCheckSquare } from "@fortawesome/free-
 import { makeAPIRequest, postFile } from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
+import config from "../../config";
 pdfjs.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.js`;
 
 const ModalBackground = styled.div`
@@ -158,7 +159,7 @@ const InputWrapper = styled.div`
   border: 1px solid #cdcdcd;
 
   &:hover {
-    border: 1px solid rgb(27, 108, 255);
+    border: 1px solid ${config.accentColor};
   }
   transition: border 0.3s;
   background-color: #fff;
@@ -202,11 +203,11 @@ const ButtonWrapper = styled.div`
 `
 
 const StyledButton = styled.button`
-  background-color: ${(props) => props.selected ? `rgb(27, 108, 255)` : `#fff`};
+  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
   border-radius: 5px;
   padding: 5px 10px;
-  color: ${(props) => props.selected ? `#fff` : `rgb(27, 108, 255)`};
-  border: 1px solid rgb(27, 108, 255);
+  color: ${(props) => props.selected ? `#fff` : config.accentColor};
+  border: 1px solid ${config.accentColor};
   font-size: 16px;
   cursor: pointer;
   margin: 10px 0;
@@ -424,7 +425,7 @@ const CreateModal = ({ docReq, hideModal, refreshLc }) => {
     {({ isSubmitting }) => (
       isSubmitting ? <MoonLoader
             size={45}
-            color={"rgb(27, 108, 255)"}
+            color={config.accentColor}
             loading={true}
             css={css`
               margin: 0 auto;
@@ -468,7 +469,7 @@ const UploadModal = ({ docReq, refreshLc, hideModal }) => {
       <div style={{ display: "flex", flexDirection: "column", maxWidth: '700px' , margin: 'auto'}}>
         {isSubmitting ? <MoonLoader
             size={45}
-            color={"rgb(27, 108, 255)"}
+            color={config.accentColor}
             loading={true}
             css={css`
               margin: 0 auto;
@@ -582,7 +583,7 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
           {title}
           <FontAwesomeIcon
             icon={expanded ? faChevronDown : faChevronRight}
-            style={{ color: "rgb(27, 108, 255)", marginLeft: "10px" }}
+            style={{ color: config.accentColor, marginLeft: "10px" }}
           />
         </DocReqTitle>
         <DocReqDate>{dueDate}</DocReqDate>

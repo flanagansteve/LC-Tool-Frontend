@@ -6,6 +6,8 @@ import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 
+import config from '../../config'
+
 const Margin = styled.div`
   margin: 40px auto;
   max-width: 1000px;
@@ -44,13 +46,13 @@ const LCView = ({ lc, children }) => {
   return (
     <Margin>
       <StyledLink to="/">
-        <FontAwesomeIcon icon={faArrowLeft} color="rgb(27, 108, 255)" style={{ paddingRight: "10px"}} /> 
+        <FontAwesomeIcon icon={faArrowLeft} color={config.accentColor} style={{ paddingRight: "10px"}} /> 
         Back to LCs
       </StyledLink>
         {!lc ? (
           <MoonLoader
             size={45}
-            color={"rgb(27, 108, 255)"}
+            color={config.accentColor}
             loading={true}
             css={css`
               margin: 0 auto;
