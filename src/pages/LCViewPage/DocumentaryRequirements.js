@@ -102,14 +102,22 @@ const Modal = ({ show, docReq, hideModal, refreshLc }) => {
 
 const ViewModal = ({ docReq }) => {
   const lcid = docReq && docReq.lcid;
-  const [digitalDocReq, setDigitalDocReq] = useState([]);
+  // NULL if the docreq is not digital
+  const [digitalDocReq, setDigitalDocReq] = useState(null);
   useEffect(() => {
     if (!docReq) return;
     makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/`)
-      .then(data => setDigitalDocReq(data));
+      .then(data => {
+        // HACK we can "guess" if there is a digital doc req if the seller name is defined
+        if (data.sellerName === undefined) {
+          setDigitalDocReq(null);
+        } else {
+          setDigitalDocReq(data);
+        }
+      });
   }, [docReq, lcid])
   if (!docReq) return null;
-  const fields = [
+  const fields = !digitalDocReq ? [] : [
     {title: "Seller Name", value: digitalDocReq.sellerName},
     {title: "Seller Address", value: digitalDocReq.sellerAddress},
     {title: "Shipping Date", value: digitalDocReq.indicatedDateOfShipment},
@@ -131,6 +139,7 @@ const ViewModal = ({ docReq }) => {
   const link = docReq.linkToSubmittedDoc;
   return (
     <ModalFlex>
+    {digitalDocReq && (
         <ModalLeftColumn>
           <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
           {fields.map(field => field && (
@@ -140,6 +149,7 @@ const ViewModal = ({ docReq }) => {
             </div>
           ))}
         </ModalLeftColumn>
+    )}
         <ModalRightColumn >
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
           <DocReqTitle style={{margin: '0'}}>PDF Preview</DocReqTitle>
