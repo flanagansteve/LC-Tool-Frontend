@@ -45,29 +45,29 @@ function App() {
         <GlobalStyle />
         <Nav user={user} setUser={setUser} />
         <Switch>
-          <Route exact path="/create" />
-          <Route exact path="/manage" />
-          <Route exact path="/bank/register/:bankid" component={BankEmployeeSignUpPage} />
-          <Route exact path="/bank/register" component={BankSignUpPage} />
-          <Route exact path="/bank/invite" component={BankInvitePage} />
-          <Route exact path="/bank/account" component={BankManageAccountPage} />
-          <Route exact path="/lc/:lcid" component={LCViewPage} />
-          <Route exact path="/bank/lcs/client/:clientid" component={BankLCFeedPageByClient} />
-          <Route exact path="/bank/lcs/live" component={BankLiveLCFeedPage} />
-          <Route exact path="/bank/lcs/apps" component={BankLCAppFeedPage} />
-          <Route exact path="/bank/lcs" component={BankLCFeedPage} />
-          <Route exact path="/bank/:bankid/application" component={BankLCAppPage} />
-          <Route exact path="/business/register/:businessid" component={BusinessEmployeeSignUpPage} />
-          <Route exact path="/business/register" component={BusinessSignUpPage} />
-          <Route exact path="/business/invite" component={BusinessInvitePage} />
-          <Route exact path="/business/account" component={BusinessManageAccountPage} />
-          <Route exact path="/business/claimBeneficiary/:lcid" component={ClaimBeneficiaryStatusPage} />
-          <Route exact path="/business/lcs/client/" component={ClientLCFeedPage} />
-          <Route exact path="/business/lcs/beneficiary/" component={BeneficiaryLCFeedPage} />
-          <Route exact path="/business/lcs/" component={ClientLCFeedPage} />
-          <Route exact path="/banks" component={BankDirectoryPage} />
-          <Route exact path="/login" component={LoginPage}/>
-          <Route exact path="/" component={HomePage} />
+          <Route path="/create" />
+          <Route path="/manage" />
+          <Route path="/bank/register/:bankid" component={BankEmployeeSignUpPage} />
+          <Route path="/bank/register" component={BankSignUpPage} />
+          <Route path="/bank/invite" component={BankInvitePage} />
+          <Route path="/bank/account" component={BankManageAccountPage} />
+          <Route path="/lc/:lcid" component={LCViewPage} />
+          <Route path="/bank/lcs/client/:clientid" component={BankLCFeedPageByClient} />
+          <Route path="/bank/lcs/live" component={BankLiveLCFeedPage} />
+          <Route path="/bank/lcs/apps" component={BankLCAppFeedPage} />
+          <Route path="/bank/lcs" component={BankLCFeedPage} />
+          <Route path="/bank/:bankid/application" component={BankLCAppPage} />
+          <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage} />
+          <Route path="/business/register" component={BusinessSignUpPage} />
+          <Route path="/business/invite" component={BusinessInvitePage} />
+          <Route path="/business/account" component={BusinessManageAccountPage} />
+          <Route path="/business/claimBeneficiary/:lcid" component={ClaimBeneficiaryStatusPage} />
+          <Route path="/business/lcs/client/" component={ClientLCFeedPage} />
+          <Route path="/business/lcs/beneficiary/" component={BeneficiaryLCFeedPage} />
+          <Route path="/business/lcs/" component={ClientLCFeedPage} />
+          <Route path="/banks" component={BankDirectoryPage} />
+          <Route path="/login" component={LoginPage}/>
+          <Route path="/" component={HomePage} />
         </Switch>
       </Router>
     </UserContext.Provider>

@@ -103,17 +103,57 @@ const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
 
 const ViewModal = ({ docReq }) => {
   const lcid = docReq && docReq.lcid;
+  // NULL if the docreq is not digital
+  const [digitalDocReq, setDigitalDocReq] = useState(null);
+  useEffect(() => {
+    if (!docReq) return;
+    makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/`)
+      .then(data => {
+        // HACK we can "guess" if there is a digital doc req if the seller name is defined
+        if (data.sellerName === undefined) {
+          setDigitalDocReq(null);
+        } else {
+          setDigitalDocReq(data);
+        }
+      });
+  }, [docReq, lcid])
   if (!docReq) return null;
+  const fields = !digitalDocReq ? [] : [
+    {title: "Seller Name", value: digitalDocReq.sellerName},
+    {title: "Seller Address", value: digitalDocReq.sellerAddress},
+    {title: "Shipping Date", value: digitalDocReq.indicatedDateOfShipment},
+    {title: "Country of Export", value: digitalDocReq.countryOfExport},
+    // {title: "Incoterms Of Sale", value: digitalDocReq.incotermsOfSale},
+    {title: "Reason for Export", value: digitalDocReq.reasonForExport},
+    {title: "Consignee Name", value: digitalDocReq.consigneeName || digitalDocReq.buyerName},
+    {title: "Consignee Address", value: digitalDocReq.consigneeAddress || digitalDocReq.buyerAddress},
+    {title: "Buyer Name", value: digitalDocReq.buyerName},
+    {title: "Buyer Address", value: digitalDocReq.buyerAddress},
+    {title: "Description of Goods", value: digitalDocReq.goodsDescription},
+    {title: "Units of Measure", value: digitalDocReq.unitOfMeasure},
+    {title: "Units Purchased", value: digitalDocReq.unitsPurchased},
+    {title: "Price per Unit", value: digitalDocReq.unitPrice},
+    {title: "Currency of Settlement", value: digitalDocReq.currency},
+    {title: "Harmonized Schedule Code", value: digitalDocReq.hsCode},
+    {title: "Country of Origin", value: digitalDocReq.countryOfOrigin},
+  ]
   const link = docReq.linkToSubmittedDoc;
   return (
     <ModalFlex>
+    {digitalDocReq && (
         <ModalLeftColumn>
           <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
-          Here's some text about the doc req.
+          {fields.map(field => field && (
+            <div key={field.title}>
+              <SmallHeader>{field.title}</SmallHeader>
+              <DocReqTitle>{field.value}</DocReqTitle>
+            </div>
+          ))}
         </ModalLeftColumn>
+    )}
         <ModalRightColumn >
           <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-          <DocReqTitle style={{margin: '0'}}>PDF File</DocReqTitle>
+          <DocReqTitle style={{margin: '0'}}>PDF Preview</DocReqTitle>
           <Button style={{padding: '5px 10px'}}>
             <a href={link} style={{color: "#fff", fontSize: '14px', textDecoration: 'none'}}>Download PDF</a>
           </Button>
