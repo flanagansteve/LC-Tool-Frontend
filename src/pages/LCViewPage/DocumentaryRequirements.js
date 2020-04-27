@@ -7,8 +7,9 @@ import MoonLoader from 'react-spinners/MoonLoader'
 import { css } from "@emotion/core";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faCheckSquare } from "@fortawesome/free-solid-svg-icons";
+import { get, camelCase } from "lodash";
 
-import { makeAPIRequest, postFile } from '../../utils/api';
+import { makeAPIRequest, postFile, objectToCamelCase } from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
 import config from "../../config";
@@ -21,7 +22,7 @@ const ModalBackground = styled.div`
   z-index: 1;
   width: 100%;
   height: 100%;
-  background-color: rgba(0,0,0,0.4); 
+  background-color: rgba(0,0,0,0.4);
   overflow: scroll;
 `
 
@@ -60,7 +61,7 @@ const ModalButtonsWrapper = styled.div`
 
 const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'}
 
-const Modal = ({ show, docReq, hideModal, refreshLc }) => {
+const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
   const [type, setType] = useState(MODAL_TYPES.CREATE);
   if (docReq && docReq.type === 'generic') return (
     <ModalBackground show={show}>
@@ -88,7 +89,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc }) => {
           <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF DocReq</Button>
         </ModalButtonsWrapper>
         {type === MODAL_TYPES.CREATE
-          ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
+          ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal} lc={lc}/>
           : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
         }
         <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
@@ -341,19 +342,27 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   checkbox: array().of(string()),
 }
 
-const CreateModal = ({ docReq, hideModal, refreshLc }) => {
+const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
   const [fields, setFields] = useState([]);
+  const [suggestedFields, setSuggestedFields] = useState([]);
   useEffect(() => {
     if (!docReq) return undefined;
     makeAPIRequest(`/lc/supported_creatable_docs/${docReq.type}/`)
       .then(d => setFields(d));
+    makeAPIRequest(`/lc/${lc.id}/doc_req/${docReq.id}/autopopulate/`)
+      .then(s => setSuggestedFields(s));
   }, [docReq])
   if (!docReq) return null;
   const schemaObj = {};
   let initialValues = {};
   let validationSchema = null;
   fields.forEach(q => {
-    initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+    Object.keys(suggestedFields).forEach(key => {
+      if (camelCase(q.key) == key) {
+        initialValues[q.key] = get(lc, suggestedFields[key])
+      }
+    });
+    if (!initialValues[q.key]) initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
   });
   fields.forEach(q => {
     schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
@@ -362,10 +371,12 @@ const CreateModal = ({ docReq, hideModal, refreshLc }) => {
     }
   });
   validationSchema = object().shape(schemaObj);
+  console.log(initialValues)
   return fields.length > 0 && (
     <Formik
       initialValues={initialValues}
       validationSchema={validationSchema}
+      enableReinitialize
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
         const app = {};
@@ -653,7 +664,7 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
           </div>
         )
       }
-      <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc}/>
+      <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc} lc={lc}/>
     </Panel>
   );
 }

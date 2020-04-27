@@ -4,7 +4,7 @@ import { snakeCase, camelCase } from "lodash";
 
 const API_BASEURL = "/api";
 
-const objectToSnakeCase = object => {
+export const objectToSnakeCase = object => {
   let newObject = {};
   if (typeof object !== "object" || object === null) {
     return object;
@@ -20,7 +20,7 @@ const objectToSnakeCase = object => {
   return newObject;
 };
 
-const objectToCamelCase = object => {
+export const objectToCamelCase = object => {
   let newObject = {};
   if (typeof object !== "object" || object === null) {
     return object;
