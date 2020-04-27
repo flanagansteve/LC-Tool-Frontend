@@ -52,13 +52,13 @@ const ClaimBeneficiaryStatusPage = ({ match, history }) => {
   }
 
   return (
-    <BasicLayout 
+    <BasicLayout
       title="Claim Beneficiary Status"
       isLoading={!(user && lc)}
     >
       <ClaimMessage>
         {`Are you a representative of ${get(user, 'business.name')}, selling ${lc && lc.purchasedItem ? `${get(lc, 'unitsPurchased')}
-         ${get(lc, 'unitsOfMeasure')} of ${get(lc, 'purchasedItem')} ` : ''}to ${get(lc, 'client.name')}${lc && lc.dueDate ? 
+         ${get(lc, 'unitOfMeasure')} of ${get(lc, 'purchasedItem')} ` : ''}to ${get(lc, 'client.name')}${lc && lc.dueDate ? 
          `, due by ${get(lc, 'dueDate')}` : ''}?`}
       </ClaimMessage>
       <center><Button onClick={handleClick}>Yes, Claim Beneficiary Status</Button></center>

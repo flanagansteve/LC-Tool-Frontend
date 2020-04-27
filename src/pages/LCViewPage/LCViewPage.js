@@ -361,9 +361,9 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
   const details = [
     {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
-    {title: "Payment Date", value: lc.dueDate, name: 'dueDate', type: 'date'},
+    {title: "Latest Permissible Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate', type: 'date'},
     {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate', type: 'date'},
-    {title: "Units of Measure", value: lc.unitsOfMeasure, type: 'text', name: 'unitsOfMeasure'},
+    {title: "Unit of Measure", value: lc.unitOfMeasure, type: 'text', name: 'unitOfMeasure'},
     {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased', type: 'number'},
     {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt', type: 'number'},
     {title: "Credit Expiration Date", value: lc.expirationDate, name: 'expirationDate', type: 'date'},
@@ -377,7 +377,6 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
     {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", name: 'partialShipmentAllowed', type: 'boolean'},
     {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", name: 'transshipmentAllowed', type: 'boolean'},
     {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', name: 'merchChargeLocation'},
-    {title: "Late Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate', type: 'date'},
     {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', name: 'chargeTransportationLocation'},
     {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', name: 'namedPlaceOfDestination'},
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
