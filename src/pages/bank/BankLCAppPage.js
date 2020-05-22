@@ -1,9 +1,14 @@
-import React, { useState, useEffect, useContext } from 'react';
-import styled from 'styled-components';
+import React, { useState, useEffect, useContext, useRef } from 'react';
+import styled, {keyframes} from 'styled-components';
+import _ from 'lodash'
 import { Formik, Form, Field, useField } from 'formik';
 import { object, string, number, boolean, array, date } from 'yup';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckSquare } from "@fortawesome/free-solid-svg-icons";
+import {
+  faChevronDown,
+  faCheckSquare,
+  faTrash
+} from "@fortawesome/free-solid-svg-icons";
 
 import BasicLayout from '../../components/BasicLayout';
 import { makeAPIRequest } from '../../utils/api';
@@ -12,6 +17,10 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import { useAuthentication, UserContext } from '../../utils/auth';
 
 import config from '../../config';
+import {Dropdown} from "../../components/ui/Dropdown";
+
+const disabledBackgroundColor = `#c3c1c3`;
+const disabledColor = `black`;
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -19,19 +28,28 @@ const InputWrapper = styled.div`
   padding: 15px 25px;
   border-radius: 10px;
   border: 1px solid #cdcdcd;
-
-  &:hover {
-    border: 1px solid ${config.accentColor};
-  }
   transition: border 0.3s;
-  background-color: #fff;
-`
+  background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
+  
+  ${props => !props.disabled && `&:hover {
+    border: 1px solid ${config.accentColor};
+  }`}
+`;
 
 const QuestionText = styled.h3`
   font-size: 14px;
   font-weight: 300;
   line-height: 1.25;
-`
+  color: ${props => props.disabled ? disabledColor : `#000`};
+`;
+
+const ClickableText = styled.div`
+  color: blue;
+  cursor: pointer;
+  &:hover {
+    color: #1772fb;
+  }
+`;
 
 const Subtitle = styled.div`
   margin-top: 15px;
@@ -39,12 +57,19 @@ const Subtitle = styled.div`
   font-style: italic;
   font-size: 14px;
   font-weight: 300;
-`
+`;
+
+const SectionSubtitle = styled.div`
+  color: #555353;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 300;
+`;
 
 const Asterisk = styled.span`
   color: #dc3545;
   font-size: 16px;
-`
+`;
 
 const StyledFormInput = styled(Field)`
   margin-top: 10px;
@@ -52,7 +77,9 @@ const StyledFormInput = styled(Field)`
   min-width: 100%;
   font-size: 16px;
   border: none;
-  border-bottom: 1px solid #cdcdcd;
+  border-bottom: ${props => props.disabled ? `0px` : `1px solid #cdcdcd`};
+  background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
+  color: ${props => props.disabled ? disabledColor : `#000`};
 `;
 
 const ButtonWrapper = styled.div`
@@ -63,51 +90,107 @@ const ButtonWrapper = styled.div`
   > :not(:last-child) {
     margin-right: 20px;
   }
-`
+`;
+
+const NestedButtonWrapper = styled.div`
+  padding-left: 10px;
+  flex: 1;
+  display: flex;
+
+  > :not(:last-child) {
+    margin-right: 20px;
+  }
+`;
+
+const ButtonVerticalWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  margin-top: 15px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  width: 95%;
+`;
 
 const StyledButton = styled.button`
-  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
+  background-color: ${(props) => props.selected ? config.accentColor : props.disabled ? disabledBackgroundColor : `#fff`};
   border-radius: 5px;
   padding: 5px 10px;
-  color: ${(props) => props.selected ? `#fff` : config.accentColor};
-  border: 1px solid ${config.accentColor};
+  color: ${(props) => props.selected ? `#fff` : props.disabled ? disabledColor : config.accentColor};
+  border: 1px solid ${props => props.disabled ? disabledColor : config.accentColor};
   font-size: 16px;
-  cursor: pointer;
-  margin: 10px 0;
+  ${props => !props.disabled && `cursor: pointer;`}
+  margin: ${props => props.nested ? `0px` : `10px 0;`}
   max-width: 45%;
   display: flex;
   align-items: center;
-`
+`;
 
+const StyledSection = styled.button`
+  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
+  border-radius: 1px;
+  padding: 10px 10px;
+  color: ${(props) => props.selected ? `#fff` : config.accentColor};
+  font-size: 16px;
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+`;
+
+const scrollToAndHighlight = (questionKey) => {
+  const selector = `[id="${questionKey}"]`;
+  let parentElement = document.querySelector(selector);
+  const originalBackgroundColor = window.getComputedStyle(parentElement).backgroundColor;
+  const changeQuestionBackgroundTemp = () => {
+    parentElement.animate({backgroundColor: ["lightblue", originalBackgroundColor]}, 1000);
+  };
+
+  // if the element is on the screen
+  if (window.scrollY <= parentElement.offsetTop && window.scrollY + document.documentElement.clientHeight >=
+      parentElement.offsetTop + parentElement.offsetHeight) {
+    changeQuestionBackgroundTemp();
+  } else {
+    let scrollTimeout;
+    const scrollHandler = () => {
+      clearTimeout(scrollTimeout);
+      scrollTimeout = setTimeout(() => {
+        window.removeEventListener("scroll", scrollHandler);
+        changeQuestionBackgroundTemp()
+      }, 20);
+    };
+    window.addEventListener("scroll", scrollHandler);
+    parentElement.scrollIntoView({behavior: "smooth", block: "nearest"});
+  }
+};
 
 const BasicInput = ({ question, children, subtitle }) => {
   const [, meta] = useField(question.key);
   const { error, touched } = meta;
   return (
-    <InputWrapper>
-      <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
-      {subtitle && <Subtitle>{subtitle}</Subtitle>}
+    <InputWrapper id={question.key} disabled={question.disabledTooltip}>
+      <QuestionText disabled={question.disabledTooltip}>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
+      {!question.disabledTooltip && subtitle && <Subtitle>{subtitle}</Subtitle>}
+      {question.disabledTooltip && <Subtitle onClick={() => scrollToAndHighlight(question.disabledTooltip.parentKey)}>{question.disabledTooltip.text}</Subtitle>}
       {error && touched && <Subtitle style={{color: '#dc3545'}}>{typeof error !== 'object' ? error : null}</Subtitle>}
       {children}
     </InputWrapper>
   )
-}
+};
 
 const TextInput = ({ question }) => {
   return (
-    <BasicInput question={question}>
-      <StyledFormInput type="text" name={question.key}/>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <StyledFormInput type="text" name={question.key}/>}
     </BasicInput>
   );
 };
 
 const NumberInput = ({ question }) => {
   return (
-    <BasicInput question={question}>
-      <StyledFormInput type="number" name={question.key}/>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <StyledFormInput type="number" name={question.key}/>}
     </BasicInput>
   )
-}
+};
 
 const YesNoInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
@@ -117,60 +200,60 @@ const YesNoInput = ({ question }) => {
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
-  }
+  };
 
   return (
-    <BasicInput question={question}>
-      <ButtonWrapper style={{ justifyContent: 'center' }}>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <ButtonWrapper style={{ justifyContent: 'center' }}>
         <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
         <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
-      </ButtonWrapper>
+      </ButtonWrapper>}
     </BasicInput>
   )
-}
+};
 
 const AllRadiosWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-`
+`;
 
 const RadioInput = ({ question }) => {
-  const options = JSON.parse(question.options);
+  const options = question.options;
   const [, meta, helpers] = useField(question.key);
   const { value } = meta;
   const { setValue } = helpers;
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
-  }
+  };
   return (
-    <BasicInput question={question}>
-    <AllRadiosWrapper>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <AllRadiosWrapper>
       <ButtonWrapper>
     {options && options.map((opt) => (
         <StyledButton onClick={handleClick(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
     ))}
       </ButtonWrapper>
-    </AllRadiosWrapper>
+    </AllRadiosWrapper>}
     </BasicInput>
   )
-}
+};
 
 const DateInput = ({ question }) => {
   return (
-    <BasicInput question={question}>
-      <StyledFormInput type="date" name={question.key}/>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <StyledFormInput type="date" name={question.key}/>}
     </BasicInput>
   )
-}
+};
 
 const AllCheckboxesWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-`
+`;
 
 const CheckboxInput = ({ question }) => {
-  const options = JSON.parse(question.options);
+  const options = question.options;
   const [, meta, helpers] = useField(question.key);
   const { value } = meta;
   const { setValue } = helpers;
@@ -182,88 +265,297 @@ const CheckboxInput = ({ question }) => {
     } else {
       setValue(value.concat([val]));
     }
-  }
+  };
 
   return (
-    <BasicInput question={question} subtitle="Check all that apply.">
-    <AllCheckboxesWrapper>
-      <ButtonWrapper>
-    {options && options.map((opt) => (
-        <StyledButton onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
-        {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{ marginRight: '10px' }}/>}
-        {opt}
-        </StyledButton>
-    ))}
-      </ButtonWrapper>
-    </AllCheckboxesWrapper>
+    <BasicInput disabled={question.disabledTooltip} question={question} subtitle="Check all that apply.">
+      {!question.disabledTooltip && <AllCheckboxesWrapper>
+        <ButtonWrapper>
+      {options && options.map((opt) => (
+          <StyledButton disabled={question.disabledTooltip} onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
+          {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{ marginRight: '10px' }}/>}
+          {opt}
+          </StyledButton>
+      ))}
+        </ButtonWrapper>
+      </AllCheckboxesWrapper>}
     </BasicInput>
   )
-}
+};
 
 const DocReqFieldWrapper = styled.div`
   margin: 10px 0;
   display: flex;
   align-items: center;
+  border-bottom: 1px solid #cdcdcd;
   > :first-child {
-    flex-basis: 200px;
+    width: 130px;
     font-weight: 300;
-    border-bottom: 1px solid #cdcdcd;
     border-right: 1px solid #cdcdcd;
     padding: 10px 10px 5px;
     text-align: right;
   }
-`
+`;
 
 const StyledDocReqField = styled(Field)`
   padding: 10px 10px 5px;
   font-size: 16px;
   border: none;
-  border-bottom: 1px solid #cdcdcd;
-  flex-grow: 1;
+  flex: 1;
+  width: calc(100% - 130px);
   line-height: 1em;
+  color: #000;
+  background-color: #fff;
+`;
+
+const StyledDocReqDiv = styled.div`
+  padding: 10px 10px 5px;
+  font-size: 16px;
+  border: none;
+  flex: 1;
+  width: calc(100% - 130px);
+  line-height: 1em;
+  color: #000;
+  background-color: #fff;
+  word-break: break-word;
 `;
 
 const DocReqTitle = styled.h3`
   text-transform: uppercase;
   font-weight: 300;
   letter-spacing: .1em;
-`
+  ${props => props.disabled && `color: ${disabledColor};`}
+`;
+
+const CommonNestedTypeComponent = ({question, keyName}) => {
+  const componentMap = {
+    text: <StyledDocReqField type={"text"} disabled={question.disabled === "True"} name={keyName}/>,
+    number: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
+    decimal: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
+    date: <StyledDocReqField type={"date"} disabled={question.disabled === "True"} name={keyName}/>,
+  };
+  return componentMap[question.type];
+};
+
+const ObjectNestedTypeComponent = ({question, value, setValue}) => {
+  const componentMap = {
+    boolean: <NestedButtonWrapper>
+      <StyledButton nested={true} type={"button"} disabled={question.disabled === "True"}
+                    onClick={() => setValue({...value, [question.key]: true})}
+                    selected={value[question.key] === true}>Yes</StyledButton>
+      <StyledButton nested={true} type={"button"} disabled={question.disabled === "True"}
+                    onClick={() => setValue({...value, [question.key]: false})}
+                    selected={value[question.key] === false}>No</StyledButton>
+    </NestedButtonWrapper>,
+  };
+  return componentMap[question.type];
+};
+
+const ObjectInput = ({ question }) => {
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+
+  return (
+      <BasicInput question={question}>
+        {!question.disabledTooltip && question.children.map(child => {
+          const keyName = `${question.key}.${child.key}`;
+          return (
+              <DocReqFieldWrapper key={keyName}>
+                <span>{child.questionText}{child.required ? <Asterisk> *</Asterisk> : null}</span>
+                {CommonNestedTypeComponent({question: child, keyName}) ||
+                ObjectNestedTypeComponent({question: child, value, setValue})}
+              </DocReqFieldWrapper>
+          )
+        })}
+      </BasicInput>
+  )
+};
+
+const ArrayNestedTypeComponent = ({question, parentQuestion, value, setValue, valueIndex, options}) => {
+  const keyName = `${parentQuestion.key}[${valueIndex}].${question.key}`;
+  const curVal = value[valueIndex][question.key];
+  const componentMap = {
+    boolean: <NestedButtonWrapper>
+      <StyledButton nested={true} type={"button"} disabled={question.disabled === "True"}
+                    onClick={() => setValue(value.map((valObj, curInd) =>
+                        curInd === valueIndex ? {...valObj, [question.key]: true} : valObj))}
+                    selected={curVal}>Yes</StyledButton>
+      <StyledButton nested={true} type={"button"} disabled={question.disabled === "True"}
+                    onClick={() => setValue(value.map((valObj, curInd) =>
+                        curInd === valueIndex ? {...valObj, [question.key]: false} : valObj))}
+                    selected={curVal}>No</StyledButton>
+    </NestedButtonWrapper>,
+    radio: !question.options && (valueIndex < value.length - 1 || options.length === 1) ?
+        <StyledDocReqDiv>{curVal}</StyledDocReqDiv> :
+        <Dropdown selectedIndex={options.indexOf(curVal)} items={options} onChange={selected => setValue(value.map((valObj, curInd) =>
+              curInd === valueIndex ? {...valObj, [question.key]: selected} : valObj))}/>
+  };
+  return componentMap[question.type];
+};
+
+const StyledIcon = styled(FontAwesomeIcon)`
+  &:hover {
+    cursor: pointer;
+  }
+`;
 
 const DocReqInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
   const { value } = meta;
   const { setValue } = helpers;
 
-  const handleClick = (e) => {
-    e.preventDefault();
-    setValue([...value, { docName: '', dueDate: (new Date()).toISOString(), requiredValues: ''}])
-  }
+  const addDocument = () => {
+    const addition = {};
+    question.children.forEach(child => {
+      addition[child.key] = TYPE_TO_DEFAULT[child.type];
+      if (child.type === "radio") {
+        addition[child.key] = getOptions(child, true)[0];
+      }
+    });
+    setValue([...value, addition]);
+  };
+
+  const removeDocument = indexToRemove => {
+    setValue(value.filter((valObj, curInd) => curInd !== indexToRemove));
+  };
+
+  const getOptions = (childQuestion, includeLast) => {
+    if (childQuestion.options) return childQuestion.options;
+    else if (question.options) {
+      const valueOptionsSet = new Set(value.filter((valObj, curInd) => includeLast || curInd < value.length - 1).map(valObj => valObj[childQuestion.key]));
+      return question.options.filter(option => !valueOptionsSet.has(option));
+    } else return null;
+  };
+
+  const name = question.settings?.name;
 
   return (
     <BasicInput question={question}>
-      {value.map((docReq, i) => (
+      {!question.disabledTooltip && value.map((obj, i) => {
+        return (
         <div style={{margin: "20px"}} key={i}>
-          <DocReqTitle>Documentary Requirement #{i+1}</DocReqTitle>
-          <DocReqFieldWrapper>
-          <span>Name: </span>
-            <StyledDocReqField type="text" name={`${question.key}[${i}].docName`}/>
-          </DocReqFieldWrapper>
-          <DocReqFieldWrapper>
-          <span>Due Date: </span>
-          <StyledDocReqField type="date" name={`${question.key}[${i}].dueDate`}/>
-          </DocReqFieldWrapper>
-          <DocReqFieldWrapper>
-          <span>Required Values: </span>
-          <StyledDocReqField type="text" name={`${question.key}[${i}].requiredValues`}/>
-          </DocReqFieldWrapper>
+          <DocReqTitle>{name ? name : "Documentary Requirement"} #{i + 1} <StyledIcon icon={faTrash} onClick={() => removeDocument(i)}/></DocReqTitle>
+          {question.children.map(child => {
+            const keyName = `${question.key}[${i}].${child.key}`;
+            return (
+            <DocReqFieldWrapper key={keyName}>
+              <span>{child.questionText}{child.required ? <Asterisk> *</Asterisk> : null}</span>
+              {CommonNestedTypeComponent({question: child, keyName}) ||
+              ArrayNestedTypeComponent({question: child, parentQuestion: question, value, setValue, valueIndex: i, options: getOptions(child)})}
+            </DocReqFieldWrapper>)
+          })}
         </div>
-      ))}
-      <center style={{ marginTop: '25px'}}>
-        <StyledButton onClick={handleClick}>Add Documentary Requirement</StyledButton>
-      </center>
+      )})}
+      {!question.disabledTooltip && <center style={{ marginTop: '25px'}}>
+        <StyledButton disabled={question.options && question.options.length === value.length} type={"button"} onClick={addDocument}>Add {name ? name : "Documentary Requirement"}</StyledButton>
+      </center>}
     </BasicInput>
   )
-}
+};
+
+const contains = (option, answer) => {
+  if (answer && Array.isArray(answer)) {
+    return answer.some(piece => _.isEqual(piece, option));
+  } else {
+    return option === answer;
+  }
+};
+
+const markDisabled = async ({questions, values, setLCApp, validateForm}) => {
+  let changed = false;
+  const questionsCopy = questions.map(q => ({...q}));
+  questionsCopy.filter(q => q.disabled).forEach(q => {
+    const dependency = JSON.parse(q.disabled);
+    for (let option of dependency.answer) {
+      if (contains(option, values[dependency.key])) {
+        const parentQuestion = questions.find(potential => potential.key === dependency.key);
+        changed = changed || !q.disabledTooltip;
+        const message = (<span style={{color: "#58595A"}}>This question is redundant based on your earlier
+        answer to <ClickableText>'{parentQuestion.questionText}'</ClickableText></span>);
+        q.disabledTooltip = {text: message, parentKey: parentQuestion.key};
+        return;
+      }
+    }
+    if (q.disabledTooltip) {
+      q.disabledTooltip = undefined;
+      changed = true;
+    }
+  });
+  if (changed) {
+    await setLCApp([...questionsCopy]);
+    validateForm();
+  }
+};
+
+const findAndSetSectionsError = ({questions, errors, touched, setSectionsError}) => {
+  const erroredQuestions = questions.filter(q => errors[q.key]);
+  const erroredAndTouchedSections = erroredQuestions.filter(q => touched[q.key]).map(q => q.section);
+  setSectionsError(new Set(erroredAndTouchedSections));
+};
+
+const scrollToFirstErrorOnSection = ({questions, errors, selectedSection}) => {
+  const erroredQuestions = questions.filter(q => errors[q.key]);
+  const erroredQuestionsOnSelectedSection = erroredQuestions.filter(q => q.section === selectedSection?.text);
+  if (erroredQuestionsOnSelectedSection.length) {
+    const selector = `[id="${erroredQuestionsOnSelectedSection[0].key}"]`;
+    let errorElement = document.querySelector(selector);
+    errorElement.scrollIntoView({behavior: "smooth"});
+  } else {
+    window.scrollTo({top: 0, behavior: "smooth"});
+  }
+};
+
+const ErrorFocus = (props) => {
+  let { isSubmitting, errors, touched, questions, selectedSection, setTouched, values } = props;
+
+  const prevErrors = usePrevious(errors);
+  const prevTouched = usePrevious(touched);
+  const prevValues = usePrevious(values);
+  const prevSelectedSection = usePrevious(selectedSection);
+  const prevIsSubmitting = usePrevious(isSubmitting);
+
+  const keyToEffect = {
+    scroll: scrollToFirstErrorOnSection,
+    sectionsErrors: findAndSetSectionsError,
+    markDisabled: markDisabled
+  };
+
+  useEffect(() => {
+    const effects = new Set();
+    if (!_.isEqual(selectedSection, prevSelectedSection)) {
+      touched = {...touched};
+      questions.forEach(q => {
+        if (q.section === prevSelectedSection?.text) {
+          touched[q.key] = true;
+        }
+      });
+      setTouched(touched);
+      effects.add("scroll");
+    }
+    if (!_.isEqual(errors, prevErrors) || !_.isEqual(touched, prevTouched)) {
+      effects.add("sectionsErrors");
+    }
+    if (!_.isEqual(values, prevValues)) {
+      effects.add("markDisabled");
+    }
+    if (isSubmitting && !prevIsSubmitting) {
+      effects.add("sectionsErrors");
+      effects.add("scroll");
+    }
+    effects.forEach(effect => keyToEffect[effect](props));
+  });
+
+  return null;
+};
+
+const usePrevious = value => {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+};
 
 const TYPE_TO_COMPONENT = {
   text: TextInput,
@@ -273,7 +565,21 @@ const TYPE_TO_COMPONENT = {
   radio: RadioInput,
   date: DateInput,
   checkbox: CheckboxInput,
+  object: ObjectInput,
   array_of_objs: DocReqInput,
+};
+
+const createDefault = question => {
+  let initial = question.initialValue;
+  if (question.type === "object") {
+    initial = initial || {};
+    question.children.forEach(child => {
+      initial[child.key] = child.initialValue || TYPE_TO_DEFAULT[child.type];
+    });
+  } else if (!initial) {
+    initial = TYPE_TO_DEFAULT[question.type];
+  }
+  return initial;
 };
 
 const TYPE_TO_DEFAULT = {
@@ -284,10 +590,12 @@ const TYPE_TO_DEFAULT = {
   radio: null,
   date: (new Date()).toISOString().slice(0, 10),
   checkbox: [],
+  object: {},
   array_of_objs: [],
-}
+};
 
-const REQUIRED_MSG = "This field is required.";
+const REQUIRED_FIELD_MSG = "This field is required.";
+const REQUIRED_SECTION_MSG = "Missing required fields";
 
 const TYPE_TO_VALIDATION_SCHEMA = {
   text: string(),
@@ -296,51 +604,87 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   boolean: boolean().nullable(),
   radio: string().nullable(),
   date: date(),
-  checkbox: array().of(string()),
-  array_of_objs: array().of(object().shape({
-    docName: string().required(REQUIRED_MSG),
-    requiredValues: string().required(REQUIRED_MSG),
-    dueDate: date().required(REQUIRED_MSG),
-  })),
-}
+  checkbox: array().of(string())
+};
+
+const createChildrenShape = question => {
+  const shape = {};
+  question.children.forEach(child => {
+    shape[child.key] = child.required ?
+        TYPE_TO_VALIDATION_SCHEMA[child.type].required(REQUIRED_FIELD_MSG) :
+        TYPE_TO_VALIDATION_SCHEMA[child.type];
+  });
+  return shape;
+};
+
+const createValidationSchema = question => {
+  let schema = TYPE_TO_VALIDATION_SCHEMA[question.type];
+  if (question.type === 'object') {
+    schema = object().shape(createChildrenShape(question));
+  } else if (question.type === 'array_of_objs') {
+    schema = array().of(object().shape(createChildrenShape(question)));
+  }
+  if (question.required && !question.disabledTooltip) {
+    schema = schema.required(REQUIRED_FIELD_MSG);
+  }
+  return schema;
+};
 
 const BankLCAppPage = ({ match }) => {
-  const [lcApp, setLCApp] = useState(null);
   const persistedLcApp = JSON.parse(localStorage.getItem(`lc/${match.params.bankid}`));
+  const [user] = useContext(UserContext);
+  const [lcApp, setLCApp] = useState(null);
   const [status, setStatus] = useState({ message: "", status: null });
+  const [selectedSectionIndex, setSelectedSectionIndex] = useState(null);
+  const [sections, setSections] = useState(null);
+  let [initialValues, setInitialValues] = useState({});
   useAuthentication(`/bank/${match.params.bankid}/application`);
   useEffect(() => {
-    makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
-      .then(json => setLCApp(json))
-  }, [match.params.bankid]);
+    if (user && match.params.bankid) {
+      makeAPIRequest(`/bank/${match.params.bankid}/digital_app/`)
+      .then(json => {
+        const sectionSet = new Set();
+        json.forEach(q => {
+          sectionSet.add(q.section);
+          if (q.options) q.options = JSON.parse(q.options);
+          if (q.settings) q.settings = JSON.parse(q.settings);
+          q.children.forEach(child => {
+            if (child.options) child.options = JSON.parse(child.options);
+            if (child.settings) child.settings = JSON.parse(child.settings);
+          });
+        });
+        const sections = [];
+        if (persistedLcApp) {
+          initialValues = persistedLcApp;
+        } else {
+          json.forEach(q => {
+            if (user && q.key === 'applicant_name') initialValues[q.key] = user.business.name;
+            else if (user && q.key === 'applicant_address') initialValues[q.key] = user.business.address;
+            else initialValues[q.key] = createDefault(q);
+          });
+        }
+        sectionSet.forEach(
+            section => sections.push({text: section, error: false}));
+        setSections(sections);
+        setSelectedSectionIndex(0);
+        setInitialValues(initialValues);
+        setLCApp(json);
+      })
+    }
+  }, [match.params.bankid, user]);
 
-  const [user] = useContext(UserContext);
-
-  let initialValues = {};
   let validationSchema = null;
 
   if (lcApp) {
     const schemaObj = {};
-    if (persistedLcApp) {
-      initialValues = persistedLcApp;
-    } else {
-      lcApp.forEach(q => {
-        if (user && q.key === 'applicant_name') initialValues[q.key] = user.business.name;
-        else if (user && q.key === 'applicant_address') initialValues[q.key] = user.business.address;
-        else initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
-      });
-    }
-      lcApp.forEach(q => {
-        schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
-        if (q.required) {
-          schemaObj[q.key] = schemaObj[q.key].required(REQUIRED_MSG);
-        }
-      });
+    lcApp.forEach(q => {
+      schemaObj[q.key] = createValidationSchema(q);
+    });
     validationSchema = object().shape(schemaObj);
   }
 
   return (
-    <BasicLayout title={`LC Application ✏️`} subtitle={(<span><Asterisk>*</Asterisk> denotes required field.</span>)} isLoading={!lcApp}>
+    <BasicLayout title={`LC Application ✏️`} isLoading={!lcApp}>
     {lcApp && (
     <Formik
       initialValues={initialValues}
@@ -362,24 +706,60 @@ const BankLCAppPage = ({ match }) => {
               localStorage.removeItem(`lc/${match.params.bankid}`);
               setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
             } else {
-              if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
-              localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
+              if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org.";
+              localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values));
               setStatus({status: "error", message: `Error submitting form: ${text}`});
             }
-            })
+            });
         setSubmitting(false);
       }}
     >
-    {({ isSubmitting }) => (
-      <Form>
-      {lcApp && lcApp.map(question => {
-        const Component = TYPE_TO_COMPONENT[question.type];
-        return <Component key={question.id} question={question} />;
-      })}
-      {status.status && <StatusMessage status={status.status}>{status.message}</StatusMessage>}
-      <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
-      <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
-      </div>
+    {({ isSubmitting, errors, touched, setTouched, values, validateForm }) => (
+      <Form style={{display: "flex"}}>
+        <ErrorFocus
+            values={values} errors={errors} touched={touched} isSubmitting={isSubmitting} setLCApp={setLCApp} setTouched={setTouched}
+            selectedSection={sections[selectedSectionIndex]} questions={lcApp} validateForm={validateForm}
+            setSectionsError={(erroredSectionSet => {
+              const sectionsErrors = sections.map(section => section.error);
+              sections.forEach(section => {section.error = erroredSectionSet.has(section.text)});
+              !_.isEqual(sections.map(section => section.error), sectionsErrors) && setSections([...sections]);})}/>
+        <div style={{width: "30%", position: "sticky", top: 0, height: "fit-content"}}>
+          <ButtonVerticalWrapper>
+            {sections.map((section, index) => (<StyledSection
+                type="button"
+                onClick={() => setSelectedSectionIndex(index)}
+                style={{whiteSpace: "pre"}}
+                key={section.text}
+                selected={index === selectedSectionIndex}>
+              {section.text}
+              {section.error && <SectionSubtitle style={{color: '#dc3545'}}>{REQUIRED_SECTION_MSG}</SectionSubtitle>}
+            </StyledSection>))}
+          </ButtonVerticalWrapper>
+          {status.status && <StatusMessage status={status.status}>{status.message}</StatusMessage>}
+          <div style={{display: "flex", marginTop: "20px", width: "95%"}}>
+            <Button disabled={isSubmitting} type="submit">Submit LC App</Button>
+          </div>
+        </div>
+        <div style={{width: "70%"}}>
+          {lcApp && lcApp.filter(question => sections[selectedSectionIndex].text === question.section).map(question => {
+            const Component = TYPE_TO_COMPONENT[question.type];
+            return <Component
+                key={question.id} question={question}/>;
+          })}
+          <div style={{display: "flex", marginLeft: "150px", marginRight: "150px"}}>
+            <Button
+                style={{flex: 1, marginRight: "50px"}}
+                disabled={selectedSectionIndex === 0}
+                onClick={() => setSelectedSectionIndex(selectedSectionIndex - 1)}
+                type="button">Previous Section</Button>
+            <Button
+                style={{flex: 1, marginLeft: "50px"}}
+                onClick={selectedSectionIndex < sections.length - 1 ? () => setSelectedSectionIndex(selectedSectionIndex + 1) : null}
+                type={selectedSectionIndex === sections.length - 1 ? "submit" : "button"}>
+              {selectedSectionIndex === sections.length - 1 ? "Submit LC App" : "Next Section"}
+            </Button>
+          </div>
+        </div>
       </Form>
     )}
       </Formik>
@@ -387,6 +767,6 @@ const BankLCAppPage = ({ match }) => {
     )}
     </BasicLayout>
   )
-}
+};
 
 export default BankLCAppPage;
