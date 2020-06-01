@@ -5,7 +5,7 @@ import { get } from "lodash";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch } from "@fortawesome/free-solid-svg-icons";
 
-import BasicLayoutWithLink from "../../../components/BasicLayoutWithLink";
+import BasicLayout from "../../../components/BasicLayout";
 import { makeAPIRequest } from '../../../utils/api';
 import config from "../../../config";
 
@@ -113,7 +113,7 @@ const BusinessLCFeed = ({ title, user, url, hideSearch, currentlyOnClient }) => 
   }, [businessid, url]);
 
   return (
-    <BasicLayoutWithLink
+    <BasicLayout
       title={title}
       isLoading={!shownLcs}
       link={`/business/lcs/${currentlyOnClient ? "beneficiary" : "client"}`}
@@ -135,7 +135,7 @@ const BusinessLCFeed = ({ title, user, url, hideSearch, currentlyOnClient }) => 
     {shownLcs.map(lc => <LCListEntry lc={lc} key={lc.id}/>)}
     </div>
     ) : (<center style={{ marginTop: '30px', fontStyle: 'italic', color: '#888' }}>You don't have any LCs yet.</center>)))}
-    </BasicLayoutWithLink>
+    </BasicLayout>
   )
 
 }
