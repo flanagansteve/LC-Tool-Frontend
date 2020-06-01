@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import MoonLoader from "react-spinners/MoonLoader";
+import StatusMessage from "./ui/StatusMessage";
 import { css } from "@emotion/core";
 
 import config from '../config';
@@ -22,15 +23,29 @@ const Subtitle = styled.h2`
   color: #555;
 `;
 
+const RightAlignedLink = styled.a`
+  float : right;
+  padding: 10px 0;
+  color: #00d;
+  line-height: 1.25;
+`;
+
 const Content = styled.div`
   margin: 40px 0 0;
 `;
 
-const BasicLayout = ({ title, subtitle, isLoading, children }) => {
+const Status = styled.div`
+  position: sticky;
+  bottom: 0;
+`;
+
+const BasicLayout = ({ title, subtitle, link, linktext, isLoading, children,
+  marginStyle, statusComponent }) => {
   return (
-    <Margin>
+    <Margin style={marginStyle}>
       <Title>{title}</Title>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
+      {link && <RightAlignedLink href={link}>{linktext}</RightAlignedLink>}
       <Content>
         {isLoading ? (
           <MoonLoader
@@ -45,6 +60,9 @@ const BasicLayout = ({ title, subtitle, isLoading, children }) => {
           children
         )}
       </Content>
+      <Status>
+        {statusComponent}
+      </Status>
     </Margin>
   );
 };
