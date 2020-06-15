@@ -1,13 +1,12 @@
-import React, { useState, useEffect, useContext, useRef } from 'react';
-import styled, {keyframes} from 'styled-components';
+import React, {useContext, useEffect, useRef, useState} from 'react';
+import styled from 'styled-components';
 import _ from 'lodash'
-import {Formik, Form, Field, useField, useFormikContext} from 'formik';
-import { object, string, number, boolean, array, date } from 'yup';
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { Prompt } from 'react-router-dom'
+import {Field, Form, Formik, useField, useFormikContext} from 'formik';
+import {array, boolean, date, number, object, string} from 'yup';
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {
-  faTimes,
   faCheckSquare,
+  faTimes,
   faTrash
 } from "@fortawesome/free-solid-svg-icons";
 
@@ -19,11 +18,13 @@ import {
 } from '../../utils/api';
 import Button from "../../components/ui/Button";
 import StatusMessage from "../../components/ui/StatusMessage";
-import { useAuthentication, UserContext } from '../../utils/auth';
+import {useAuthentication, UserContext} from '../../utils/auth';
 
 import config from '../../config';
-import {Dropdown} from "../../components/ui/Dropdown";
+import {Dropdown, SearchableSelect} from "../../components/ui/Dropdown";
 import {Popup} from "../../components/ui/Popup";
+import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
+import {RouteBlockingPopup} from "../../components/ui/RouteBlockingPopup";
 
 const disabledBackgroundColor = `#c3c1c3`;
 const disabledColor = `black`;
@@ -208,10 +209,84 @@ const BasicInput = ({ question, children, subtitle }) => {
   )
 };
 
-const TextInput = ({ question }) => {
+const TextInput = ({ question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate }) => {
+  const {values, setValues, initialValues, handleChange, setFieldValue} = useFormikContext();
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+  const autofillTemplateTimeout = useRef();
+  const beneficiaryAutocompleteTimeout = useRef(null);
+
+  const [suggested, setSuggested] = useState([]);
+
+  useEffect(() => {
+    if (status.status !== "success" && !appliedTemplate && (question.key === "beneficiary_name" || question.key === "purchased_item")) {
+      clearTimeout(autofillTemplateTimeout.current);
+      const timeoutId = setTimeout(() => {
+          const params = {};
+          if (values.beneficiary_name) params.beneficiary_name = values.beneficiary_name;
+          if (values.purchased_item) params.purchased_item = values.purchased_item;
+          const paramString = Object.entries(params).map(([key, value]) => `${key}=${value}`).join("&");
+          if (paramString) makeAPIRequest(`/lc/digital_app_templates/?${paramString}`).then(result => {
+            if (result.length) {
+              const Component = (
+                  <div>
+                    <div style={{display: "flex"}}>
+                      <span style={{flex: 1}}/>
+                      <StyledIcon onClick={() => setStatus({status: null, message: ""})}
+                                  icon={faTimes} style={{color: "black"}}/>
+                    </div>
+                    <div style={{color: "black"}}>Load Template with Similar Answers:</div>
+                    <div style={{paddingTop: 10}}>
+                      {result.map(template => (
+                          <div key={template.id} style={{paddingTop: 5}}>
+                            <ClickableText onClick={async () => {
+                              setStatus({status: null, message: ""});
+                              await loadTemplateAnswers({lcApp, selectedTemplate: template, values, initialValues, setValues, setAppliedTemplate, setStatus});
+                            }}>
+                              {template.templateName}
+                            </ClickableText></div>
+                      ))}
+                    </div>
+                  </div>
+              );
+              setStatus({status: "info", message: Component});
+            } else {
+              setStatus({status: null, message: ""});
+            }
+          });
+        }, 500);
+      autofillTemplateTimeout.current = timeoutId;
+    }
+  }, [value]);
+
+  useEffect(() => {
+    if (question.key === "beneficiary_name") {
+      clearTimeout(beneficiaryAutocompleteTimeout.current);
+      const timeoutId = setTimeout(() =>
+        makeAPIRequest(`/business/autocomplete/?string=${value}`)
+        .then(suggested => setSuggested(suggested)), 400);
+      beneficiaryAutocompleteTimeout.current = timeoutId;
+    }
+  }, [value]);
+
+  const onSelect = async item => {
+    await setFieldValue("beneficiary_address", item.address);
+    await setValue(item.name);
+  };
+
+  const inputComponent = question.key === "beneficiary_name" ?
+      <SearchableSelect
+          onSelect={onSelect}
+          items={suggested}
+          questionKey={question.key}
+          handleChange={handleChange}
+      /> :
+      <StyledFormInput type="text" name={question.key}/>;
+
   return (
     <BasicInput question={question} disabled={question.disabledTooltip}>
-      {!question.disabledTooltip && <StyledFormInput type="text" name={question.key}/>}
+      {!question.disabledTooltip && inputComponent}
     </BasicInput>
   );
 };
@@ -488,8 +563,9 @@ const DocReqInput = ({ question }) => {
 };
 
 const contains = (option, answer) => {
-  if (answer && Array.isArray(answer)) {
-    return answer.some(piece => _.isEqual(piece, option));
+  if (option === "*") return answer.length;
+  else if (answer && Array.isArray(answer)) {
+    return  answer.some(piece => _.isEqual(piece, option));
   } else {
     return option === answer;
   }
@@ -663,6 +739,25 @@ const createValidationSchema = question => {
   return schema;
 };
 
+const loadTemplateAnswers = async ({lcApp, selectedTemplate, values, initialValues, setValues, setAppliedTemplate, setStatus}) => {
+  const questionType = {};
+  lcApp.forEach(q => questionType[q.key] = q.type);
+  const template = await makeAPIRequest(`/lc/digital_app_templates/${selectedTemplate.id}/`, "GET");
+  values = {...values};
+  for (let [key, value] of Object.entries(template)) {
+    const questionKey = _.snakeCase(key);
+    if (questionType[questionKey] === "object" ||
+        questionType[questionKey] === "array_of_objs" ||
+        questionType[questionKey] === "checkbox") value = JSON.parse(value);
+    if (initialValues[questionKey] !== undefined) values[questionKey] = value;
+    template[key] = value;
+  }
+  setStatus({status: "success", message: "Successfully loaded application"});
+  setTimeout(() => setStatus({status: null, message: ""}), 2500);
+  setValues(values);
+  setAppliedTemplate(template);
+};
+
 const LoadTemplate = ({lcApp, setModal, initialValues, setAppliedTemplate, setStatus, setValues, values}) => {
   const [selectedTemplate, setSelectedTemplate] = useState();
   const [lcTemplates, setLCTemplates] = useState();
@@ -679,22 +774,7 @@ const LoadTemplate = ({lcApp, setModal, initialValues, setAppliedTemplate, setSt
              onSelect={async () => {
                setModal(null);
                if (!selectedTemplate) return;
-               const questionType = {};
-               lcApp.forEach(q => questionType[q.key] = q.type);
-               const template = await makeAPIRequest(`/lc/digital_app_templates/${selectedTemplate.id}/`, "GET");
-               values = {...values};
-               for (let [key, value] of Object.entries(template)) {
-                 const questionKey = _.snakeCase(key);
-                 if (questionType[questionKey] === "object" ||
-                     questionType[questionKey] === "array_of_objs" ||
-                     questionType[questionKey] === "checkbox") value = JSON.parse(value);
-                 if (initialValues[questionKey] !== undefined) values[questionKey] = value;
-                 template[key] = value;
-               }
-               setValues(values);
-               setAppliedTemplate(template);
-               setStatus({status: "success", message: "Successfully loaded application"});
-               setTimeout(() => setStatus({status: null, message: ""}), 2500);
+               await loadTemplateAnswers({lcApp, selectedTemplate, values, initialValues, setValues, setAppliedTemplate, setStatus});
              }}
       >
         {lcTemplates && !lcTemplates.length && <div style={{paddingBottom: 20, color: "gray", fontStyle: "italic"}}>No Saved Templates</div>}
@@ -811,7 +891,8 @@ const SaveTemplate = ({setModal, values, lcApp, appliedTemplate, setStatus, setA
   )
 };
 
-const unsavedChanges = ({values, template, initialValues}) => {
+const unsavedChanges = ({values, template, initialValues, submitCount}) => {
+  if (submitCount) return false;
   if (!template) return !_.isEqual(values, initialValues);
   for (let [templateField, templateValue] of Object.entries(template)) {
     templateField = _.snakeCase(templateField);
@@ -827,13 +908,14 @@ const emptyAndChanged = (currentValue, templateValue) => {
 };
 
 const Refresh = ({appliedTemplate}) => {
-  const { values, initialValues } = useFormikContext();
+  const { values, initialValues, submitCount } = useFormikContext();
   useEffect(() => {
-    if (unsavedChanges({values, template: appliedTemplate, initialValues})) {
-      window.onbeforeunload = () => true;
+    if (unsavedChanges({values, template: appliedTemplate, initialValues, submitCount})) {
+      window.onbeforeunload = () => "You have unsaved changes. Are you sure you want to leave without saving?";
     } else {
       window.onbeforeunload = undefined;
     }
+    return () => window.onbeforeunload = undefined;
   });
   return null;
 };
@@ -894,9 +976,7 @@ const BankLCAppPage = ({ match }) => {
   }
 
   return <BasicLayout
-          title={`LC Application ✏️`} isLoading={!lcApp} status={status} marginStyle={{marginBottom: 0}}
-          statusComponent={<StatusMessage style={{overflow: "auto", width: "calc(30% - 40px)", maxWidth: "", margin: 0}}
-                                          status={status.status}>{status.message}</StatusMessage>}>
+          title={`LC Application ✏️`} isLoading={!lcApp} status={status} marginStyle={{marginBottom: 0, marginTop: 10}}>
     {lcApp && (
     <Formik
       initialValues={initialValues}
@@ -942,10 +1022,9 @@ const BankLCAppPage = ({ match }) => {
         setSubmitting(false);
       }}
     >
-    {({ isSubmitting, errors, touched, setTouched, values, validateForm, setValues, handleSubmit }) => (
+    {({ isSubmitting, errors, touched, setTouched, values, validateForm, setValues, handleSubmit, submitCount }) => (
         <div style={{display: "flex", paddingBottom: 40}}>
-          <Prompt when={unsavedChanges({values, template: appliedTemplate, initialValues})}
-                  message={"Are you sure you want to leave the page? You have unsaved changes."}/>
+          <RouteBlockingPopup when={unsavedChanges({values, template: appliedTemplate, initialValues, submitCount})}/>
           <Refresh appliedTemplate={appliedTemplate}/>
           {modal === "loadTemplate" && <LoadTemplate
               initialValues={initialValues} lcApp={lcApp}
@@ -964,36 +1043,42 @@ const BankLCAppPage = ({ match }) => {
                 const sectionsErrors = sections.map(section => section.error);
                 sections.forEach(section => {section.error = erroredSectionSet.has(section.text)});
                 !_.isEqual(sections.map(section => section.error), sectionsErrors) && setSections([...sections]);})}/>
-          <div style={{width: "30%", position: "sticky", top: 0, height: "fit-content"}}>
-            <div style={{display: "flex", flexDirection: "row"}}>
-              <StyledButton type={"button"} style={{marginRight: "10px"}} fitWidth={true} onClick={() => {
-                setModal("loadTemplate");
-              }}>Load Template</StyledButton>
-              <StyledButton type={"button"} style={{marginLeft: 10, marginRight: 15}} fitWidth={true}
-                            onClick={() => setModal("saveTemplate")}>
-                Save As Template</StyledButton>
+          <ResizableScreenDiv style={{width: "30%", position: "sticky", top: 0, display: "flex", flexDirection: "column"}}>
+            <div style={{flex: 1}}>
+              <div style={{display: "flex", flexDirection: "row"}}>
+                <StyledButton type={"button"} style={{marginRight: "10px"}} fitWidth={true} onClick={() => {
+                  setModal("loadTemplate");
+                }}>Load Template</StyledButton>
+                <StyledButton type={"button"} style={{marginLeft: 10, marginRight: 15}} fitWidth={true}
+                              onClick={() => setModal("saveTemplate")}>
+                  Save As Template</StyledButton>
+              </div>
+              <ButtonVerticalWrapper>
+                {sections.map((section, index) => (<StyledSection
+                    type="button"
+                    onClick={() => setSelectedSectionIndex(index)}
+                    style={{whiteSpace: "pre"}}
+                    key={section.text}
+                    selected={index === selectedSectionIndex}>
+                  {section.text}
+                  {section.error && <SectionSubtitle style={{color: '#dc3545'}}>{REQUIRED_SECTION_MSG}</SectionSubtitle>}
+                </StyledSection>))}
+              </ButtonVerticalWrapper>
+              <div style={{display: "flex", marginTop: "20px", width: "95%"}}>
+                <Button disabled={isSubmitting} onClick={handleSubmit}>Submit LC App</Button>
+              </div>
             </div>
-            <ButtonVerticalWrapper>
-              {sections.map((section, index) => (<StyledSection
-                  type="button"
-                  onClick={() => setSelectedSectionIndex(index)}
-                  style={{whiteSpace: "pre"}}
-                  key={section.text}
-                  selected={index === selectedSectionIndex}>
-                {section.text}
-                {section.error && <SectionSubtitle style={{color: '#dc3545'}}>{REQUIRED_SECTION_MSG}</SectionSubtitle>}
-              </StyledSection>))}
-            </ButtonVerticalWrapper>
-            <div style={{display: "flex", marginTop: "20px", width: "95%"}}>
-              <Button disabled={isSubmitting} onClick={handleSubmit}>Submit LC App</Button>
-            </div>
-          </div>
+            <div style={{flex: 1}}/>
+            {status.status && <StatusMessage style={{overflowY: "auto", flexGrow: 0, marginTop: 20}}
+                           status={status.status}>{status.message}</StatusMessage>}
+          </ResizableScreenDiv>
           <Form style={{width: "70%"}}>
             <div>
               {lcApp && lcApp.filter(question => sections[selectedSectionIndex].text === question.section).map(question => {
                 const Component = TYPE_TO_COMPONENT[question.type];
                 return <Component
-                    key={question.id} question={question}/>;
+                    key={question.id} question={question} status={status} setStatus={setStatus} lcApp={lcApp}
+                    setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>;
               })}
               <div style={{display: "flex", marginLeft: "150px", marginRight: "150px"}}>
                 <Button

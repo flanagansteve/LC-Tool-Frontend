@@ -1,42 +1,46 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, {useContext, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
-import { Formik, Field, Form, useField } from "formik";
-import { get } from "lodash";
+import {Field, Form, Formik, useField, useFormikContext} from "formik";
+import _, {get} from "lodash";
 
-import { makeAPIRequest } from '../../utils/api';
-import { useAuthentication, UserContext } from "../../utils/auth";
+import {makeAPIRequest} from '../../utils/api';
+import {useAuthentication, UserContext} from "../../utils/auth";
 import LCView from "../../components/lc/LCView";
 import Button from "../../components/ui/Button";
 import DocumentaryRequirements from './DocumentaryRequirements';
 import Panel from './Panel';
 import config from '../../config';
+import {Popup} from "../../components/ui/Popup";
 
 // TODO break this file up into multiple files
 
+const disabledBackgroundColor = `#c3c1c3`;
+const disabledColor = `black`;
+
 const TwoColumnHolder = styled.div`
   display: flex;
-`
+`;
 
 const LeftColumn = styled.div`
   flex-grow: 1;
   margin-right: 20px;
   min-width: 250px;
   max-width: 250px;
-`
+`;
 
 const RightColumn = styled.div`
   flex-grow: 6;
-`
+`;
 
 const OrderStatusWrapper = styled.div`
   font-weight: 300;
-`
+`;
 
 const PartyDisplayMessage = styled.div`
   font-weight: 300;
   margin: 15px 0;
   text-align: center;
-`
+`;
 
 const APPROVALS_TO_STATE = {
   client: {
@@ -65,35 +69,40 @@ const APPROVALS_TO_STATE = {
     canEdit: ['client'],
     canApprove: ['client'],
   },
-}
+};
 
 const OrderStatusMessage = ({ stateName }) => {
   const message = APPROVALS_TO_STATE[stateName].message;
   return <div>{message}</div>
-}
+};
 
-const OrderStatus = ({ lc, setLc, userType, stateName }) => {
+const OrderStatus = ({ lc, setLc, userType, stateName, setModal }) => {
   const approvals = [
     {name: 'Issuer:', value: get(lc, 'issuerApproved')},
     {name: 'Client:', value: get(lc, 'clientApproved')},
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
-  ]
-  const handleClickApprove = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true })
+  ];
+  const handleClickApprove = async () => {
+    const approvedCreditAmt = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+    if (userType === "issuer" && (!approvedCreditAmt || parseFloat(lc.client.totalCredit) +
+        parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
+      setModal("creditOverflow");
+    }
+    else makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
-  }
+  };
   const handleClickPayout = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, paidOut: true })); // TODO fix
-  }
+  };
   const handleClickRequest = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, requested: true })); // TODO fix
-  }
+  };
   const handleClickDraw = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true })
       .then(json => setLc({ ...lc, drawn: true })); // TODO fix
-  }
+  };
   const allApproved = approvals.every(a => a.value);
   const { paidOut, drawn, requested } = lc;
   return (
@@ -115,7 +124,7 @@ const OrderStatus = ({ lc, setLc, userType, stateName }) => {
       </OrderStatusWrapper>
     </Panel>
   );
-}
+};
 
 const OrderNotes = ({ lc }) => {
   return (
@@ -125,18 +134,18 @@ const OrderNotes = ({ lc }) => {
       </OrderStatusWrapper>
     </Panel>
   )
-}
+};
 
 const ClientInformationWrapper = styled.div`
   font-weight: 300;
   font-size: 14px;
   line-height: 1.5;
-`
+`;
 
 const HistoryOrder = styled.div`
   display: flex;
   justify-content: space-between;
-`
+`;
 
 const ClientInformation = ({ lc }) => {
   const employee = get(lc, 'taskedClientEmployees[0]');
@@ -145,7 +154,7 @@ const ClientInformation = ({ lc }) => {
   useEffect(() => {
     makeAPIRequest(`/lc/by_client/${client.id}/`)
       .then(json => setClientOrders(json));
-  }, [client.id])
+  }, [client.id]);
 
   return (
     <Panel title="Client Information">
@@ -163,7 +172,7 @@ const ClientInformation = ({ lc }) => {
       </ClientInformationWrapper>
     </Panel>
   );
-}
+};
 
 const BigStatsWrapper = styled.div`
   display: flex;
@@ -172,69 +181,95 @@ const BigStatsWrapper = styled.div`
     flex-grow: 1;
   }
 
-  > :last-child {
-    margin-right: 40px;
-  }
-
   border-bottom: 1px solid #cdcdcd;
-`
+`;
 
 const BigNumberTitle = styled.div`
   font-size: 14px;
   margin: 10px 0 15px;
-`
+`;
 
 const BigNumber = styled.div`
   font-weight: 600;
-  font-size: 36px;
+  font-size: 30px;
   margin-bottom: 25px;
-`
+`;
 
 const AnalysisWrapper = styled.div`
   display: flex;
   align-items: baseline;
   margin: 10px;
-`
+`;
 
 const SmallHeader = styled.div`
   font-size: 12px;
   min-width: 150px;
   margin-right: 50px;
-`
+`;
 
 const AnalysisBody = styled.div`
-  font-weight: 300;
-`
+  font-weight: ${props => props.error === undefined ? 300 : 400};
+  ${props => props.error && "color: red;"}
+  ${props => props.error === false && "color: #00a031;"}
+`;
 
-const Financials = ({ lc }) => {
+const AnalysisDetail = styled.span`
+  font-style: italic;
+  font-weight: 300;
+  font-size: 14px;
+  color: red;
+  text-decoration: underline;
+  opacity: .6;
+  cursor: pointer;
+  &:hover {
+    opacity: 1;
+  }
+`;
+
+const Subtitle = styled.div`
+  margin-top: 15px;
+  color: #555353;
+  font-style: italic;
+  font-size: 14px;
+  font-weight: 300;
+`;
+
+const Financials = ({ lc, setModal }) => {
+  let creditOverflow = false;
+  const approvedCreditAmt = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+  if (!approvedCreditAmt || parseFloat(lc.client.totalCredit) +
+      parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt)) {
+    creditOverflow = true;
+  }
   const client = get(lc, 'client');
   return (
     <Panel title="Financials">
       <BigStatsWrapper>
-        <div>
+        <div style={{paddingRight: 30, width: "max-content"}}>
           <BigNumberTitle>Annual Cashflow</BigNumberTitle>
           <BigNumber>
             {client.annualCashflow || "N/A"}
             <span style={{ fontWeight: "200", fontSize: "16px" }}> yearly</span>
            </BigNumber>
         </div>
-        <div>
+        <div style={{paddingRight: 30}}>
           <BigNumberTitle>Savings Available</BigNumberTitle>
           <BigNumber>{client.balanceAvailable || "N/A"}</BigNumber>
         </div>
         <div>
           <BigNumberTitle>Approved Credit</BigNumberTitle>
-          <BigNumber>{client.approvedCredit || "N/A"}</BigNumber>
+          <BigNumber>{client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt || "N/A"}</BigNumber>
         </div>
       </BigStatsWrapper>
       <div>
         <AnalysisWrapper>
-          <SmallHeader>Cashflow Analysis</SmallHeader>
-          <AnalysisBody>
-            Bountium will provide intelligent analysis and predictions to help assess letters of credit.
-            <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
-              &nbsp;Coming soon
-            </span>
+          <SmallHeader>Credit Analysis</SmallHeader>
+          <AnalysisBody error={creditOverflow}>
+            {creditOverflow ? "There is a credit overflow." : "Approving this LC will not exceed the current approved credit limit."}
+            {creditOverflow && <span>&nbsp;</span>}
+            {creditOverflow && <AnalysisDetail onClick={() => setModal("creditOverflow")}>
+              Click here for details
+            </AnalysisDetail>}
           </AnalysisBody>
         </AnalysisWrapper>
         <AnalysisWrapper>
@@ -249,18 +284,18 @@ const Financials = ({ lc }) => {
       </div>
     </Panel>
   );
-}
+};
 
 const ODColumn = styled.div`
   flex-basis: 50%;
-`
+`;
 
 const ODValue = styled.div`
   font-weight: 500;
   font-size: 24px;
   margin-bottom: 20px;
   margin-top: 5px;
-`
+`;
 
 const StyledInput = styled(Field)`
 	border: none;
@@ -268,7 +303,17 @@ const StyledInput = styled(Field)`
 	padding: 10px;
 	border-radius: 10px;
 	font-size: 18px;
-`
+`;
+
+const StyledPopupInput = styled.input`
+  padding: 10px 0 5px;
+  flex: 1;
+  font-size: 16px;
+  border: none;
+  border-bottom: ${props => props.disabled ? `0px` : `1px solid #cdcdcd`};
+  background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
+  color: ${props => props.disabled ? disabledColor : `#000`};
+`;
 
 const ButtonWrapper = styled.div`
   display: flex;
@@ -277,7 +322,7 @@ const ButtonWrapper = styled.div`
   > :not(:last-child) {
     margin-right: 20px;
   }
-`
+`;
 
 const StyledButton = styled.button`
   background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
@@ -287,11 +332,11 @@ const StyledButton = styled.button`
   border: 1px solid ${config.accentColor};
   font-size: 16px;
   cursor: pointer;
-  margin: 10px 0;
+  margin: ${props => props.nested ? `0px` : `10px 0;`}
   max-width: 45%;
   display: flex;
   align-items: center;
-`
+`;
 
 const YesNoInput = ({ name }) => {
   const [, meta, helpers] = useField(name);
@@ -301,7 +346,7 @@ const YesNoInput = ({ name }) => {
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
-  }
+  };
 
   return (
       <ButtonWrapper>
@@ -309,14 +354,14 @@ const YesNoInput = ({ name }) => {
         <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
       </ButtonWrapper>
   )
-}
+};
 
 const TYPE_TO_COMPONENT = {
   text: (props) => (<StyledInput type="text" {...props}/>),
   number: (props) => (<StyledInput type="number" {...props}/>),
   date: (props) => (<StyledInput type="date" {...props}/>),
   boolean: (props) => (<YesNoInput type="text" {...props}/>),
-}
+};
 
 const SubmitWrapper = styled.div`
   display: flex;
@@ -325,7 +370,7 @@ const SubmitWrapper = styled.div`
   padding-bottom: 10px;
   margin-bottom: 10px;
   align-items: center;
-`
+`;
 
 const SubmitSection = () => {
   return (
@@ -339,7 +384,7 @@ const SubmitSection = () => {
     </ODColumn>
     </SubmitWrapper>
   )
-}
+};
 
 const OrderDetail = ({ title, value, units, type, name, editing }) => {
   const Input = TYPE_TO_COMPONENT[type];
@@ -347,14 +392,14 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
   <>
     <SmallHeader>{title}</SmallHeader>
     <ODValue>
-      {editing && type ? <Input name={name}/> : (value || "N/A")}
+      {editing && type ? <Input name={name} id={name}/> : (value || "N/A")}
       {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
     </ODValue>
   </>
   )
-}
+};
 
-const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
+const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModal }) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
   const canEdit = !live && APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
@@ -367,9 +412,10 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
     {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased', type: 'number'},
     {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt', type: 'number'},
     {title: "Credit Expiration Date", value: lc.expirationDate, name: 'expirationDate', type: 'date'},
+    {title: "Cash Secure Amount", value: lc.cashSecure, type: 'number', name: 'cashSecure'},
+    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'}
   ];
   const extraDetails = [
-    {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'},
     {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, name: 'creditDeliveryMeans', type: 'text'},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
     {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, name: 'draftsInvoiceValue', units: '%', type: 'number'},
@@ -389,7 +435,7 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
         ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
         : "No")) // not editable for now
     }
-  ]
+  ];
 
   // setup initial values
   const initialValues = { latestVersionNotes: '' };
@@ -408,57 +454,193 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live }) => {
 
   return (
     <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing} canEdit={canEdit}>
-    <Formik
-      initialValues={initialValues}
-      onSubmit={(values, { setSubmitting }) => {
-        setSubmitting(true);
-        const { latestVersionNotes, ...lcValues } = values;
-        const newLc = {};
-        Object.entries(lcValues).forEach(pair => {
-          const [k, v] = pair;
-          if (v !== initialValues[k]) newLc[k] = v;
-        })
-        console.log(newLc)
-        makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
-          lc: newLc, latestVersionNotes,
-        }).then(() => {
-            setSubmitting(false);
-            refreshLc();
-            setEditing(false);
-          })
-      }}
-    >
-    {() => (
-    <Form>
-      {editing && <SubmitSection />}
-      <div style={{display: 'flex'}}>
-        <ODColumn>
-          {details.slice(0,details.length/2).map((d) =>
-            <OrderDetail key={d.title} {...d} editing={editing}/>
-          )}
-          {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) =>
-            <OrderDetail key={d.title} {...d} editing={editing}/>
-          )}
-        </ODColumn>
-        <ODColumn>
-          {details.slice(details.length/2).map((d) =>
-            <OrderDetail key={d.title} {...d} editing={editing}/>
-          )}
-          {showExtra && extraDetails.slice(extraDetails.length/2).map((d) =>
-            <OrderDetail key={d.title} {...d} editing={editing}/>
-          )}
-        </ODColumn>
+      <Formik
+        initialValues={initialValues}
+        onSubmit={(values, { setSubmitting }) => {
+          setSubmitting(true);
+          const { latestVersionNotes, ...lcValues } = values;
+          const newLc = {};
+          Object.entries(lcValues).forEach(pair => {
+            const [k, v] = pair;
+            if (v !== initialValues[k]) newLc[k] = v;
+          });
+          makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+            lc: newLc, latestVersionNotes,
+          }).then(() => {
+              setSubmitting(false);
+              refreshLc();
+              setEditing(false);
+            })
+        }}
+      >
+      {() => (<div>
+        <CreditOverflowPopup
+            setModal={setModal} modal={modal} setEditing={setEditing}
+            lc={lc} refreshLc={refreshLc}/>
+        <Form>
+          {editing && <SubmitSection />}
+          <div style={{display: 'flex'}}>
+            <ODColumn>
+              {details.slice(0,details.length/2).map((d) =>
+                <OrderDetail key={d.title} {...d} editing={editing}/>
+              )}
+              {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) =>
+                <OrderDetail key={d.title} {...d} editing={editing}/>
+              )}
+            </ODColumn>
+            <ODColumn>
+              {details.slice(details.length/2).map((d) =>
+                <OrderDetail key={d.title} {...d} editing={editing}/>
+              )}
+              {showExtra && extraDetails.slice(extraDetails.length/2).map((d) =>
+                <OrderDetail key={d.title} {...d} editing={editing}/>
+              )}
+            </ODColumn>
+          </div>
+        </Form>
       </div>
-    </Form>
-    )}
-    </Formik>
+      )}
+      </Formik>
     </Panel>
   );
-}
+};
+
+const scrollToAndHighlight = (questionKey) => {
+  const selector = `[id="${questionKey}"]`;
+  let parentElement = document.querySelector(selector);
+  const originalBackgroundColor = window.getComputedStyle(parentElement).backgroundColor;
+  const changeQuestionBackgroundTemp = () => {
+    parentElement.animate({backgroundColor: ["lightblue", originalBackgroundColor]}, 1000);
+  };
+  let scrollTimeout;
+  const scrollHandler = () => {
+    clearTimeout(scrollTimeout);
+    scrollTimeout = setTimeout(() => {
+      window.removeEventListener("scroll", scrollHandler);
+      changeQuestionBackgroundTemp();
+      parentElement.focus();
+    }, 20);
+  };
+  window.addEventListener("scroll", scrollHandler);
+  parentElement.scrollIntoView({behavior: "smooth", block: "center"});
+};
+
+const usePrevious = value => {
+  const ref = useRef();
+  useEffect(() => {
+    ref.current = value;
+  });
+  return ref.current;
+};
+
+const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
+  const [selectedButtonIndices, setSelectedButtonIndex] = useState({0: true, 1: false});
+  const prevSelectedButtonIndices = usePrevious(selectedButtonIndices);
+  const approvedCredit = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt || 0;
+  const minimumIncrease = (parseFloat(lc.client.totalCredit) + parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) - parseFloat(approvedCredit)).toString();
+  const [increaseApprovedCreditValue, setIncreaseApprovedCreditValue] = useState(minimumIncrease);
+  const [requestMoreCashValue, setRequestMoreCashValue] = useState(minimumIncrease);
+  const [error, setError] = useState("");
+  const [submissionAttempts, setSubmissionAttempts] = useState(0);
+  const increaseApprovedCreditRef = useRef(null);
+  const requestMoreCashRef = useRef(null);
+  const {setFieldValue, values} = useFormikContext();
+  const overflow = -(parseFloat(approvedCredit) - parseFloat(lc.client.totalCredit) -
+      parseFloat(lc.creditAmt) + parseFloat(lc.cashSecure));
+
+  useEffect(() => {
+    handleError();
+  }, [increaseApprovedCreditValue, requestMoreCashValue]);
+
+  useEffect(() => {
+    if (!_.isEqual(selectedButtonIndices, prevSelectedButtonIndices)) {
+      handleError();
+      if (selectedButtonIndices[0] && selectedButtonIndices[1]) {
+        if (prevSelectedButtonIndices[0])
+          requestMoreCashRef.current && requestMoreCashRef.current.focus();
+        else if (prevSelectedButtonIndices[1])
+          increaseApprovedCreditRef.current && increaseApprovedCreditRef.current.focus();
+      } else if (selectedButtonIndices[0]) {
+        increaseApprovedCreditRef.current && increaseApprovedCreditRef.current.focus();
+      } else if (selectedButtonIndices[1]) {
+        requestMoreCashRef.current && requestMoreCashRef.current.focus();
+      }
+    }
+  });
+
+  const handleError = () => {
+    if (selectedButtonIndices[0] && selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue) + parseFloat(requestMoreCashValue) < parseFloat(minimumIncrease)) {
+      setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
+      return true;
+    } else if (selectedButtonIndices[0] && !selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue) < parseFloat(minimumIncrease)) {
+      setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
+      return true;
+    } else if (selectedButtonIndices[1] && !selectedButtonIndices[0] && parseFloat(requestMoreCashValue) < parseFloat(minimumIncrease)) {
+      setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
+      return true;
+    } else if (!selectedButtonIndices[0] && !selectedButtonIndices[1]) {
+      setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
+      return true;
+    }
+    setError("");
+    return false;
+  };
+
+  const onSelect = async () => {
+    setSubmissionAttempts(submissionAttempts + 1);
+    const error = handleError();
+    if (!error && selectedButtonIndices[0]) {
+      await makeAPIRequest(`/bank/${lc.issuer.id}/business/${lc.client.id}/approved_credit/`, "PUT", {approvedCreditAmt: parseFloat(increaseApprovedCreditValue) + parseFloat(approvedCredit)});
+      refreshLc();
+      setModal(false);
+    }
+    if (!error && selectedButtonIndices[1]) {
+      await setEditing(true);
+      await setModal(false);
+      setFieldValue("cashSecure", parseFloat(requestMoreCashValue) + parseFloat(lc.cashSecure));
+      setFieldValue("latestVersionNotes", `Please increase cash secured amount.${values.latestVersionNotes && " " + values.latestVersionNotes}`);
+      scrollToAndHighlight("cashSecure");
+    }
+  };
+
+  return (
+      <Popup containerStyle={{width: "55%"}} show={modal === "creditOverflow"} title={"Credit Overflow"}
+             error={submissionAttempts > 0 && error} onCancel={() => setModal(false)}
+             selectDisabled={submissionAttempts > 0 && error} onSelect={onSelect}>
+        <div>
+          Approving this LC will exceed the current approved credit ({approvedCredit}) for {get(lc, "client.name")} by {overflow}.
+          <Subtitle>Check all that apply.</Subtitle>
+          <div style={{flexDirection: "row", display: "flex", paddingTop: 20, paddingBottom: 20}}>
+            <StyledButton
+                nested style={{width: 230, justifyContent: "center"}}
+                onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 0: !selectedButtonIndices[0]})}
+                selected={selectedButtonIndices[0]}>
+              Increase Approved Credit By</StyledButton>
+            <StyledPopupInput
+                ref={increaseApprovedCreditRef} value={increaseApprovedCreditValue} type={"number"}
+                onChange={({target}) => setIncreaseApprovedCreditValue(target.value)}
+                style={{marginLeft: 10, visibility: selectedButtonIndices[0] ? "visible" : "hidden"}}/>
+          </div>
+          <div style={{flexDirection: "row", display: "flex", paddingBottom: 20}}>
+            <StyledButton
+                nested style={{width: 230, justifyContent: "center"}}
+                onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 1: !selectedButtonIndices[1]})}
+                selected={selectedButtonIndices[1]}>
+              Request More Secured Cash</StyledButton>
+            <StyledPopupInput
+                ref={requestMoreCashRef} value={requestMoreCashValue} type={"number"}
+                onChange={({target}) => setRequestMoreCashValue(target.value)}
+                style={{marginLeft: 10, visibility: selectedButtonIndices[1] ? "visible" : "hidden"}}/>
+          </div>
+        </div>
+      </Popup>
+  )
+};
 
 const LCViewPage = ( {match} ) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
   const [user] = useContext(UserContext);
+  const [modal, setModal] = useState("");
   const [lc, setLc] = useState(null);
   let userType = 'unknown';
   if (get(user, 'bank')) {
@@ -473,7 +655,7 @@ const LCViewPage = ( {match} ) => {
     issuer: get(lc, 'issuerApproved'),
     client: get(lc, 'clientApproved'),
     beneficiary: get(lc, 'beneficiaryApproved')
-  }
+  };
   let stateName = 'all';
   if (a.issuer === true) {
     if (a.client === true) {
@@ -492,36 +674,49 @@ const LCViewPage = ( {match} ) => {
       stateName = 'bene';
     }
   }
-  // console.log(lc)
 
   // TODO change API to just return the new LC after we update it
   const refreshLc = () => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
-      .then(json => setLc(json))
-  }
+    .then(json => {
+      userType === "issuer" ?
+          makeAPIRequest(`/lc/total_credit/${json.client.id}/`).then(totalCredit => {
+            json.client.totalCredit = totalCredit;
+            setLc(json);
+          }) : setLc(json);
+    })
+  };
 
   useEffect(() => {
-    makeAPIRequest(`/lc/${match.params.lcid}/`)
-      .then(json => setLc(json))
-  }, [match.params.lcid])
+    if (user)
+      makeAPIRequest(`/lc/${match.params.lcid}/`)
+        .then(json => {
+          userType === "issuer" ?
+          makeAPIRequest(`/lc/total_credit/${json.client.id}/`).then(totalCredit => {
+            json.client.totalCredit = totalCredit;
+            setLc(json);
+          }) : setLc(json);
+        })
+  }, [match.params.lcid, user?.id]);
 
   return (
     <LCView lc={lc}>
       <TwoColumnHolder>
         <LeftColumn>
-          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live} stateName={stateName}/>
+          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live} stateName={stateName} setModal={setModal}/>
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
         </LeftColumn>
         <RightColumn>
-          {userType === 'issuer' && <Financials lc={lc}/>}
-          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName} userType={userType} live={live}/>
+          {userType === 'issuer' && <Financials lc={lc} setModal={setModal}/>}
+          <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName}
+                        userType={userType} live={live} modal={modal} setModal={setModal}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
     </LCView>
   )
 
-}
+};
 
 export default LCViewPage;

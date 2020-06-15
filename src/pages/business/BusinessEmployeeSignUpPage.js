@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, {useContext, useState} from "react";
 import styled from "styled-components";
 import { Formik, Form, Field, ErrorMessage } from 'formik';
 import { string, object, ref } from 'yup';
@@ -7,6 +7,7 @@ import BasicLayout from "../../components/BasicLayout";
 import { makeAPIRequest } from '../../utils/api';
 import { UserContext } from "../../utils/auth";
 import Button from "../../components/ui/Button";
+import StatusMessage from "../../components/ui/StatusMessage";
 
 const SignUpForm = styled(Form)`
   background-color: #fff;
@@ -39,9 +40,18 @@ const StyledErrorMessage = styled(ErrorMessage)`
 `;
 
 const FormFooter = styled.div`
-  display: flex;
-  justify-content: flex-end;
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
   margin-bottom: 10px;
+  
+  > :nth-child(1) {
+    grid-column-start: 2;
+    justify-self: center;
+  }
+  
+  > :nth-child(2) {
+    justify-self: end;
+  }
 `;
 
 const requiredMsg = 'This field is required.';
@@ -50,11 +60,11 @@ const signUpFormValidationSchema = object().shape({
   name: string().required(requiredMsg),
   title: string().required(requiredMsg),
   email: string().email('Please enter a valid email address.').required(requiredMsg),
-  password: string().required(requiredMsg).matches(
-    /^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
-    "Password must have at least 8 characters, and have at least one of each of the following: " +
-    "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
-  ), // wtf is this regex... idk but it works
+  password: string().required(requiredMsg),
+  // .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+  //   "Password must have at least 8 characters, and have at least one of each of the following: " +
+  //   "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
+  //), // wtf is this regex... idk but it works
   // source https://stackoverflow.com/questions/55451304/formik-yup-password-strength-validation-with-react
   // TODO update this to be more user friendly
   passwordConfirm: string().required(requiredMsg)
@@ -73,6 +83,7 @@ const FormInput = ({ title, type, name }) => {
 
 const BusinessEmployeeSignUpPage = ({ history, match }) => {
   const setUser = useContext(UserContext)[1];
+  const [status, setStatus] = useState({status: null, message: ""});
   return (
     <BasicLayout
       title="Welcome! 🎉"
@@ -89,7 +100,8 @@ const BusinessEmployeeSignUpPage = ({ history, match }) => {
             setUser({ ...json.userEmployee, business: json.usersEmployer });
             history.push("/business/invite");
           })
-          .then(() => setSubmitting(false));
+          .then(() => setSubmitting(false))
+          .catch(e => e.text().then(message => setStatus({status: "error", message})).then(setSubmitting(false)))
       }}
       validationSchema={signUpFormValidationSchema}
     >
@@ -121,9 +133,10 @@ const BusinessEmployeeSignUpPage = ({ history, match }) => {
           type="password"
         />
         <FormFooter>
-<Button showArrow disabled={isSubmitting}>
-  Sign Up
-</Button>
+          <StatusMessage style={{marginTop: 0, overflow: "auto"}} status={status.status}>{status.message}</StatusMessage>
+          <Button style={{height: "fit-content"}} showArrow disabled={isSubmitting}>
+            Sign Up
+          </Button>
         </FormFooter>
       </SignUpForm>
     )}
