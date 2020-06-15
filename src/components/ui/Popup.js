@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, {useEffect} from "react";
 import styled from "styled-components";
 import Button from "./Button";
 import config from "../../config";
@@ -55,23 +55,39 @@ const Error = styled.span`
   padding-right: 20px;
 `;
 
-export const Popup = ({show, title, children, onCancel, onSelect, containerStyle, onShow, error, selectDisabled, selectButton = "Select"}) => {
+export const Popup = ({show, title, children, onCancel, onSelect, containerStyle,
+  onShow, error, selectDisabled, selectButton = "Select", cancelButton = "Cancel"}) => {
 
   useEffect(() => {
-    document.body.style.overflow = show ? "hidden" : "";
+    const scrollTop = show ? `-${document.documentElement.scrollTop}px` : -parseInt(document.body.style.top);
+    document.body.style.position = show ? "fixed" : "";
+    document.body.style.width = show ? "100%" : "";
+    document.body.style.overflowY = show ? "scroll" : "";
+    if (show) document.body.style.top = scrollTop;
+    else {
+      document.body.style.top = "";
+      if (!isNaN(scrollTop)) document.documentElement.scrollTop = scrollTop;
+    }
     show && onShow && onShow();
-    return () => document.body.style.overflow = "";
+    return () => {
+      document.body.style.position = "";
+      document.body.style.width = "";
+      document.body.style.overflowY = "";
+      const resetScroll = -parseInt(document.body.style.top);
+      if (!isNaN(resetScroll)) document.documentElement.scrollTop = resetScroll;
+      document.body.style.top = "";
+    }
   }, [show]);
 
   return (
       show &&
-      <Modal>
-        <Container style={containerStyle}>
+      <Modal onClick={() => onCancel()}>
+        <Container style={containerStyle} onClick={event => event.stopPropagation()}>
           <Title>{title}</Title>
           {children}
           <ButtonWrapper>
             <Error>{error}</Error>
-            <CancelButton type={"button"} onClick={onCancel}>Cancel</CancelButton>
+            <CancelButton type={"button"} onClick={onCancel}>{cancelButton}</CancelButton>
             <ActionButton type={"button"} disabled={selectDisabled} onClick={onSelect}>{selectButton}</ActionButton>
           </ButtonWrapper>
         </Container>
