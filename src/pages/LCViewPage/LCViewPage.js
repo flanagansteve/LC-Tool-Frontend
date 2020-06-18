@@ -1,5 +1,5 @@
 import React, {useContext, useEffect, useRef, useState} from "react";
-import styled from "styled-components";
+import styled, {css, keyframes} from "styled-components";
 import {Field, Form, Formik, useField, useFormikContext} from "formik";
 import _, {get} from "lodash";
 
@@ -11,6 +11,14 @@ import DocumentaryRequirements from './DocumentaryRequirements';
 import Panel from './Panel';
 import config from '../../config';
 import {Popup} from "../../components/ui/Popup";
+import {
+  faChevronDown,
+  faChevronRight,
+  faTimes
+} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import AnimateHeight from "react-animate-height";
+import ComplianceChecks from "./ComplianceChecks";
 
 // TODO break this file up into multiple files
 
@@ -223,6 +231,7 @@ const AnalysisDetail = styled.span`
   cursor: pointer;
   &:hover {
     opacity: 1;
+    ${props => props.pop && "font-size: 15px;"}
   }
 `;
 
@@ -237,8 +246,9 @@ const Subtitle = styled.div`
 const Financials = ({ lc, setModal }) => {
   let creditOverflow = false;
   const approvedCreditAmt = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+  const lcCredit = lc.issuerApproved ? 0 : parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure);
   if (!approvedCreditAmt || parseFloat(lc.client.totalCredit) +
-      parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt)) {
+      lcCredit > parseFloat(approvedCreditAmt)) {
     creditOverflow = true;
   }
   const client = get(lc, 'client');
@@ -386,7 +396,7 @@ const SubmitSection = () => {
   )
 };
 
-const OrderDetail = ({ title, value, units, type, name, editing }) => {
+const OrderDetail = ({ title, value, units, type, name, editing, error, errorClicked }) => {
   const Input = TYPE_TO_COMPONENT[type];
   return (
   <>
@@ -394,6 +404,8 @@ const OrderDetail = ({ title, value, units, type, name, editing }) => {
     <ODValue>
       {editing && type ? <Input name={name} id={name}/> : (value || "N/A")}
       {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
+      {error && <span>&nbsp;</span>}
+      {error && <AnalysisDetail pop onClick={errorClicked} style={{ opacity: 1 }}>{error}</AnalysisDetail>}
     </ODValue>
   </>
   )
@@ -404,7 +416,10 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModa
   const [editing, setEditing] = useState(false);
   const canEdit = !live && APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
   const details = [
-    {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
+    {title: "Counterparty", value: get(lc, 'beneficiary.name'),
+      error: (get(lc, 'beneficiary.sanctions'))?.length ? "Possible Sanctions" : null,
+      errorClicked: () => setModal("sanctionsModal")
+    }, // must edit bene separately
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
     {title: "Latest Permissible Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate', type: 'date'},
     {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate', type: 'date'},
@@ -477,6 +492,9 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModa
         <CreditOverflowPopup
             setModal={setModal} modal={modal} setEditing={setEditing}
             lc={lc} refreshLc={refreshLc}/>
+        <SanctionsModal
+            setModal={setModal} modal={modal} setEditing={setEditing}
+            lc={lc} refreshLc={refreshLc}/>
         <Form>
           {editing && <SubmitSection />}
           <div style={{display: 'flex'}}>
@@ -502,6 +520,88 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModa
       )}
       </Formik>
     </Panel>
+  );
+};
+
+const SanctionInfo = ({sanction}) => {
+  const [showExtra, setShowExtra] = useState(false);
+
+  const handleRightClick = event => {
+    event.preventDefault();
+    window.open(`https://www.google.com/search?q=${sanction.name}`);
+  };
+
+  const addressToString = address => {
+    const fields = [];
+    address.address && fields.push(address.address);
+    address.addressGroup && fields.push(address.addressGroup);
+    address.country && fields.push(address.country);
+    return fields.join(", ");
+  };
+
+  const titleCase = string => {
+    const exceptions = new Set(
+        ["and", "as", "but", "for", "if", "nor", "or", "so", "yet", "a", "an",
+          "the", "as", "at", "by", "for", "in", "of", "off", "on", "per", "to",
+          "up", "via"]);
+
+    const allCaps = new Set(["s.a.", "sa"]);
+
+    const capitalizeFirstLetter = (word, wordIndex) => {
+      word = word.toLowerCase();
+      if (allCaps.has(word)) return word.toUpperCase();
+      else if (!wordIndex || !exceptions.has(word)) return word.charAt(0).toUpperCase() + word.substring(1);
+      else return word;
+    };
+
+    return string.split(" ").map((substr, ind) => capitalizeFirstLetter(substr, ind)).join(" ");
+  };
+
+  return (
+      <div style={{paddingBottom: 20}}>
+        <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
+          <div style={{fontSize: 19}} title={"Right click to search"} onContextMenu={handleRightClick}>{titleCase(sanction.name)}</div>
+          <FontAwesomeIcon
+              icon={showExtra ? faChevronDown : faChevronRight}
+              onClick={() => setShowExtra(!showExtra)}
+              style={{
+                color: config.accentColor,
+                padding: '0 10px',
+                cursor: 'pointer',
+              }}
+          />
+          <AnalysisDetail>
+            Dismiss
+            <FontAwesomeIcon style={{paddingLeft: 5}} icon={faTimes}/>
+          </AnalysisDetail>
+        </div>
+        <AnimateHeight duration={300} height={showExtra ? "auto" : 0}>
+          {sanction.aliases.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
+            Aliases:
+            <div style={{paddingLeft: 40}}>
+              {sanction.aliases.map(alias => <div style={{paddingTop: 3}} key={alias.id}>{titleCase(alias.name)}</div>)}
+            </div>
+          </div>}
+          {sanction.addresses.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
+            Addresses:
+            <div style={{paddingLeft: 40}}>
+            {sanction.addresses.map(address => <div style={{paddingTop: 3}} key={address.id}>{addressToString(address)}</div>)}
+            </div>
+          </div>}
+        </AnimateHeight>
+      </div>
+  )
+};
+
+const SanctionsModal = ({modal, setModal, lc}) => {
+  const sanctions = get(lc, 'beneficiary.sanctions');
+  return (
+      <Popup
+          title={`Possible Sanctions for ${get(lc, 'beneficiary.name')}`}
+          show={modal === "sanctionsModal"} onCancel={() => setModal(false)}
+          containerStyle={{width: "70%"}}>
+        {sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>)}
+      </Popup>
   );
 };
 
@@ -678,25 +778,18 @@ const LCViewPage = ( {match} ) => {
   // TODO change API to just return the new LC after we update it
   const refreshLc = () => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
-    .then(json => {
-      userType === "issuer" ?
-          makeAPIRequest(`/lc/total_credit/${json.client.id}/`).then(totalCredit => {
-            json.client.totalCredit = totalCredit;
-            setLc(json);
-          }) : setLc(json);
+    .then(async json => {
+      if (userType === "issuer") {
+          json.client.totalCredit = await makeAPIRequest(`/lc/total_credit/${json.client.id}/`);
+          json.beneficiary.sanctions = await makeAPIRequest(`/business/${json.beneficiary.id}/ofac/`);
+          setLc(json);
+      }
+      else setLc(json);
     })
   };
 
   useEffect(() => {
-    if (user)
-      makeAPIRequest(`/lc/${match.params.lcid}/`)
-        .then(json => {
-          userType === "issuer" ?
-          makeAPIRequest(`/lc/total_credit/${json.client.id}/`).then(totalCredit => {
-            json.client.totalCredit = totalCredit;
-            setLc(json);
-          }) : setLc(json);
-        })
+    if (user) refreshLc();
   }, [match.params.lcid, user?.id]);
 
   return (
@@ -711,6 +804,7 @@ const LCViewPage = ( {match} ) => {
           {userType === 'issuer' && <Financials lc={lc} setModal={setModal}/>}
           <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName}
                         userType={userType} live={live} modal={modal} setModal={setModal}/>
+          <ComplianceChecks lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>

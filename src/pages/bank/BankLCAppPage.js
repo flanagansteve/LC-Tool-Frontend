@@ -778,7 +778,7 @@ const LoadTemplate = ({lcApp, setModal, initialValues, setAppliedTemplate, setSt
              }}
       >
         {lcTemplates && !lcTemplates.length && <div style={{paddingBottom: 20, color: "gray", fontStyle: "italic"}}>No Saved Templates</div>}
-        {lcTemplates && <div style={{flex: 1, display: "grid", gridAutoRows: "1fr", overflowY: "scroll", gridTemplateColumns: "repeat(3, 1fr)"}}>
+        {lcTemplates && <div style={{flex: 1, display: "grid", gridAutoRows: "1fr", overflowY: "auto", gridTemplateColumns: "repeat(3, 1fr)"}}>
           {lcTemplates.map(template => <StyledButton type={"button"} fitWidth={true}
                                                      selected={template.id === selectedTemplate?.id}
                                                      onClick={() => setSelectedTemplate(template)}
