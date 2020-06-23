@@ -343,7 +343,7 @@ const CountrySanctionCheck = ({lc, setLc}) => {
   } else if (countrySanctionMessage === "") {
     message = `Did not find any immediate sanction errors for country ${beneficiaryCountry}.`;
   } else {
-    message = <div>{beneficiaryCountry} may violate sanctions. Please click&nbsp;
+    message = <div>Paying out an LC to {beneficiaryCountry} may violate sanctions. Please click&nbsp;
       <a target="_blank" rel="noopener noreferrer" href={countrySanctionMessage}>here</a> for more information.</div>;
   }
 
@@ -362,7 +362,7 @@ const CountrySanctionCheck = ({lc, setLc}) => {
       errorMessage={countrySanctionMessage === "" ? "No errors found" : "1 potential error"}
     >
       <div style={{paddingLeft: 20, fontSize: 19, width: "70%"}}>{beneficiaryCountry}</div>
-      <div style={{paddingLeft: 60}}>{message}</div>
+      <div style={{paddingLeft: 60, width: "70%"}}>{message}</div>
     </ComplianceCheck>
   )
 };
