@@ -368,20 +368,8 @@ const CountrySanctionCheck = ({lc, setLc}) => {
 };
 
 const ImportLicenseCheck = ({lc, setLc}) => {
-  const beneficiary = get(lc, 'beneficiary.name');
-  const beneficiaryCountry = get(lc, 'beneficiary.country');
-  const clientCountry = get(lc, "client.country");
   const licenseSanctionMessage = get(lc, "importLicenseMessage");
-  const good = get(lc, "merchDescription")
   const status = get(lc, "importLicenseApproval");
-  let message;
-  if (licenseSanctionMessage === null || licenseSanctionMessage === "" ) {
-    message = `Could not find any permits or licenses required for this transaction.
-    Please contact steve@bountium.org if you would like additionaly information.`;
-  }
-  else {
-    message = <div>{licenseSanctionMessage}</div>;
-  }
 
   return (
       <ComplianceCheck
@@ -397,16 +385,11 @@ const ImportLicenseCheck = ({lc, setLc}) => {
           error={licenseSanctionMessage === null || licenseSanctionMessage}
           errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
       >
-        {licenseSanctionMessage.length > 1 ?  <div style = {{paddingTop: 20, paddingLeft: 20}}>{licenseSanctionMessage}</div>  :
+        {licenseSanctionMessage?.length > 1 ?  <div style = {{paddingTop: 20, paddingLeft: 20}}>{licenseSanctionMessage}</div>  :
             <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this transaction.</div>}
       </ComplianceCheck>
   )
 };
-
-
-
-
-
 
 
 const ComplianceChecks = ({lc, setLc}) => {
