@@ -22,9 +22,9 @@ import {useAuthentication, UserContext} from '../../utils/auth';
 
 import config from '../../config';
 import {Dropdown, SearchableSelect} from "../../components/ui/Dropdown";
-import {Popup} from "../../components/ui/Popup";
+import {Modal} from "../../components/ui/Modal";
 import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
-import {RouteBlockingPopup} from "../../components/ui/RouteBlockingPopup";
+import {RouteBlockingModal} from "../../components/ui/RouteBlockingModal";
 
 const disabledBackgroundColor = `#c3c1c3`;
 const disabledColor = `black`;
@@ -770,7 +770,7 @@ const LoadTemplate = ({lcApp, setModal, initialValues, setAppliedTemplate, setSt
   }, []);
 
   return (
-      <Popup show={true} title={"Load Application Template"} onCancel={() => setModal(null)}
+      <Modal show={true} title={"Load Application Template"} onCancel={() => setModal(null)}
              onSelect={async () => {
                setModal(null);
                if (!selectedTemplate) return;
@@ -785,7 +785,7 @@ const LoadTemplate = ({lcApp, setModal, initialValues, setAppliedTemplate, setSt
                                                      key={template.id}
                                                      style={{margin: "10px"}}>{template.templateName}</StyledButton>)}
         </div>}
-      </Popup>
+      </Modal>
   )
 };
 
@@ -809,7 +809,7 @@ const SaveTemplate = ({setModal, values, lcApp, appliedTemplate, setStatus, setA
   }, [appliedTemplate?.id]);
 
   return (
-      <Popup show={true} title={"Save Application Template"} containerStyle={{width: "60%"}} selectButton={"Save"}
+      <Modal show={true} title={"Save Application Template"} containerStyle={{width: "60%"}} selectButton={"Save"}
              onCancel={() => setModal(null)} error={submitCount > 0 && saveTemplateError} selectDisabled={submitCount && saveTemplateError}
              onShow={() => {
                const fields = [];
@@ -887,7 +887,7 @@ const SaveTemplate = ({setModal, values, lcApp, appliedTemplate, setStatus, setA
                          }}/>
           </div>
         </div>
-      </Popup>
+      </Modal>
   )
 };
 
@@ -1024,7 +1024,7 @@ const BankLCAppPage = ({ match }) => {
     >
     {({ isSubmitting, errors, touched, setTouched, values, validateForm, setValues, handleSubmit, submitCount }) => (
         <div style={{display: "flex", paddingBottom: 40}}>
-          <RouteBlockingPopup when={unsavedChanges({values, template: appliedTemplate, initialValues, submitCount})}/>
+          <RouteBlockingModal when={unsavedChanges({values, template: appliedTemplate, initialValues, submitCount})}/>
           <Refresh appliedTemplate={appliedTemplate}/>
           {modal === "loadTemplate" && <LoadTemplate
               initialValues={initialValues} lcApp={lcApp}

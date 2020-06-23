@@ -3,7 +3,7 @@ import styled from "styled-components";
 import Button from "./Button";
 import config from "../../config";
 
-const Modal = styled.div`
+const Background = styled.div`
   position: fixed;
   display: flex;
   width: 100%;
@@ -55,7 +55,7 @@ const Error = styled.span`
   padding-right: 20px;
 `;
 
-export const Popup = ({show, title, children, onCancel, onSelect, containerStyle,
+export const Modal = ({show, title, children, onCancel, onSelect, containerStyle,
   onShow, error, selectDisabled, selectButton = "Select", cancelButton = "Cancel"}) => {
 
   useEffect(() => {
@@ -81,7 +81,7 @@ export const Popup = ({show, title, children, onCancel, onSelect, containerStyle
 
   return (
       show &&
-      <Modal onClick={() => onCancel()}>
+      <Background onClick={() => onCancel()}>
         <Container style={containerStyle} onClick={event => event.stopPropagation()}>
           <Title>{title}</Title>
           {children}
@@ -91,6 +91,6 @@ export const Popup = ({show, title, children, onCancel, onSelect, containerStyle
             <ActionButton type={"button"} disabled={selectDisabled} onClick={onSelect}>{selectButton}</ActionButton>
           </ButtonWrapper>
         </Container>
-      </Modal>
+      </Background>
   )
 };

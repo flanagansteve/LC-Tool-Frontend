@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Prompt, useHistory } from 'react-router-dom';
-import {Popup} from './Popup';
+import {Modal} from './Modal';
 
-export const RouteBlockingPopup = ({when}) => {
+export const RouteBlockingModal = ({when}) => {
   const [modalVisible, setModalVisible] = useState(false);
   const [lastLocation, setLastLocation] = useState(null);
   const [confirmedNavigation, setConfirmedNavigation] = useState(false);
@@ -35,7 +35,7 @@ export const RouteBlockingPopup = ({when}) => {
   return (
       <div>
         <Prompt when={when} message={handleBlockedNavigation}/>
-        <Popup
+        <Modal
             show={modalVisible}
             title="Exit without saving?"
             selectButton="Confirm"
@@ -43,7 +43,7 @@ export const RouteBlockingPopup = ({when}) => {
             onCancel={closeModal}
             onSelect={handleConfirmNavigationClick}>
           <div style={{paddingBottom: 15}}>You have unsaved changes. Are you sure you want to leave without saving?</div>
-        </Popup>
+        </Modal>
       </div>
   );
 };

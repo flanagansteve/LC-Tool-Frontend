@@ -1,174 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
-import { Formik, Field, Form, useField } from 'formik';
-import { object, string, number, boolean, array, date } from 'yup';
-import Pdf from './Pdf';
-import MoonLoader from 'react-spinners/MoonLoader'
-import { css } from "@emotion/core";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import {
-  faChevronDown,
-  faChevronRight,
-  faCheckSquare,
-  faTimes
-} from "@fortawesome/free-solid-svg-icons";
-import { get, camelCase } from "lodash";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
+import {get} from "lodash";
 
-import { makeAPIRequest, postFile, objectToCamelCase } from '../../utils/api';
+import {makeAPIRequest} from '../../utils/api';
 import Panel from './Panel';
-import Button from '../../components/ui/Button';
 import config from "../../config";
 import AnimateHeight from "react-animate-height";
-
-const ModalBackground = styled.div`
-  ${props => !props.show && `display: none;`}
-  position: fixed;
-  left: 0;
-  top: 0;
-  z-index: 1;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0,0,0,0.4);
-  overflow: scroll;
-`
-
-const ModalWrapper = styled.div`
-  max-width: 70%;
-  background-color: #fff;
-  border-radius: 10px;
-  margin: 10% auto;
-  padding: 20px 30px;
-`
-
-const ModalFlex = styled.div`
-  display: flex;
-  justify-content: space-around;
-`
-
-const ModalLeftColumn = styled.div`
-  flex-grow: 1;
-  min-width: 30%;
-  flex-basis: 40%;
-`
-
-const ModalRightColumn = styled.div`
-  flex-grow: 1;
-  flex-basis: 50%;
-`
-
-const ModalButtonsWrapper = styled.div`
-  display: flex;
-  justify-content: center;
-  > :not(:last-child) {
-    margin-right: 10px;
-  }
-  margin: 20px auto 30px;
-`
-
-const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'}
-
-const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
-  const [type, setType] = useState(MODAL_TYPES.CREATE);
-  if (docReq && docReq.type === 'generic') return (
-      <ModalBackground show={show}>
-        <ModalWrapper>
-          <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
-          <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-            <Button onClick={hideModal}>Close</Button>
-          </div>
-        </ModalWrapper>
-      </ModalBackground>
-  );
-  return (
-      <ModalBackground show={show}>
-        {docReq && docReq.linkToSubmittedDoc ? (
-            <ModalWrapper>
-              <ViewModal docReq={docReq}/>
-              <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-                <Button onClick={hideModal}>Close</Button>
-              </div>
-            </ModalWrapper>
-        ) : docReq && (
-            <ModalWrapper>
-              <ModalButtonsWrapper>
-                <Button onClick={() => setType(MODAL_TYPES.CREATE)} unselected={type !== MODAL_TYPES.CREATE}>Create Digital DocReq</Button>
-                <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF DocReq</Button>
-              </ModalButtonsWrapper>
-              {type === MODAL_TYPES.CREATE
-                  ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal} lc={lc}/>
-                  : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
-              }
-              <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-                <Button onClick={hideModal}>Cancel</Button>
-              </div>
-            </ModalWrapper>
-        )}
-      </ModalBackground>
-  )
-}
-
-const ViewModal = ({ docReq }) => {
-  const lcid = docReq && docReq.lcid;
-  // NULL if the docreq is not digital
-  const [digitalDocReq, setDigitalDocReq] = useState(null);
-  useEffect(() => {
-    if (!docReq) return;
-    makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/`)
-    .then(data => {
-      // HACK we can "guess" if there is a digital doc req if the seller name is defined
-      if (data.sellerName === undefined) {
-        setDigitalDocReq(null);
-      } else {
-        setDigitalDocReq(data);
-      }
-    });
-  }, [docReq, lcid])
-  if (!docReq) return null;
-  const fields = !digitalDocReq ? [] : [
-    {title: "Seller Name", value: digitalDocReq.sellerName},
-    {title: "Seller Address", value: digitalDocReq.sellerAddress},
-    {title: "Shipping Date", value: digitalDocReq.indicatedDateOfShipment},
-    {title: "Country of Export", value: digitalDocReq.countryOfExport},
-    // {title: "Incoterms Of Sale", value: digitalDocReq.incotermsOfSale},
-    {title: "Reason for Export", value: digitalDocReq.reasonForExport},
-    {title: "Consignee Name", value: digitalDocReq.consigneeName || digitalDocReq.buyerName},
-    {title: "Consignee Address", value: digitalDocReq.consigneeAddress || digitalDocReq.buyerAddress},
-    {title: "Buyer Name", value: digitalDocReq.buyerName},
-    {title: "Buyer Address", value: digitalDocReq.buyerAddress},
-    {title: "Description of Goods", value: digitalDocReq.goodsDescription},
-    {title: "Units of Measure", value: digitalDocReq.unitOfMeasure},
-    {title: "Units Purchased", value: digitalDocReq.unitsPurchased},
-    {title: "Price per Unit", value: digitalDocReq.unitPrice},
-    {title: "Currency of Settlement", value: digitalDocReq.currency},
-    {title: "Harmonized Schedule Code", value: digitalDocReq.hsCode},
-    {title: "Country of Origin", value: digitalDocReq.countryOfOrigin},
-  ]
-  const link = docReq.linkToSubmittedDoc;
-  return (
-      <ModalFlex>
-        {digitalDocReq && (
-            <ModalLeftColumn>
-              <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
-              {fields.map(field => field && (
-                  <div key={field.title}>
-                    <SmallHeader>{field.title}</SmallHeader>
-                    <DocReqTitle>{field.value}</DocReqTitle>
-                  </div>
-              ))}
-            </ModalLeftColumn>
-        )}
-        <ModalRightColumn >
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
-            <DocReqTitle style={{margin: '0'}}>PDF Preview</DocReqTitle>
-            <Button style={{padding: '5px 10px'}}>
-              <a href={link} style={{color: "#fff", fontSize: '14px', textDecoration: 'none'}}>Download PDF</a>
-            </Button>
-          </div>
-          {link && <Pdf src={`/api/lc/${lcid}/doc_req/${docReq.id}/file/`} />}
-        </ModalRightColumn>
-      </ModalFlex>
-  )
-}
+import {Modal} from "../../components/ui/Modal";
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -182,30 +22,32 @@ const InputWrapper = styled.div`
   }
   transition: border 0.3s;
   background-color: #fff;
-`
+`;
 
 const QuestionText = styled.h3`
   font-size: 14px;
   font-weight: 300;
   line-height: 1.25;
-`
+`;
 
 const Subtitle = styled.div`
-  margin-top: 15px;
-  color: #555353;
+  margin-top: 5px;
+  margin-bottom: 10px;
+  color: ${props => props.error ? "red" : "#555353"};
   font-style: italic;
   font-size: 14px;
   font-weight: 300;
-`
+`;
 
 const Asterisk = styled.span`
   color: #dc3545;
   font-size: 16px;
-`
-const StyledFormInput = styled(Field)`
+`;
+
+const StyledFormInput = styled.textarea`
   margin-top: 10px;
   padding: 10px 0 5px;
-  min-width: 100%;
+  min-height: 100px;
   font-size: 16px;
   border: none;
   border-bottom: 1px solid #cdcdcd;
@@ -213,13 +55,12 @@ const StyledFormInput = styled(Field)`
 
 const ButtonWrapper = styled.div`
   display: flex;
-  margin-top: 15px;
   flex-wrap: wrap;
 
   > :not(:last-child) {
     margin-right: 20px;
   }
-`
+`;
 
 const StyledButton = styled.button`
   background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
@@ -230,330 +71,44 @@ const StyledButton = styled.button`
   font-size: 16px;
   cursor: pointer;
   margin: 10px 0;
-  max-width: 45%;
   display: flex;
   align-items: center;
-`
-
-
-const BasicInput = ({ question, children, subtitle }) => {
-  const [, meta] = useField(question.key);
-  const { error, touched } = meta;
-  return (
-      <InputWrapper>
-        <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
-        {subtitle && <Subtitle>{subtitle}</Subtitle>}
-        {error && touched && <Subtitle style={{color: '#dc3545'}}>{typeof error !== 'object' ? error : null}</Subtitle>}
-        {children}
-      </InputWrapper>
-  )
-}
-
-const TextInput = ({ question }) => {
-  return (
-      <BasicInput question={question}>
-        <StyledFormInput type="text" name={question.key}/>
-      </BasicInput>
-  );
-};
-
-const NumberInput = ({ question }) => {
-  return (
-      <BasicInput question={question}>
-        <StyledFormInput type="number" name={question.key}/>
-      </BasicInput>
-  )
-}
-
-const YesNoInput = ({ question }) => {
-  const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
-
-  const handleClick = (val) => (e) => {
-    e.preventDefault();
-    setValue(val);
-  }
-
-  return (
-      <BasicInput question={question}>
-        <ButtonWrapper style={{ justifyContent: 'center' }}>
-          <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
-          <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
-        </ButtonWrapper>
-      </BasicInput>
-  )
-}
-
-const AllRadiosWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`
-
-const RadioInput = ({ question }) => {
-  const options = JSON.parse(question.options);
-  const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
-  const handleClick = (val) => (e) => {
-    e.preventDefault();
-    setValue(val);
-  }
-  return (
-      <BasicInput question={question}>
-        <AllRadiosWrapper>
-          <ButtonWrapper>
-            {options && options.map((opt) => (
-                <StyledButton onClick={handleClick(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
-            ))}
-          </ButtonWrapper>
-        </AllRadiosWrapper>
-      </BasicInput>
-  )
-}
-
-const DateInput = ({ question }) => {
-  return (
-      <BasicInput question={question}>
-        <StyledFormInput type="date" name={question.key}/>
-      </BasicInput>
-  )
-}
-
-const AllCheckboxesWrapper = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`
-
-const CheckboxInput = ({ question }) => {
-  const options = JSON.parse(question.options);
-  const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
-  const handleClick = (val) => (e) => {
-    e.preventDefault();
-    const i = value.indexOf(val);
-    if (i !== -1) {
-      setValue(value.slice(0, i).concat(value.slice(i + 1)));
-    } else {
-      setValue(value.concat([val]));
-    }
-  }
-
-  return (
-      <BasicInput question={question} subtitle="Check all that apply.">
-        <AllCheckboxesWrapper>
-          <ButtonWrapper>
-            {options && options.map((opt) => (
-                <StyledButton onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
-                  {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{ marginRight: '10px' }}/>}
-                  {opt}
-                </StyledButton>
-            ))}
-          </ButtonWrapper>
-        </AllCheckboxesWrapper>
-      </BasicInput>
-  )
-}
-
-const TYPE_TO_COMPONENT = {
-  text: TextInput,
-  decimal: NumberInput,
-  number: NumberInput,
-  boolean: YesNoInput,
-  radio: RadioInput,
-  date: DateInput,
-  checkbox: CheckboxInput,
-};
-
-const TYPE_TO_DEFAULT = {
-  text: "",
-  decimal: 0,
-  number: 0,
-  boolean: null,
-  radio: null,
-  date: (new Date()).toISOString().slice(0, 10),
-  checkbox: [],
-}
-
-const REQUIRED_MSG = "This field is required.";
-
-const TYPE_TO_VALIDATION_SCHEMA = {
-  text: string(),
-  decimal: number(),
-  number: number(),
-  boolean: boolean().nullable(),
-  radio: string().nullable(),
-  date: date(),
-  checkbox: array().of(string()),
-}
-
-const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
-  const [fields, setFields] = useState([]);
-  const [suggestedFields, setSuggestedFields] = useState([]);
-  useEffect(() => {
-    if (!docReq) return undefined;
-    makeAPIRequest(`/lc/supported_creatable_docs/${docReq.type}/`)
-    .then(d => setFields(d));
-    makeAPIRequest(`/lc/${lc.id}/doc_req/${docReq.id}/autopopulate/`)
-    .then(s => setSuggestedFields(s));
-  }, [docReq])
-  if (!docReq) return null;
-  const schemaObj = {};
-  let initialValues = {};
-  let validationSchema = null;
-  fields.forEach(q => {
-    Object.keys(suggestedFields).forEach(key => {
-      if (camelCase(q.key) == key) {
-        initialValues[q.key] = get(lc, suggestedFields[key])
-      }
-    });
-    if (!initialValues[q.key]) initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
-  });
-  fields.forEach(q => {
-    schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
-    if (q.required) {
-      schemaObj[q.key] = schemaObj[q.key].required(REQUIRED_MSG);
-    }
-  });
-  validationSchema = object().shape(schemaObj);
-  console.log(initialValues)
-  return fields.length > 0 && (
-      <Formik
-          initialValues={initialValues}
-          validationSchema={validationSchema}
-          enableReinitialize
-          onSubmit={(values, { setSubmitting }) => {
-            setSubmitting(true);
-            const app = {};
-            Object.entries(values).forEach((kv) => {
-              const [key, value] = kv;
-              if (value === null) {
-              } else {
-                app[key] = value;
-              }
-            });
-            const { lcid, id } = docReq;
-            makeAPIRequest(`/lc/${lcid}/doc_req/${id}/`, 'POST', app, true)
-            .then(() => hideModal())
-            .then(() => refreshLc())
-            .then(() => setSubmitting(false));
-            // .then(async res => {
-            //   let text = await res.text();
-            //   if (res.status === 200) {
-            //     localStorage.removeItem(`lc/${match.params.bankid}`);
-            //     setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
-            //   } else {
-            //     if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
-            //     localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
-            //     setStatus({status: "error", message: `Error submitting form: ${text}`});
-            //   }
-            //   })
-          }}
-      >
-        {({ isSubmitting }) => (
-            isSubmitting ? <MoonLoader
-                size={45}
-                color={config.accentColor}
-                loading={true}
-                css={css`
-              margin: 0 auto;
-            `}
-            /> : (
-                <Form>
-                  <DocReqTitle>Create {docReq.docName}</DocReqTitle>
-                  {fields && fields.map(question => {
-                    const Component = TYPE_TO_COMPONENT[question.type];
-                    return <Component key={question.key} question={question} />;
-                  })}
-                  <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
-                    <Button disabled={isSubmitting} type="submit">Create</Button>
-                  </div>
-                </Form>
-
-            )
-        )}
-      </Formik>
-  )
-}
-
-const UploadModal = ({ docReq, refreshLc, hideModal }) => {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const uploadFile = (file) => {
-    if (!file) {
-      console.error('No file found.');
-      return;
-    }
-    setIsSubmitting(true);
-    const { lcid, id } = docReq;
-    postFile(`/lc/${lcid}/doc_req/${id}/`, file)
-    .then(() => hideModal())
-    .then(() => refreshLc())
-    .then(() => setIsSubmitting(false));
-  }
-
-  return (
-      <>
-        <DocReqTitle>Upload {docReq.docName}</DocReqTitle>
-        <div style={{ display: "flex", flexDirection: "column", maxWidth: '700px' , margin: 'auto'}}>
-          {isSubmitting ? <MoonLoader
-              size={45}
-              color={config.accentColor}
-              loading={true}
-              css={css`
-              margin: 0 auto;
-            `}
-          /> : (
-              <FileUpload>
-                Upload File
-                <input
-                    type="file"
-                    onChange={(e) => uploadFile(e.target.files[0])}
-                    style={{ display: "none" }}
-                />
-              </FileUpload>
-          )}
-        </div>
-      </>
-  );
-}
+`;
 
 const DocumentaryEntryFlex = styled.div`
   display: flex;
-  align-items: center;
+  align-items: baseline;
   > :nth-child(1) {
-    min-width: 60%;
+    min-width: 55%;
   }
   > :nth-child(2) {
-    min-width: 20%;
+    min-width: 30%;
   }
   > :nth-child(3) {
-    min-width: 20%;
+    min-width: 15%;
   }
   ${props => props.clickable && `cursor: pointer;`}
-`
+`;
 
 const DocumentaryEntryWrapper = styled.div`
   border-bottom: 1px solid #cdcdcd;
-`
+`;
 
 const DocReqTitle = styled.div`
   font-weight: 500;
   font-size: 24px;
   max-width: 700px;
   margin: 5px auto 20px;
+  margin: 5px auto 20px;
   display: flex;
   align-items: center;
-`
-
-const DocReqDate = styled.div`
-  font-size: 14px;
-`
+  ${props => props.clickable && `cursor: pointer;`}
+`;
 
 const DocReqStatus = styled.div`
   font-size: 14px;
   font-weight: 500;
-`
+`;
 
 const ExpandedDocumentaryEntry = styled.div`
   padding-bottom: 10px;
@@ -561,14 +116,7 @@ const ExpandedDocumentaryEntry = styled.div`
   font-weight: 300;
   line-height: 1.5;
   width: 75%;
-`
-
-const FileUpload = styled.label`
-  padding: 5px 10px;
-  border: 1px solid #dcdcdc;
-  margin-right: auto;
-  cursor: pointer;
-`
+`;
 
 const DocumentaryEntryEvaluation = styled.div`
   display: flex;
@@ -577,13 +125,91 @@ const DocumentaryEntryEvaluation = styled.div`
   > :not(:last-child) {
     margin-right: 10px;
   }
-`
+`;
 
 const SmallHeader = styled.div`
   font-size: 12px;
   min-width: 150px;
   margin-right: 50px;
-`
+`;
+
+const RequestClarificationModal = ({lc, initialReason, modal, setModal, type, setLc, client, beneficiary}) => {
+  const [comment, setComment] = useState(initialReason);
+  const textAreaRef = useRef(null);
+
+  const field = type === "company" ? "ofacBankApproval" : "sanctionBankApproval";
+
+  useEffect(() => {
+    if (modal === "requestClarification") {
+      textAreaRef.current.focus();
+    }
+  }, [modal]);
+
+  const onRequest = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+      lc: {[field]: "requested"},
+      comment: {action: "requested clarification on the beneficiary", message: comment}
+    }).then(data => setLc(data.updatedLc));
+    setModal("");
+  };
+
+  return (
+    <Modal selectButton={"Confirm"} show={modal === "requestClarification"} onCancel={() => setModal("")}
+           title={"Request Clarification"} onSelect={onRequest}>
+      <div>Request {client?.name} to provide more information about {beneficiary?.name}?</div>
+      <div style={{paddingTop: 40}}>Comment:</div>
+      <StyledFormInput ref={textAreaRef} value={comment} onChange={({target}) => setComment(target.value)}/>
+    </Modal>
+  )
+};
+
+const RejectionModal = ({initialReason, modal, setModal, rejectUrl, setLc}) => {
+  const [rejectionReason, setRejectionReason] = useState(initialReason);
+  const textAreaRef = useRef(null);
+
+  useEffect(() => {
+    if (modal === "reject") {
+      textAreaRef.current.focus();
+    }
+  }, [modal]);
+
+  const onReject = () => {
+    makeAPIRequest(rejectUrl, "PUT").then(data => setLc(data.updatedLc));
+    setModal("");
+  };
+
+  return (
+    <Modal selectButton={"Reject"} show={modal === "reject"} onCancel={() => setModal("")} title={"Confirm Rejection"}
+           onSelect={onReject}>
+      <div>Are you sure you want to reject this LC? Doing so will cause all changes to be permanently halted.</div>
+      <div style={{paddingTop: 40}}>Notes:</div>
+      <StyledFormInput ref={textAreaRef} value={rejectionReason}
+                       onChange={({target}) => setRejectionReason(target.value)}/>
+    </Modal>
+  )
+};
+
+const titleCase = string => {
+  const exceptions = new Set(
+    ["and", "as", "but", "for", "if", "nor", "or", "so", "yet", "a", "an",
+      "the", "as", "at", "by", "for", "in", "of", "off", "on", "per", "to",
+      "up", "via"]);
+
+  const allCaps = new Set(["s.a.", "sa"]);
+
+  const capitalizeFirstLetter = (word, wordIndex) => {
+    word = word.toLowerCase();
+    if (allCaps.has(word)) {
+      return word.toUpperCase();
+    } else if (!wordIndex || !exceptions.has(word)) {
+      return word.charAt(0).toUpperCase() + word.substring(1);
+    } else {
+      return word;
+    }
+  };
+
+  return string.split(" ").map((substr, ind) => capitalizeFirstLetter(substr, ind)).join(" ");
+};
 
 const SanctionInfo = ({sanction}) => {
 
@@ -600,109 +226,154 @@ const SanctionInfo = ({sanction}) => {
     return fields.join(", ");
   };
 
-  const titleCase = string => {
-    const exceptions = new Set(
-        ["and", "as", "but", "for", "if", "nor", "or", "so", "yet", "a", "an",
-          "the", "as", "at", "by", "for", "in", "of", "off", "on", "per", "to",
-          "up", "via"]);
-
-    const allCaps = new Set(["s.a.", "sa"]);
-
-    const capitalizeFirstLetter = (word, wordIndex) => {
-      word = word.toLowerCase();
-      if (allCaps.has(word)) return word.toUpperCase();
-      else if (!wordIndex || !exceptions.has(word)) return word.charAt(0).toUpperCase() + word.substring(1);
-      else return word;
-    };
-
-    return string.split(" ").map((substr, ind) => capitalizeFirstLetter(substr, ind)).join(" ");
-  };
-
   return (
-      <div style={{paddingBottom: 20}}>
-        <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-          <div style={{fontSize: 19}} title={"Right click to search"} onContextMenu={handleRightClick}>{titleCase(sanction.name)}</div>
-          <div>
-            Dismiss
-            <FontAwesomeIcon style={{paddingLeft: 5}} icon={faTimes}/>
-          </div>
+    <div style={{paddingBottom: 20, paddingLeft: 20}}>
+      <div style={{fontSize: 19, width: "70%"}} title={"Right click to search"}
+           onContextMenu={handleRightClick}>{titleCase(sanction.name)}</div>
+      {sanction.aliases.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
+        Aliases:
+        <div style={{paddingLeft: 40}}>
+          {sanction.aliases.map(alias => <div style={{paddingTop: 3}} key={alias.id}>{titleCase(alias.name)}</div>)}
         </div>
-        {sanction.aliases.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
-          Aliases:
-          <div style={{paddingLeft: 40}}>
-            {sanction.aliases.map(alias => <div style={{paddingTop: 3}} key={alias.id}>{titleCase(alias.name)}</div>)}
-          </div>
-        </div>}
-        {sanction.addresses.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
-          Addresses:
-          <div style={{paddingLeft: 40}}>
-            {sanction.addresses.map(address => <div style={{paddingTop: 3}} key={address.id}>{addressToString(address)}</div>)}
-          </div>
-        </div>}
-      </div>
+      </div>}
+      {sanction.addresses.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
+        Addresses:
+        <div style={{paddingLeft: 40}}>
+          {sanction.addresses.map(
+            address => <div style={{paddingTop: 3}} key={address.id}>{addressToString(address)}</div>)}
+        </div>
+      </div>}
+    </div>
   )
 };
 
-const SDNCheck = ({ lc, refreshLc }) => {
+const ComplianceCheck = ({
+  lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage,
+  children, status, approveUrl, rejectUrl, requestUrl, type
+}) => {
   const [expanded, setExpanded] = useState(false);
-  const sanctions = get(lc, 'beneficiary.sanctions');
+  const [modal, setModal] = useState("");
+
+  const onWaiveClick = () => {
+    makeAPIRequest(approveUrl, "PUT").then(data => setLc(data.updatedLc));
+  };
+
   return (
-      <DocumentaryEntryWrapper>
-        <DocumentaryEntryFlex
-            clickable
-            onClick={() => setExpanded((e) => !e)}
-        >
-          <DocReqTitle style={{ margin: "15px 0" }}>
-            {"OFAC Company Sanctions"}
+    <DocumentaryEntryWrapper>
+      <RejectionModal modal={modal} setModal={setModal} initialReason={initialRejectionReason}
+                      rejectUrl={rejectUrl} setLc={setLc}/>
+      <RequestClarificationModal lc={lc} modal={modal} setModal={setModal} initialReason={initialRequestComment}
+                                 requestUrl={requestUrl} setLc={setLc} client={lc?.client} type={type}
+                                 beneficiary={lc?.beneficiary}/>
+      <DocumentaryEntryFlex>
+        <div>
+          <DocReqTitle style={{margin: "15px 0 0 0"}} clickable
+                       onClick={() => setExpanded((e) => !e)}>
+            {title}
             <FontAwesomeIcon
-                icon={expanded ? faChevronDown : faChevronRight}
-                style={{ color: config.accentColor, marginLeft: "10px" }}
+              icon={expanded ? faChevronDown : faChevronRight}
+              style={{color: config.accentColor, marginLeft: "10px"}}
             />
           </DocReqTitle>
-          <div style={{flex: 1}}/>
-          <DocReqStatus>{"Incomplete"}</DocReqStatus>
-        </DocumentaryEntryFlex>
-        <AnimateHeight duration={300} height={expanded ? "auto" : 0}>
-          <ExpandedDocumentaryEntry>
-            {sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>)}
-          </ExpandedDocumentaryEntry>
-        </AnimateHeight>
-      </DocumentaryEntryWrapper>
+          <Subtitle error={error} style={{paddingLeft: 10}}>
+            {error && errorMessage}
+          </Subtitle>
+        </div>
+        <ButtonWrapper style={{position: "relative"}}>
+          <StyledButton selected={status === "Accepted"} onClick={onWaiveClick}>Waive</StyledButton>
+          <StyledButton selected={status === "Rejected"} onClick={() => setModal("reject")}>Reject</StyledButton>
+          {expanded && <StyledButton style={{position: "absolute", top: 40}} selected={status === "Requested"}
+                                     onClick={() => setModal("requestClarification")}>
+            Request Clarification</StyledButton>}
+        </ButtonWrapper>
+        <DocReqStatus>{status}</DocReqStatus>
+      </DocumentaryEntryFlex>
+      <AnimateHeight duration={300} height={expanded ? "auto" : 0}>
+        <ExpandedDocumentaryEntry>
+          {children}
+        </ExpandedDocumentaryEntry>
+      </AnimateHeight>
+    </DocumentaryEntryWrapper>
   );
-}
+};
 
-const useModal = () => {
-  const [isModalShowing, setIsModalShowing] = useState(false);
-  const [modalDocReq, setModalDocReq] = useState(null);
-
-  return {
-    showModal: (docReq, lcid) => {
-      setIsModalShowing(true);
-      setModalDocReq({...docReq, lcid});
-    },
-    hideModal: () => setIsModalShowing(false),
-    isModalShowing,
-    modalDocReq
-  }
-}
-
-const ComplianceChecks = ({ lc, refreshLc }) => {
-  const { showModal, hideModal, isModalShowing, modalDocReq } = useModal();
-  const docReqs = lc.documentaryrequirementSet;
-  const d = docReqs[0];
+const CompanyOFACCheck = ({lc, setLc}) => {
+  const beneficiary = get(lc, 'beneficiary.name');
+  const sanctions = get(lc, 'ofacSanctions');
+  const status = get(lc, "ofacBankApproval");
   return (
-      <Panel title="Compliance Checks">
-        <DocumentaryEntryFlex>
-          <SmallHeader style={{margin: "0"}}>Type</SmallHeader>
-          <div style={{flex: 1}}/>
-          <SmallHeader style={{margin: "0"}}>Status</SmallHeader>
-        </DocumentaryEntryFlex>
-          <SDNCheck
-              lc={lc}
-              refreshLc={refreshLc}
-          />
-      </Panel>
+    <ComplianceCheck
+      lc={lc}
+      type={"company"}
+      setLc={setLc}
+      approveUrl={`/lc/${lc.id}/approve_ofac/`}
+      rejectUrl={`/lc/${lc.id}/reject_ofac/`}
+      requestUrl={`/lc/${lc.id}/request_ofac/`}
+      title={"OFAC Company Sanctions"}
+      status={titleCase(status)}
+      initialRejectionReason={`The beneficiary ${beneficiary} is on the OFAC SDN sanction list.`}
+      initialRequestComment={`Our records indicate that the beneficiary ${beneficiary} is on the OFAC SDN sanction list. If this is a mistake, please provide reasoning to confirm so.`}
+      error={sanctions.length > 0}
+      errorMessage={`${sanctions.length > 0 ? sanctions.length : "No"} ${sanctions.length > 0 ? "potential"
+        : ""} error${sanctions.length !== 1 ? "s" : ""}${sanctions.length === 0 ? " found" : ""}`}
+    >
+      {sanctions.length > 0 ? sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>) :
+        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for company
+          ${beneficiary}.`</div>}
+    </ComplianceCheck>
+  )
+};
+
+const CountrySanctionCheck = ({lc, setLc}) => {
+  const beneficiary = get(lc, 'beneficiary.name');
+  const beneficiaryCountry = get(lc, 'beneficiary.country');
+  const clientCountry = get(lc, "client.country");
+  const countrySanctionMessage = get(lc, "sanctionAutoMessage");
+  const status = get(lc, "sanctionBankApproval");
+  let message;
+  if (countrySanctionMessage === null) {
+    message = `Not able to check sanction violations for the country ${beneficiaryCountry}. 
+    Please contact steve@bountium.org if you would like for this functioniality to be extended.`;
+  } else if (countrySanctionMessage === "") {
+    message = `Did not find any immediate sanction errors for country ${beneficiaryCountry}.`;
+  } else {
+    message = <div>{beneficiaryCountry} may violate sanctions. Please click&nbsp;
+      <a target="_blank" rel="noopener noreferrer" href={countrySanctionMessage}>here</a> for more information.</div>;
+  }
+
+  return (
+    <ComplianceCheck
+      lc={lc}
+      type={"country"}
+      setLc={setLc}
+      title={"Country Sanctions"}
+      status={titleCase(status)}
+      approveUrl={`/lc/${lc.id}/approve_sanction/`}
+      rejectUrl={`/lc/${lc.id}/reject_sanction/`}
+      requestUrl={`/lc/${lc.id}/request_sanction/`}
+      initialRejectionReason={`The beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanction violations with your country (${clientCountry}).`}
+      initialRequestComment={`Our records indicate that the beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanctions against your country (${clientCountry}). If this is a mistake, please provide reasoning to confirm so.`}
+      error={countrySanctionMessage === null || countrySanctionMessage}
+      errorMessage={countrySanctionMessage === "" ? "No errors found" : "1 potential error"}
+    >
+      <div style={{paddingLeft: 20, fontSize: 19, width: "70%"}}>{beneficiaryCountry}</div>
+      <div style={{paddingLeft: 60}}>{message}</div>
+    </ComplianceCheck>
+  )
+};
+
+const ComplianceChecks = ({lc, setLc}) => {
+  return (
+    <Panel title="Compliance Checks">
+      <DocumentaryEntryFlex>
+        <SmallHeader style={{margin: "0"}}>Type</SmallHeader>
+        <SmallHeader style={{margin: "0"}}>Action</SmallHeader>
+        <SmallHeader style={{margin: "0"}}>Status</SmallHeader>
+      </DocumentaryEntryFlex>
+      <CompanyOFACCheck lc={lc} setLc={setLc}/>
+      <CountrySanctionCheck lc={lc} setLc={setLc}/>
+    </Panel>
   );
-}
+};
 
 export default ComplianceChecks;

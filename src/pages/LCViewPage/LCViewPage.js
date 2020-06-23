@@ -1,7 +1,8 @@
 import React, {useContext, useEffect, useRef, useState} from "react";
-import styled, {css, keyframes} from "styled-components";
+import styled from "styled-components";
 import {Field, Form, Formik, useField, useFormikContext} from "formik";
 import _, {get} from "lodash";
+import moment from "moment";
 
 import {makeAPIRequest} from '../../utils/api';
 import {useAuthentication, UserContext} from "../../utils/auth";
@@ -10,14 +11,7 @@ import Button from "../../components/ui/Button";
 import DocumentaryRequirements from './DocumentaryRequirements';
 import Panel from './Panel';
 import config from '../../config';
-import {Popup} from "../../components/ui/Popup";
-import {
-  faChevronDown,
-  faChevronRight,
-  faTimes
-} from "@fortawesome/free-solid-svg-icons";
-import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
-import AnimateHeight from "react-animate-height";
+import {Modal} from "../../components/ui/Modal";
 import ComplianceChecks from "./ComplianceChecks";
 
 // TODO break this file up into multiple files
@@ -51,6 +45,11 @@ const PartyDisplayMessage = styled.div`
 `;
 
 const APPROVALS_TO_STATE = {
+  issuerRejected: {
+    message: "LC Application has been rejected by the issuer.",
+    canEdit: [],
+    canApprove: []
+  },
   client: {
     message: "LC Application has been submitted and is waiting on issuer review.",
     canEdit: ['issuer'],
@@ -79,62 +78,71 @@ const APPROVALS_TO_STATE = {
   },
 };
 
-const OrderStatusMessage = ({ stateName }) => {
+const OrderStatusMessage = ({stateName}) => {
   const message = APPROVALS_TO_STATE[stateName].message;
   return <div>{message}</div>
 };
 
-const OrderStatus = ({ lc, setLc, userType, stateName, setModal }) => {
+const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) => {
   const approvals = [
     {name: 'Issuer:', value: get(lc, 'issuerApproved')},
     {name: 'Client:', value: get(lc, 'clientApproved')},
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ];
   const handleClickApprove = async () => {
-    const approvedCreditAmt = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
-    if (userType === "issuer" && (!approvedCreditAmt || parseFloat(lc.client.totalCredit) +
-        parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
+    const approvedCreditAmt = lc.client.approvedCredit.filter(
+      model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+    if (userType === "issuer" && (!approvedCreditAmt || parseFloat(totalCredit) +
+      parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
       setModal("creditOverflow");
-    }
-    else makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', { approve: true })
-      .then(json => setLc({ ...lc, [`${userType}Approved`]: true })); // TODO fix
+    } else {
+      makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
+      .then(json => setLc({...lc, [`${userType}Approved`]: true}));
+    } // TODO fix
   };
   const handleClickPayout = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', { approve: true })
-      .then(json => setLc({ ...lc, paidOut: true })); // TODO fix
+    makeAPIRequest(`/lc/${get(lc, 'id')}/payout/`, 'POST', {approve: true})
+    .then(json => setLc({...lc, paidOut: true})); // TODO fix
   };
   const handleClickRequest = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', { approve: true })
-      .then(json => setLc({ ...lc, requested: true })); // TODO fix
+    makeAPIRequest(`/lc/${get(lc, 'id')}/request/`, 'POST', {approve: true})
+    .then(json => setLc({...lc, requested: true})); // TODO fix
   };
   const handleClickDraw = () => {
-    makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', { approve: true })
-      .then(json => setLc({ ...lc, drawn: true })); // TODO fix
+    makeAPIRequest(`/lc/${get(lc, 'id')}/draw/`, 'POST', {approve: true})
+    .then(json => setLc({...lc, drawn: true})); // TODO fix
   };
   const allApproved = approvals.every(a => a.value);
-  const { paidOut, drawn, requested } = lc;
+  const {paidOut, drawn, requested} = lc;
   return (
     <Panel title="Order Status" highlight>
       <OrderStatusWrapper>
-      {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
+        {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
         <center><Button onClick={handleClickApprove}>Approve</Button></center>}
-      {allApproved && !paidOut && userType === "issuer" && <center><Button onClick={handleClickPayout} style={{marginBottom: '15px'}}>Pay Out</Button></center>}
-      {allApproved && !requested && userType === "beneficiary" && <center><Button onClick={handleClickRequest} style={{marginBottom: '15px'}}>Request</Button></center>}
-      {allApproved && !drawn && userType === "beneficiary" && <center><Button onClick={handleClickDraw} style={{marginBottom: '15px'}}>Draw</Button></center>}
-      {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
-      {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid out.</PartyDisplayMessage>
-        : drawn ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been drawn.</PartyDisplayMessage>
-        : requested ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been requested.</PartyDisplayMessage> : null}
-      <PartyDisplayMessage style={{fontWeight: '500'}}>You are the {userType}.</PartyDisplayMessage>
-      {!allApproved && (
-        <OrderStatusMessage stateName={stateName} />
-      )}
+        {allApproved && !paidOut && userType === "issuer" &&
+        <center><Button onClick={handleClickPayout}
+                        style={{marginBottom: '15px'}}>Pay Out</Button></center>}
+        {allApproved && !requested && userType === "beneficiary" &&
+        <center><Button onClick={handleClickRequest} style={{marginBottom: '15px'}}>Request</Button></center>}
+        {allApproved && !drawn && userType === "beneficiary" &&
+        <center><Button onClick={handleClickDraw} style={{marginBottom: '15px'}}>Draw</Button></center>}
+        {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
+        {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid
+            out.</PartyDisplayMessage>
+          : drawn ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been
+              drawn.</PartyDisplayMessage>
+            : requested ? <PartyDisplayMessage style={{marginTop: '0'}}>Payment for this LC has been
+              requested.</PartyDisplayMessage> : null}
+        <PartyDisplayMessage style={{fontWeight: '500'}}>You are the {userType}.</PartyDisplayMessage>
+        {!allApproved && (
+          <OrderStatusMessage stateName={stateName}/>
+        )}
       </OrderStatusWrapper>
     </Panel>
   );
 };
 
-const OrderNotes = ({ lc }) => {
+const OrderNotes = ({lc}) => {
   return (
     <Panel title="Revision Notes">
       <OrderStatusWrapper>
@@ -155,13 +163,13 @@ const HistoryOrder = styled.div`
   justify-content: space-between;
 `;
 
-const ClientInformation = ({ lc }) => {
+const ClientInformation = ({lc}) => {
   const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
   const [clientOrders, setClientOrders] = useState(null);
   useEffect(() => {
     makeAPIRequest(`/lc/by_client/${client.id}/`)
-      .then(json => setClientOrders(json));
+    .then(json => setClientOrders(json));
   }, [client.id]);
 
   return (
@@ -170,7 +178,7 @@ const ClientInformation = ({ lc }) => {
         POC: {employee.name}
         <br/>
         Email: <a href={`mailto:${employee.email}`}>{employee.email}</a>
-        <h1 style={{ fontWeight: "500", margin: "15px 0"}}>Order History</h1>
+        <h1 style={{fontWeight: "500", margin: "15px 0"}}>Order History</h1>
         {clientOrders && clientOrders.map(order => (
           <HistoryOrder key={order.id}>
             <a href={`/lc/${order.id}`}>{order.purchasedItem || `LC #${order.id}`}</a>
@@ -243,12 +251,13 @@ const Subtitle = styled.div`
   font-weight: 300;
 `;
 
-const Financials = ({ lc, setModal }) => {
+const Financials = ({lc, setModal, totalCredit}) => {
   let creditOverflow = false;
-  const approvedCreditAmt = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+  const approvedCreditAmt = lc.client.approvedCredit.filter(
+    model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
   const lcCredit = lc.issuerApproved ? 0 : parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure);
-  if (!approvedCreditAmt || parseFloat(lc.client.totalCredit) +
-      lcCredit > parseFloat(approvedCreditAmt)) {
+  if (!approvedCreditAmt || parseFloat(totalCredit) +
+    lcCredit > parseFloat(approvedCreditAmt)) {
     creditOverflow = true;
   }
   const client = get(lc, 'client');
@@ -259,8 +268,8 @@ const Financials = ({ lc, setModal }) => {
           <BigNumberTitle>Annual Cashflow</BigNumberTitle>
           <BigNumber>
             {client.annualCashflow || "N/A"}
-            <span style={{ fontWeight: "200", fontSize: "16px" }}> yearly</span>
-           </BigNumber>
+            <span style={{fontWeight: "200", fontSize: "16px"}}> yearly</span>
+          </BigNumber>
         </div>
         <div style={{paddingRight: 30}}>
           <BigNumberTitle>Savings Available</BigNumberTitle>
@@ -268,14 +277,16 @@ const Financials = ({ lc, setModal }) => {
         </div>
         <div>
           <BigNumberTitle>Approved Credit</BigNumberTitle>
-          <BigNumber>{client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt || "N/A"}</BigNumber>
+          <BigNumber>{client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt
+          || "N/A"}</BigNumber>
         </div>
       </BigStatsWrapper>
       <div>
         <AnalysisWrapper>
           <SmallHeader>Credit Analysis</SmallHeader>
           <AnalysisBody error={creditOverflow}>
-            {creditOverflow ? "There is a credit overflow." : "Approving this LC will not exceed the current approved credit limit."}
+            {creditOverflow ? "There is a credit overflow."
+              : "Approving this LC will not exceed the current approved credit limit."}
             {creditOverflow && <span>&nbsp;</span>}
             {creditOverflow && <AnalysisDetail onClick={() => setModal("creditOverflow")}>
               Click here for details
@@ -286,7 +297,7 @@ const Financials = ({ lc, setModal }) => {
           <SmallHeader>Tolerance Analysis</SmallHeader>
           <AnalysisBody>
             Bountium will provide tools to help understand tolerance values within a letter of credit.
-            <span style={{ fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
+            <span style={{fontStyle: "italic", fontWeight: "300", fontSize: "14px"}}>
               &nbsp;Coming soon
             </span>
           </AnalysisBody>
@@ -348,10 +359,10 @@ const StyledButton = styled.button`
   align-items: center;
 `;
 
-const YesNoInput = ({ name }) => {
+const YesNoInput = ({name}) => {
   const [, meta, helpers] = useField(name);
-  const { value } = meta;
-  const { setValue } = helpers;
+  const {value} = meta;
+  const {setValue} = helpers;
 
   const handleClick = (val) => (e) => {
     e.preventDefault();
@@ -359,10 +370,10 @@ const YesNoInput = ({ name }) => {
   };
 
   return (
-      <ButtonWrapper>
-        <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
-        <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
-      </ButtonWrapper>
+    <ButtonWrapper>
+      <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
+      <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
+    </ButtonWrapper>
   )
 };
 
@@ -385,47 +396,50 @@ const SubmitWrapper = styled.div`
 const SubmitSection = () => {
   return (
     <SubmitWrapper>
-    <ODColumn>
-      <Button type="submit">Submit Revisions</Button>
-    </ODColumn>
-    <ODColumn>
-      <SmallHeader style={{marginBottom: '5px'}}>Revision Comments</SmallHeader>
-      <Field name="latestVersionNotes" type="text"/>
-    </ODColumn>
+      <ODColumn>
+        <Button type="submit">Submit Revisions</Button>
+      </ODColumn>
+      <ODColumn>
+        <SmallHeader style={{marginBottom: '5px'}}>Revision Comments</SmallHeader>
+        <Field name="latestVersionNotes" type="text"/>
+      </ODColumn>
     </SubmitWrapper>
   )
 };
 
-const OrderDetail = ({ title, value, units, type, name, editing, error, errorClicked }) => {
+const OrderDetail = ({title, value, units, type, name, editing, error, errorClicked}) => {
   const Input = TYPE_TO_COMPONENT[type];
   return (
-  <>
-    <SmallHeader>{title}</SmallHeader>
-    <ODValue>
-      {editing && type ? <Input name={name} id={name}/> : (value || "N/A")}
-      {units && <span style={{ fontWeight: "200", fontSize: "16px" }}> {units}</span>}
-      {error && <span>&nbsp;</span>}
-      {error && <AnalysisDetail pop onClick={errorClicked} style={{ opacity: 1 }}>{error}</AnalysisDetail>}
-    </ODValue>
-  </>
+    <>
+      <SmallHeader>{title}</SmallHeader>
+      <ODValue>
+        {editing && type ? <Input name={name} id={name}/> : (value || "N/A")}
+        {units && <span style={{fontWeight: "200", fontSize: "16px"}}> {units}</span>}
+        {error && <span>&nbsp;</span>}
+        {error && <AnalysisDetail pop onClick={errorClicked} style={{opacity: 1}}>{error}</AnalysisDetail>}
+      </ODValue>
+    </>
   )
 };
 
-const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModal }) => {
+const OrderDetails = ({lc, refreshLc, stateName, userType, live, modal, setModal, totalCredit}) => {
   const [showExtra, setShowExtra] = useState(false);
   const [editing, setEditing] = useState(false);
   const canEdit = !live && APPROVALS_TO_STATE[stateName].canEdit.includes(userType);
   const details = [
-    {title: "Counterparty", value: get(lc, 'beneficiary.name'),
-      error: (get(lc, 'beneficiary.sanctions'))?.length ? "Possible Sanctions" : null,
-      errorClicked: () => setModal("sanctionsModal")
-    }, // must edit bene separately
+    {title: "Counterparty", value: get(lc, 'beneficiary.name')}, // must edit bene separately
     {title: "Counterparty's Country", value: get(lc, 'beneficiary.country')}, // must edit bene separately
     {title: "Latest Permissible Charge Date", value: lc.lateChargeDate, name: 'lateChargeDate', type: 'date'},
     {title: "Draft Presentation Date", value: lc.draftPresentationDate, name: 'draftPresentationDate', type: 'date'},
     {title: "Unit of Measure", value: lc.unitOfMeasure, type: 'text', name: 'unitOfMeasure'},
     {title: "Units Purchased", value: lc.unitsPurchased, name: 'unitsPurchased', type: 'number'},
-    {title: "Price of Purchase", value: lc.creditAmt, units: lc.currencyDenomination, name: 'creditAmt', type: 'number'},
+    {
+      title: "Price of Purchase",
+      value: lc.creditAmt,
+      units: lc.currencyDenomination,
+      name: 'creditAmt',
+      type: 'number'
+    },
     {title: "Credit Expiration Date", value: lc.expirationDate, name: 'expirationDate', type: 'date'},
     {title: "Cash Secure Amount", value: lc.cashSecure, type: 'number', name: 'cashSecure'},
     {title: "Credit Amount (Verbal)", value: lc.creditAmtVerbal, type: 'text', name: 'creditAmtVerbal'}
@@ -433,34 +447,71 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModa
   const extraDetails = [
     {title: "Credit Delivery Means", value: lc.creditDeliveryMeans, name: 'creditDeliveryMeans', type: 'text'},
     // {title: "Party Paying Other Banks' Fees", value: lc.payingOtherBanksFees, href: }, TODO make this work
-    {title: "Draft's Invoice Value", value: lc.draftsInvoiceValue, name: 'draftsInvoiceValue', units: '%', type: 'number'},
+    {
+      title: "Draft's Invoice Value",
+      value: lc.draftsInvoiceValue,
+      name: 'draftsInvoiceValue',
+      units: '%',
+      type: 'number'
+    },
     {title: "Credit Availability", value: lc.creditAvailability, name: 'creditAvailability', type: 'text'},
-    {title: "Partial Shipment Allowed", value: lc.partialShipmentAllowed === true ? "Yes" : "No", name: 'partialShipmentAllowed', type: 'boolean'},
-    {title: "Transshipment Allowed", value: lc.transshipmentAllowed === true ? "Yes" : "No", name: 'transshipmentAllowed', type: 'boolean'},
+    {
+      title: "Partial Shipment Allowed",
+      value: lc.partialShipmentAllowed === true ? "Yes" : "No",
+      name: 'partialShipmentAllowed',
+      type: 'boolean'
+    },
+    {
+      title: "Transshipment Allowed",
+      value: lc.transshipmentAllowed === true ? "Yes" : "No",
+      name: 'transshipmentAllowed',
+      type: 'boolean'
+    },
     {title: "Merch Charge Location", value: lc.merchChargeLocation, type: 'text', name: 'merchChargeLocation'},
-    {title: "Charge Transportation Location", value: lc.chargeTransportationLocation, type: 'text', name: 'chargeTransportationLocation'},
-    {title: "Named Place of Destination", value: lc.namedPlaceOfDestination, type: 'text', name: 'namedPlaceOfDestination'},
+    {
+      title: "Charge Transportation Location",
+      value: lc.chargeTransportationLocation,
+      type: 'text',
+      name: 'chargeTransportationLocation'
+    },
+    {
+      title: "Named Place of Destination",
+      value: lc.namedPlaceOfDestination,
+      type: 'text',
+      name: 'namedPlaceOfDestination'
+    },
     // {title: "Doc Reception Notifees", value: lc.docReceptionNotifees},
-    {title: "Client Arranging Insurance", value: lc.arrangingOwnInsurance === true ? "Yes" : "No", name: 'arrangingOwnInsurance', type: 'boolean'},
+    {
+      title: "Client Arranging Insurance",
+      value: lc.arrangingOwnInsurance === true ? "Yes" : "No",
+      name: 'arrangingOwnInsurance',
+      type: 'boolean'
+    },
     {title: "Other Instructions", value: lc.otherInstructions, type: 'text', name: 'otherInstructions'},
     {title: "Merch Description", value: lc.merchDescription, type: 'text', name: 'merchDescription'},
-    {title: "Transferable", value: (lc.transferableToClient
-      ? `Yes, to ${lc.client.name}`
-      : (lc.transferableToBeneficiary
-        ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
-        : "No")) // not editable for now
+    {
+      title: "Transferable", value: (lc.transferableToClient
+        ? `Yes, to ${lc.client.name}`
+        : (lc.transferableToBeneficiary
+          ? `Yes${lc.beneficiary && `, to ${lc.beneficiary.name}`}`
+          : "No")) // not editable for now
     }
   ];
 
   // setup initial values
-  const initialValues = { latestVersionNotes: '' };
+  const initialValues = {latestVersionNotes: ''};
   const allDetails = ([...details, ...extraDetails]);
   allDetails.forEach(d => {
-    if (!d.name) return;
+    if (!d.name) {
+      return;
+    }
     switch (d.type) {
       case 'boolean':
-        if (d.value.toLowerCase() === 'yes') initialValues[d.name] = true;
-        else if (d.value.toLowerCase() === 'no') initialValues[d.name] = false;
+        if (d.value.toLowerCase() === 'yes') {
+          initialValues[d.name] = true;
+        } else if (d.value.toLowerCase() === 'no') {
+          initialValues[d.name] = false;
+        }
         break;
       default:
         d.type && (initialValues[d.name] = d.value);
@@ -468,140 +519,58 @@ const OrderDetails = ({ lc, refreshLc, stateName, userType, live, modal, setModa
   });
 
   return (
-    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing} canEdit={canEdit}>
+    <Panel title="Order Details" expand={showExtra} setExpand={setShowExtra} editing={editing} setEditing={setEditing}
+           canEdit={canEdit}>
       <Formik
         initialValues={initialValues}
-        onSubmit={(values, { setSubmitting }) => {
+        onSubmit={(values, {setSubmitting}) => {
           setSubmitting(true);
-          const { latestVersionNotes, ...lcValues } = values;
+          const {latestVersionNotes, ...lcValues} = values;
           const newLc = {};
           Object.entries(lcValues).forEach(pair => {
             const [k, v] = pair;
-            if (v !== initialValues[k]) newLc[k] = v;
+            if (v !== initialValues[k]) {
+              newLc[k] = v;
+            }
           });
           makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
             lc: newLc, latestVersionNotes,
           }).then(() => {
-              setSubmitting(false);
-              refreshLc();
-              setEditing(false);
-            })
+            setSubmitting(false);
+            refreshLc();
+            setEditing(false);
+          })
         }}
       >
-      {() => (<div>
-        <CreditOverflowPopup
-            setModal={setModal} modal={modal} setEditing={setEditing}
-            lc={lc} refreshLc={refreshLc}/>
-        <SanctionsModal
-            setModal={setModal} modal={modal} setEditing={setEditing}
-            lc={lc} refreshLc={refreshLc}/>
-        <Form>
-          {editing && <SubmitSection />}
-          <div style={{display: 'flex'}}>
-            <ODColumn>
-              {details.slice(0,details.length/2).map((d) =>
-                <OrderDetail key={d.title} {...d} editing={editing}/>
-              )}
-              {showExtra && extraDetails.slice(0,extraDetails.length/2).map((d) =>
-                <OrderDetail key={d.title} {...d} editing={editing}/>
-              )}
-            </ODColumn>
-            <ODColumn>
-              {details.slice(details.length/2).map((d) =>
-                <OrderDetail key={d.title} {...d} editing={editing}/>
-              )}
-              {showExtra && extraDetails.slice(extraDetails.length/2).map((d) =>
-                <OrderDetail key={d.title} {...d} editing={editing}/>
-              )}
-            </ODColumn>
+        {() => (<div>
+            <CreditOverflowPopup
+              setModal={setModal} modal={modal} setEditing={setEditing}
+              lc={lc} refreshLc={refreshLc} totalCredit={totalCredit}/>
+            <Form>
+              {editing && <SubmitSection/>}
+              <div style={{display: 'flex'}}>
+                <ODColumn>
+                  {details.slice(0, details.length / 2).map((d) =>
+                    <OrderDetail key={d.title} {...d} editing={editing}/>
+                  )}
+                  {showExtra && extraDetails.slice(0, extraDetails.length / 2).map((d) =>
+                    <OrderDetail key={d.title} {...d} editing={editing}/>
+                  )}
+                </ODColumn>
+                <ODColumn>
+                  {details.slice(details.length / 2).map((d) =>
+                    <OrderDetail key={d.title} {...d} editing={editing}/>
+                  )}
+                  {showExtra && extraDetails.slice(extraDetails.length / 2).map((d) =>
+                    <OrderDetail key={d.title} {...d} editing={editing}/>
+                  )}
+                </ODColumn>
+              </div>
+            </Form>
           </div>
-        </Form>
-      </div>
-      )}
+        )}
       </Formik>
     </Panel>
-  );
-};
-
-const SanctionInfo = ({sanction}) => {
-  const [showExtra, setShowExtra] = useState(false);
-
-  const handleRightClick = event => {
-    event.preventDefault();
-    window.open(`https://www.google.com/search?q=${sanction.name}`);
-  };
-
-  const addressToString = address => {
-    const fields = [];
-    address.address && fields.push(address.address);
-    address.addressGroup && fields.push(address.addressGroup);
-    address.country && fields.push(address.country);
-    return fields.join(", ");
-  };
-
-  const titleCase = string => {
-    const exceptions = new Set(
-        ["and", "as", "but", "for", "if", "nor", "or", "so", "yet", "a", "an",
-          "the", "as", "at", "by", "for", "in", "of", "off", "on", "per", "to",
-          "up", "via"]);
-
-    const allCaps = new Set(["s.a.", "sa"]);
-
-    const capitalizeFirstLetter = (word, wordIndex) => {
-      word = word.toLowerCase();
-      if (allCaps.has(word)) return word.toUpperCase();
-      else if (!wordIndex || !exceptions.has(word)) return word.charAt(0).toUpperCase() + word.substring(1);
-      else return word;
-    };
-
-    return string.split(" ").map((substr, ind) => capitalizeFirstLetter(substr, ind)).join(" ");
-  };
-
-  return (
-      <div style={{paddingBottom: 20}}>
-        <div style={{display: "flex", flexDirection: "row", alignItems: "center"}}>
-          <div style={{fontSize: 19}} title={"Right click to search"} onContextMenu={handleRightClick}>{titleCase(sanction.name)}</div>
-          <FontAwesomeIcon
-              icon={showExtra ? faChevronDown : faChevronRight}
-              onClick={() => setShowExtra(!showExtra)}
-              style={{
-                color: config.accentColor,
-                padding: '0 10px',
-                cursor: 'pointer',
-              }}
-          />
-          <AnalysisDetail>
-            Dismiss
-            <FontAwesomeIcon style={{paddingLeft: 5}} icon={faTimes}/>
-          </AnalysisDetail>
-        </div>
-        <AnimateHeight duration={300} height={showExtra ? "auto" : 0}>
-          {sanction.aliases.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
-            Aliases:
-            <div style={{paddingLeft: 40}}>
-              {sanction.aliases.map(alias => <div style={{paddingTop: 3}} key={alias.id}>{titleCase(alias.name)}</div>)}
-            </div>
-          </div>}
-          {sanction.addresses.length > 0 && <div style={{paddingLeft: 40, paddingTop: 5}}>
-            Addresses:
-            <div style={{paddingLeft: 40}}>
-            {sanction.addresses.map(address => <div style={{paddingTop: 3}} key={address.id}>{addressToString(address)}</div>)}
-            </div>
-          </div>}
-        </AnimateHeight>
-      </div>
-  )
-};
-
-const SanctionsModal = ({modal, setModal, lc}) => {
-  const sanctions = get(lc, 'beneficiary.sanctions');
-  return (
-      <Popup
-          title={`Possible Sanctions for ${get(lc, 'beneficiary.name')}`}
-          show={modal === "sanctionsModal"} onCancel={() => setModal(false)}
-          containerStyle={{width: "70%"}}>
-        {sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>)}
-      </Popup>
   );
 };
 
@@ -633,11 +602,13 @@ const usePrevious = value => {
   return ref.current;
 };
 
-const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
+const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing, totalCredit}) => {
   const [selectedButtonIndices, setSelectedButtonIndex] = useState({0: true, 1: false});
   const prevSelectedButtonIndices = usePrevious(selectedButtonIndices);
-  const approvedCredit = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt || 0;
-  const minimumIncrease = (parseFloat(lc.client.totalCredit) + parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) - parseFloat(approvedCredit)).toString();
+  const approvedCredit = lc.client.approvedCredit.filter(model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt
+    || 0;
+  const minimumIncrease = (parseFloat(totalCredit) + parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) - parseFloat(
+    approvedCredit)).toString();
   const [increaseApprovedCreditValue, setIncreaseApprovedCreditValue] = useState(minimumIncrease);
   const [requestMoreCashValue, setRequestMoreCashValue] = useState(minimumIncrease);
   const [error, setError] = useState("");
@@ -645,8 +616,8 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
   const increaseApprovedCreditRef = useRef(null);
   const requestMoreCashRef = useRef(null);
   const {setFieldValue, values} = useFormikContext();
-  const overflow = -(parseFloat(approvedCredit) - parseFloat(lc.client.totalCredit) -
-      parseFloat(lc.creditAmt) + parseFloat(lc.cashSecure));
+  const overflow = -(parseFloat(approvedCredit) - parseFloat(totalCredit) -
+    parseFloat(lc.creditAmt) + parseFloat(lc.cashSecure));
 
   useEffect(() => {
     handleError();
@@ -656,10 +627,11 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
     if (!_.isEqual(selectedButtonIndices, prevSelectedButtonIndices)) {
       handleError();
       if (selectedButtonIndices[0] && selectedButtonIndices[1]) {
-        if (prevSelectedButtonIndices[0])
+        if (prevSelectedButtonIndices[0]) {
           requestMoreCashRef.current && requestMoreCashRef.current.focus();
-        else if (prevSelectedButtonIndices[1])
+        } else if (prevSelectedButtonIndices[1]) {
           increaseApprovedCreditRef.current && increaseApprovedCreditRef.current.focus();
+        }
       } else if (selectedButtonIndices[0]) {
         increaseApprovedCreditRef.current && increaseApprovedCreditRef.current.focus();
       } else if (selectedButtonIndices[1]) {
@@ -669,13 +641,16 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
   });
 
   const handleError = () => {
-    if (selectedButtonIndices[0] && selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue) + parseFloat(requestMoreCashValue) < parseFloat(minimumIncrease)) {
+    if (selectedButtonIndices[0] && selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue) + parseFloat(
+      requestMoreCashValue) < parseFloat(minimumIncrease)) {
       setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
       return true;
-    } else if (selectedButtonIndices[0] && !selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue) < parseFloat(minimumIncrease)) {
+    } else if (selectedButtonIndices[0] && !selectedButtonIndices[1] && parseFloat(increaseApprovedCreditValue)
+      < parseFloat(minimumIncrease)) {
       setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
       return true;
-    } else if (selectedButtonIndices[1] && !selectedButtonIndices[0] && parseFloat(requestMoreCashValue) < parseFloat(minimumIncrease)) {
+    } else if (selectedButtonIndices[1] && !selectedButtonIndices[0] && parseFloat(requestMoreCashValue) < parseFloat(
+      minimumIncrease)) {
       setError(`The minimum approved credit plus cash secured amount must be at least ${minimumIncrease}`);
       return true;
     } else if (!selectedButtonIndices[0] && !selectedButtonIndices[1]) {
@@ -690,7 +665,8 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
     setSubmissionAttempts(submissionAttempts + 1);
     const error = handleError();
     if (!error && selectedButtonIndices[0]) {
-      await makeAPIRequest(`/bank/${lc.issuer.id}/business/${lc.client.id}/approved_credit/`, "PUT", {approvedCreditAmt: parseFloat(increaseApprovedCreditValue) + parseFloat(approvedCredit)});
+      await makeAPIRequest(`/bank/${lc.issuer.id}/business/${lc.client.id}/approved_credit/`, "PUT",
+        {approvedCreditAmt: parseFloat(increaseApprovedCreditValue) + parseFloat(approvedCredit)});
       refreshLc();
       setModal(false);
     }
@@ -698,66 +674,131 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing}) => {
       await setEditing(true);
       await setModal(false);
       setFieldValue("cashSecure", parseFloat(requestMoreCashValue) + parseFloat(lc.cashSecure));
-      setFieldValue("latestVersionNotes", `Please increase cash secured amount.${values.latestVersionNotes && " " + values.latestVersionNotes}`);
+      setFieldValue("latestVersionNotes",
+        `Please increase cash secured amount.${values.latestVersionNotes && " " + values.latestVersionNotes}`);
       scrollToAndHighlight("cashSecure");
     }
   };
 
   return (
-      <Popup containerStyle={{width: "55%"}} show={modal === "creditOverflow"} title={"Credit Overflow"}
-             error={submissionAttempts > 0 && error} onCancel={() => setModal(false)}
-             selectDisabled={submissionAttempts > 0 && error} onSelect={onSelect}>
-        <div>
-          Approving this LC will exceed the current approved credit ({approvedCredit}) for {get(lc, "client.name")} by {overflow}.
-          <Subtitle>Check all that apply.</Subtitle>
-          <div style={{flexDirection: "row", display: "flex", paddingTop: 20, paddingBottom: 20}}>
-            <StyledButton
-                nested style={{width: 230, justifyContent: "center"}}
-                onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 0: !selectedButtonIndices[0]})}
-                selected={selectedButtonIndices[0]}>
-              Increase Approved Credit By</StyledButton>
-            <StyledPopupInput
-                ref={increaseApprovedCreditRef} value={increaseApprovedCreditValue} type={"number"}
-                onChange={({target}) => setIncreaseApprovedCreditValue(target.value)}
-                style={{marginLeft: 10, visibility: selectedButtonIndices[0] ? "visible" : "hidden"}}/>
-          </div>
-          <div style={{flexDirection: "row", display: "flex", paddingBottom: 20}}>
-            <StyledButton
-                nested style={{width: 230, justifyContent: "center"}}
-                onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 1: !selectedButtonIndices[1]})}
-                selected={selectedButtonIndices[1]}>
-              Request More Secured Cash</StyledButton>
-            <StyledPopupInput
-                ref={requestMoreCashRef} value={requestMoreCashValue} type={"number"}
-                onChange={({target}) => setRequestMoreCashValue(target.value)}
-                style={{marginLeft: 10, visibility: selectedButtonIndices[1] ? "visible" : "hidden"}}/>
-          </div>
+    <Modal containerStyle={{width: "55%"}} show={modal === "creditOverflow"} title={"Credit Overflow"}
+           error={submissionAttempts > 0 && error} onCancel={() => setModal(false)}
+           selectDisabled={submissionAttempts > 0 && error} onSelect={onSelect}>
+      <div>
+        Approving this LC will exceed the current approved credit ({approvedCredit}) for {get(lc,
+        "client.name")} by {overflow}.
+        <Subtitle>Check all that apply.</Subtitle>
+        <div style={{flexDirection: "row", display: "flex", paddingTop: 20, paddingBottom: 20}}>
+          <StyledButton
+            nested style={{width: 230, justifyContent: "center"}}
+            onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 0: !selectedButtonIndices[0]})}
+            selected={selectedButtonIndices[0]}>
+            Increase Approved Credit By</StyledButton>
+          <StyledPopupInput
+            ref={increaseApprovedCreditRef} value={increaseApprovedCreditValue} type={"number"}
+            onChange={({target}) => setIncreaseApprovedCreditValue(target.value)}
+            style={{marginLeft: 10, visibility: selectedButtonIndices[0] ? "visible" : "hidden"}}/>
         </div>
-      </Popup>
+        <div style={{flexDirection: "row", display: "flex", paddingBottom: 20}}>
+          <StyledButton
+            nested style={{width: 230, justifyContent: "center"}}
+            onClick={() => setSelectedButtonIndex({...selectedButtonIndices, 1: !selectedButtonIndices[1]})}
+            selected={selectedButtonIndices[1]}>
+            Request More Secured Cash</StyledButton>
+          <StyledPopupInput
+            ref={requestMoreCashRef} value={requestMoreCashValue} type={"number"}
+            onChange={({target}) => setRequestMoreCashValue(target.value)}
+            style={{marginLeft: 10, visibility: selectedButtonIndices[1] ? "visible" : "hidden"}}/>
+        </div>
+      </div>
+    </Modal>
   )
 };
 
-const LCViewPage = ( {match} ) => {
+const StyledFormInput = styled.textarea`
+  margin-top: 10px;
+  padding: 10px 0 5px;
+  min-height: 100px;
+  font-size: 16px;
+  border: none;
+  border-bottom: 1px solid #cdcdcd;
+`;
+
+const Comments = ({lc, setLc, comments, userType}) => {
+  const [modal, setModal] = useState(false);
+  const [response, setResponse] = useState("");
+
+  const onRespond = () => {
+    makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+      lc: {},
+      comment: {action: "responded to the issuer", message: response}
+    }).then(data => setLc(data.updatedLc));
+    setModal(false);
+  };
+
+  // TODO this should be a backend thing
+  comments = comments.filter(comment => comment[userType + "Viewable"]);
+  return (
+    <Panel title={"Comments"}>
+      <Modal selectButton={"Respond"} show={modal} onCancel={() => setModal(false)}
+             title={"Respond to Comment"} onSelect={onRespond}>
+        <div>
+          On {moment(modal.date).format("dddd, MMMM Do YYYY [at] h:mm a")}, {userType === modal.authorType ? "you"
+          : `the ${modal.authorType}`} {modal.action}:
+          <div style={{paddingTop: 5, fontStyle: "italic", color: "#808080"}}>
+            "{modal.message}"
+          </div>
+        </div>
+        <div style={{paddingTop: 40}}>Response:</div>
+        <StyledFormInput value={response} onChange={({target}) => setResponse(target.value)}/>
+      </Modal>
+      {comments?.length ?
+        comments.map((comment, commentIndex) =>
+          <div style={commentIndex > 0 ? {paddingTop: 40} : null} key={comment.id}>
+            On {moment(comment.date).format("dddd, MMMM Do YYYY [at] h:mm a")}, {userType === comment.authorType ? "you"
+            : `the ${comment.authorType}`} {comment.action}:
+            <div style={{paddingTop: 5, fontStyle: "italic", color: "#808080"}}>
+              "{comment.message}"
+            </div>
+            {comment.respondable === userType &&
+            <div style={{textAlign: "end"}}>
+              <Button onClick={() => setModal(comment)}>Respond</Button>
+            </div>}
+          </div>
+        )
+        : "No comments to show."}
+    </Panel>
+  )
+};
+
+const LCViewPage = ({match}) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
   const [user] = useContext(UserContext);
   const [modal, setModal] = useState("");
   const [lc, setLc] = useState(null);
+  const [totalCredit, setTotalCredit] = useState();
   let userType = 'unknown';
   if (get(user, 'bank')) {
     userType = 'issuer';
   } else if (get(user, 'business')) {
-    if (get(user, 'business.id') === get(lc, 'client.id')) userType = 'client';
-    else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) userType = 'beneficiary';
+    if (get(user, 'business.id') === get(lc, 'client.id')) {
+      userType = 'client';
+    } else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) {
+      userType = 'beneficiary';
+    }
   }
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
   // get state of order
   const a = {
     issuer: get(lc, 'issuerApproved'),
     client: get(lc, 'clientApproved'),
-    beneficiary: get(lc, 'beneficiaryApproved')
+    beneficiary: get(lc, 'beneficiaryApproved'),
+    issuerRejected: get(lc, 'ofacBankApproval') === 'rejected' || get(lc, 'sanctionBankApproval') === 'rejected'
   };
   let stateName = 'all';
-  if (a.issuer === true) {
+  if (a.issuerRejected) {
+    stateName = 'issuerRejected';
+  } else if (a.issuer === true) {
     if (a.client === true) {
       stateName = 'clientIssuer';
     } else if (a.beneficiary === true) {
@@ -778,33 +819,33 @@ const LCViewPage = ( {match} ) => {
   // TODO change API to just return the new LC after we update it
   const refreshLc = () => {
     makeAPIRequest(`/lc/${match.params.lcid}/`)
-    .then(async json => {
-      if (userType === "issuer") {
-          json.client.totalCredit = await makeAPIRequest(`/lc/total_credit/${json.client.id}/`);
-          json.beneficiary.sanctions = await makeAPIRequest(`/business/${json.beneficiary.id}/ofac/`);
-          setLc(json);
-      }
-      else setLc(json);
-    })
+    .then(json => userType === "issuer" ? makeAPIRequest(`/lc/total_credit/${json.client.id}/`).then(totalCredit => {
+      setTotalCredit(totalCredit);
+      setLc(json)
+    }) : setLc(json));
   };
 
   useEffect(() => {
-    if (user) refreshLc();
+    if (user) {
+      refreshLc();
+    }
   }, [match.params.lcid, user?.id]);
 
   return (
     <LCView lc={lc}>
       <TwoColumnHolder>
         <LeftColumn>
-          <OrderStatus lc={lc} userType={userType} setLc={setLc} live={live} stateName={stateName} setModal={setModal}/>
+          <OrderStatus lc={lc} totalCredit={totalCredit} userType={userType} setLc={setLc} live={live}
+                       stateName={stateName} setModal={setModal}/>
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
+          <Comments lc={lc} setLc={setLc} comments={lc?.comments} userType={userType}/>
         </LeftColumn>
         <RightColumn>
-          {userType === 'issuer' && <Financials lc={lc} setModal={setModal}/>}
+          {userType === 'issuer' && <Financials lc={lc} totalCredit={totalCredit} setModal={setModal}/>}
           <OrderDetails lc={lc} setLc={setLc} refreshLc={refreshLc} stateName={stateName}
-                        userType={userType} live={live} modal={modal} setModal={setModal}/>
-          <ComplianceChecks lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
+                        userType={userType} live={live} modal={modal} setModal={setModal} totalCredit={totalCredit}/>
+          {userType === 'issuer' && <ComplianceChecks lc={lc} userType={userType} live={live} setLc={setLc}/>}
           <DocumentaryRequirements lc={lc} userType={userType} live={live} refreshLc={refreshLc}/>
         </RightColumn>
       </TwoColumnHolder>
