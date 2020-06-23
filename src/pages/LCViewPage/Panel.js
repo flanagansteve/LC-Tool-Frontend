@@ -4,6 +4,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronDown, faChevronRight, faPencilAlt } from "@fortawesome/free-solid-svg-icons";
 
 import config from '../../config';
+import AnimateHeight from "react-animate-height";
 
 const BasicView = styled.div`
   border: 1px solid #dfdfdf;
