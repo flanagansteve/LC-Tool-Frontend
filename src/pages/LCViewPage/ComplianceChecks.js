@@ -361,7 +361,52 @@ const CountrySanctionCheck = ({lc, setLc}) => {
   )
 };
 
+const ImportLicenseCheck = ({lc, setLc}) => {
+  const beneficiary = get(lc, 'beneficiary.name');
+  const beneficiaryCountry = get(lc, 'beneficiary.country');
+  const clientCountry = get(lc, "client.country");
+  const hts_code = get(lc, "hts_code")
+  const licenseSanctionMessage = get(lc, "importLicenseMessage");
+  const status = get(lc, "sanctionBankApproval");
+  console.log(status);
+  let message;
+  if (licenseSanctionMessage === null || licenseSanctionMessage === "" ) {
+    message = `Could not find any permits or licenses required for this transaction.
+    Please contact steve@bountium.org if you would like additionaly information.`;
+  }
+  else {
+    message = <div>{licenseSanctionMessage}</div>;
+  }
+
+  return (
+      <ComplianceCheck
+          lc={lc}
+          type={"country"}
+          setLc={setLc}
+          title={"Import License/Permits"}
+          status={titleCase(status)}
+          approveUrl={`/lc/${lc.id}/approve_license/`}
+          rejectUrl={`/lc/${lc.id}/reject_license/`}
+          requestUrl={`/lc/${lc.id}/request_license/`}
+          initialRejectionReason={`There may an additional permit/license required for the goods marked with hts code ${hts_code}`}
+          initialRequestComment={`Our records indicate that there are additional permits required to ship this good. If this is a mistake, please provide reasoning to confirm so.`}
+          error={licenseSanctionMessage === null || licenseSanctionMessage}
+          errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
+      >
+        {licenseSanctionMessage.length > 1 ?  <SanctionInfo key={hts_code} sanction={message} /> :
+            <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this transaction.</div>}
+      </ComplianceCheck>
+  )
+};
+
+
+
+
+
+
+
 const ComplianceChecks = ({lc, setLc}) => {
+  console.log(lc);
   return (
     <Panel title="Compliance Checks">
       <DocumentaryEntryFlex>
@@ -371,6 +416,7 @@ const ComplianceChecks = ({lc, setLc}) => {
       </DocumentaryEntryFlex>
       <CompanyOFACCheck lc={lc} setLc={setLc}/>
       <CountrySanctionCheck lc={lc} setLc={setLc}/>
+      <ImportLicenseCheck lc={lc} setLc={setLc} />
     </Panel>
   );
 };
