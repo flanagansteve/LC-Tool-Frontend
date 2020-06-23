@@ -318,8 +318,7 @@ const CompanyOFACCheck = ({lc, setLc}) => {
         : ""} error${sanctions.length !== 1 ? "s" : ""}${sanctions.length === 0 ? " found" : ""}`}
     >
       {sanctions.length > 0 ? sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>) :
-        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for company
-          {beneficiary}.</div>}
+        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for company {beneficiary}.</div>}
     </ComplianceCheck>
   )
 };
@@ -332,7 +331,7 @@ const CountrySanctionCheck = ({lc, setLc}) => {
   const status = get(lc, "sanctionBankApproval");
   let message;
   if (countrySanctionMessage === null) {
-    message = `Not able to check sanction violations for the country ${beneficiaryCountry}. 
+    message = `Not able to check sanction violations for the country ${beneficiaryCountry}.
     Please contact steve@bountium.org if you would like for this functioniality to be extended.`;
   } else if (countrySanctionMessage === "") {
     message = `Did not find any immediate sanction errors for country ${beneficiaryCountry}.`;
