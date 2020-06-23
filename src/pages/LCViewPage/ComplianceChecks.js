@@ -319,7 +319,7 @@ const CompanyOFACCheck = ({lc, setLc}) => {
     >
       {sanctions.length > 0 ? sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>) :
         <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for company
-          ${beneficiary}.`</div>}
+          {beneficiary}.</div>}
     </ComplianceCheck>
   )
 };
