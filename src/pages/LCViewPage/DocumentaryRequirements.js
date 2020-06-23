@@ -24,7 +24,7 @@ const ModalBackground = styled.div`
   height: 100%;
   background-color: rgba(0,0,0,0.4);
   overflow: scroll;
-`
+`;
 
 const ModalWrapper = styled.div`
   max-width: 70%;
@@ -32,23 +32,23 @@ const ModalWrapper = styled.div`
   border-radius: 10px;
   margin: 10% auto;
   padding: 20px 30px;
-`
+`;
 
 const ModalFlex = styled.div`
   display: flex;
   justify-content: space-around;
-`
+`;
 
 const ModalLeftColumn = styled.div`
   flex-grow: 1;
   min-width: 30%;
   flex-basis: 40%;
-`
+`;
 
 const ModalRightColumn = styled.div`
   flex-grow: 1;
   flex-basis: 50%;
-`
+`;
 
 const ModalButtonsWrapper = styled.div`
   display: flex;
@@ -57,9 +57,9 @@ const ModalButtonsWrapper = styled.div`
     margin-right: 10px;
   }
   margin: 20px auto 30px;
-`
+`;
 
-const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'}
+const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'};
 
 const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
   const [type, setType] = useState(MODAL_TYPES.CREATE);
@@ -99,7 +99,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
       )}
     </ModalBackground>
   )
-}
+};
 
 const ViewModal = ({ docReq }) => {
   const lcid = docReq && docReq.lcid;
@@ -116,7 +116,7 @@ const ViewModal = ({ docReq }) => {
           setDigitalDocReq(data);
         }
       });
-  }, [docReq, lcid])
+  }, [docReq, lcid]);
   if (!docReq) return null;
   const fields = !digitalDocReq ? [] : [
     {title: "Seller Name", value: digitalDocReq.sellerName},
@@ -136,7 +136,7 @@ const ViewModal = ({ docReq }) => {
     {title: "Currency of Settlement", value: digitalDocReq.currency},
     {title: "Harmonized Schedule Code", value: digitalDocReq.hsCode},
     {title: "Country of Origin", value: digitalDocReq.countryOfOrigin},
-  ]
+  ];
   const link = docReq.linkToSubmittedDoc;
   return (
     <ModalFlex>
@@ -162,7 +162,7 @@ const ViewModal = ({ docReq }) => {
         </ModalRightColumn>
         </ModalFlex>
   )
-}
+};
 
 const InputWrapper = styled.div`
   max-width: 700px;
@@ -176,13 +176,13 @@ const InputWrapper = styled.div`
   }
   transition: border 0.3s;
   background-color: #fff;
-`
+`;
 
 const QuestionText = styled.h3`
   font-size: 14px;
   font-weight: 300;
   line-height: 1.25;
-`
+`;
 
 const Subtitle = styled.div`
   margin-top: 15px;
@@ -190,12 +190,12 @@ const Subtitle = styled.div`
   font-style: italic;
   font-size: 14px;
   font-weight: 300;
-`
+`;
 
 const Asterisk = styled.span`
   color: #dc3545;
   font-size: 16px;
-`
+`;
 const StyledFormInput = styled(Field)`
   margin-top: 10px;
   padding: 10px 0 5px;
@@ -213,7 +213,7 @@ const ButtonWrapper = styled.div`
   > :not(:last-child) {
     margin-right: 20px;
   }
-`
+`;
 
 const StyledButton = styled.button`
   background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
@@ -227,7 +227,7 @@ const StyledButton = styled.button`
   max-width: 45%;
   display: flex;
   align-items: center;
-`
+`;
 
 
 const BasicInput = ({ question, children, subtitle }) => {
@@ -241,7 +241,7 @@ const BasicInput = ({ question, children, subtitle }) => {
       {children}
     </InputWrapper>
   )
-}
+};
 
 const TextInput = ({ question }) => {
   return (
@@ -257,7 +257,7 @@ const NumberInput = ({ question }) => {
       <StyledFormInput type="number" name={question.key}/>
     </BasicInput>
   )
-}
+};
 
 const YesNoInput = ({ question }) => {
   const [, meta, helpers] = useField(question.key);
@@ -267,7 +267,7 @@ const YesNoInput = ({ question }) => {
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
-  }
+  };
 
   return (
     <BasicInput question={question}>
@@ -277,12 +277,12 @@ const YesNoInput = ({ question }) => {
       </ButtonWrapper>
     </BasicInput>
   )
-}
+};
 
 const AllRadiosWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-`
+`;
 
 const RadioInput = ({ question }) => {
   const options = JSON.parse(question.options);
@@ -292,7 +292,7 @@ const RadioInput = ({ question }) => {
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
-  }
+  };
   return (
     <BasicInput question={question}>
     <AllRadiosWrapper>
@@ -304,7 +304,7 @@ const RadioInput = ({ question }) => {
     </AllRadiosWrapper>
     </BasicInput>
   )
-}
+};
 
 const DateInput = ({ question }) => {
   return (
@@ -312,12 +312,12 @@ const DateInput = ({ question }) => {
       <StyledFormInput type="date" name={question.key}/>
     </BasicInput>
   )
-}
+};
 
 const AllCheckboxesWrapper = styled.div`
   display: flex;
   flex-wrap: wrap;
-`
+`;
 
 const CheckboxInput = ({ question }) => {
   const options = JSON.parse(question.options);
@@ -332,7 +332,7 @@ const CheckboxInput = ({ question }) => {
     } else {
       setValue(value.concat([val]));
     }
-  }
+  };
 
   return (
     <BasicInput question={question} subtitle="Check all that apply.">
@@ -348,7 +348,7 @@ const CheckboxInput = ({ question }) => {
     </AllCheckboxesWrapper>
     </BasicInput>
   )
-}
+};
 
 const TYPE_TO_COMPONENT = {
   text: TextInput,
@@ -368,7 +368,7 @@ const TYPE_TO_DEFAULT = {
   radio: null,
   date: (new Date()).toISOString().slice(0, 10),
   checkbox: [],
-}
+};
 
 const REQUIRED_MSG = "This field is required.";
 
@@ -380,7 +380,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   radio: string().nullable(),
   date: date(),
   checkbox: array().of(string()),
-}
+};
 
 const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
   const [fields, setFields] = useState([]);
@@ -391,7 +391,7 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
       .then(d => setFields(d));
     makeAPIRequest(`/lc/${lc.id}/doc_req/${docReq.id}/autopopulate/`)
       .then(s => setSuggestedFields(s));
-  }, [docReq])
+  }, [docReq]);
   if (!docReq) return null;
   const schemaObj = {};
   let initialValues = {};
@@ -399,7 +399,11 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
   fields.forEach(q => {
     Object.keys(suggestedFields).forEach(key => {
       if (camelCase(q.key) == key) {
-        initialValues[q.key] = get(lc, suggestedFields[key])
+        let initialValue = get(lc, suggestedFields[key]);
+        if (initialValue && new Set(["object", "array_of_objs", "checkbox"]).has(q.type)) {
+          initialValue = JSON.parse(initialValue);
+        }
+        initialValues[q.key] = initialValue;
       }
     });
     if (!initialValues[q.key]) initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
@@ -411,7 +415,6 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
     }
   });
   validationSchema = object().shape(schemaObj);
-  console.log(initialValues)
   return fields.length > 0 && (
     <Formik
       initialValues={initialValues}
@@ -469,7 +472,7 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
     )}
       </Formik>
   )
-}
+};
 
 const UploadModal = ({ docReq, refreshLc, hideModal }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -484,7 +487,7 @@ const UploadModal = ({ docReq, refreshLc, hideModal }) => {
       .then(() => hideModal())
       .then(() => refreshLc())
       .then(() => setIsSubmitting(false));
-  }
+  };
 
   return (
     <>
@@ -510,7 +513,7 @@ const UploadModal = ({ docReq, refreshLc, hideModal }) => {
       </div>
     </>
   );
-}
+};
 
 const DocumentaryEntryFlex = styled.div`
   display: flex;
@@ -525,11 +528,11 @@ const DocumentaryEntryFlex = styled.div`
     min-width: 20%;
   }
   ${props => props.clickable && `cursor: pointer;`}
-`
+`;
 
 const DocumentaryEntryWrapper = styled.div`
   border-bottom: 1px solid #cdcdcd;
-`
+`;
 
 const DocReqTitle = styled.div`
   font-weight: 500;
@@ -538,30 +541,30 @@ const DocReqTitle = styled.div`
   margin: 5px auto 20px;
   display: flex;
   align-items: center;
-`
+`;
 
 const DocReqDate = styled.div`
   font-size: 14px;
-`
+`;
 
 const DocReqStatus = styled.div`
   font-size: 14px;
   font-weight: 500;
-`
+`;
 
 const ExpandedDocumentaryEntry = styled.div`
   padding-bottom: 10px;
   font-size: 14px;
   font-weight: 300;
   line-height: 1.5;
-`
+`;
 
 const FileUpload = styled.label`
   padding: 5px 10px;
   border: 1px solid #dcdcdc;
   margin-right: auto;
   cursor: pointer;
-`
+`;
 
 const DocumentaryEntryEvaluation = styled.div`
   display: flex;
@@ -570,13 +573,13 @@ const DocumentaryEntryEvaluation = styled.div`
   > :not(:last-child) {
     margin-right: 10px;
   }
-`
+`;
 
 const SmallHeader = styled.div`
   font-size: 12px;
   min-width: 150px;
   margin-right: 50px;
-`
+`;
 
 const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, showModal, ...props }) => {
   const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected } = docReq;
@@ -587,13 +590,13 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
     makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
       approve: true, complaints: comments,
     }).then(() => refreshLc());
-  }
+  };
 
   const reject = () => {
     makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
       approve: false, complaints: comments,
     }).then(() => refreshLc());
-  }
+  };
 
   return (
     <DocumentaryEntryWrapper>
@@ -660,7 +663,7 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
       )}
     </DocumentaryEntryWrapper>
   );
-}
+};
 
 const useModal = () => {
   const [isModalShowing, setIsModalShowing] = useState(false);
@@ -675,7 +678,7 @@ const useModal = () => {
     isModalShowing,
     modalDocReq
   }
-}
+};
 
 const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
   const { showModal, hideModal, isModalShowing, modalDocReq } = useModal();
@@ -707,6 +710,6 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
       <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc} lc={lc}/>
     </Panel>
   );
-}
+};
 
 export default DocumentaryRequirements;
