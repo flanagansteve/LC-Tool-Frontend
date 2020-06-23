@@ -137,7 +137,14 @@ const RequestClarificationModal = ({lc, initialReason, modal, setModal, type, se
   const [comment, setComment] = useState(initialReason);
   const textAreaRef = useRef(null);
 
-  const field = type === "company" ? "ofacBankApproval" : "sanctionBankApproval";
+  let field;
+  if (type === "company") {
+    field = "ofacBankApproval"
+  } else if (type === "country") {
+    field =  "sanctionBankApproval";
+  } else if (type === "license") {
+    field = "importLicenseApproval";
+  }
 
   useEffect(() => {
     if (modal === "requestClarification") {
@@ -250,7 +257,7 @@ const SanctionInfo = ({sanction}) => {
 
 const ComplianceCheck = ({
   lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage,
-  children, status, approveUrl, rejectUrl, requestUrl, type
+  children, status, approveUrl, rejectUrl, type
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [modal, setModal] = useState("");
@@ -264,7 +271,7 @@ const ComplianceCheck = ({
       <RejectionModal modal={modal} setModal={setModal} initialReason={initialRejectionReason}
                       rejectUrl={rejectUrl} setLc={setLc}/>
       <RequestClarificationModal lc={lc} modal={modal} setModal={setModal} initialReason={initialRequestComment}
-                                 requestUrl={requestUrl} setLc={setLc} client={lc?.client} type={type}
+                                  setLc={setLc} client={lc?.client} type={type}
                                  beneficiary={lc?.beneficiary}/>
       <DocumentaryEntryFlex>
         <div>
@@ -285,7 +292,7 @@ const ComplianceCheck = ({
           <StyledButton selected={status === "Rejected"} onClick={() => setModal("reject")}>Reject</StyledButton>
           {expanded && <StyledButton style={{position: "absolute", top: 40}} selected={status === "Requested"}
                                      onClick={() => setModal("requestClarification")}>
-            Request Clarification</StyledButton>}
+            Request More Info</StyledButton>}
         </ButtonWrapper>
         <DocReqStatus>{status}</DocReqStatus>
       </DocumentaryEntryFlex>
@@ -309,7 +316,6 @@ const CompanyOFACCheck = ({lc, setLc}) => {
       setLc={setLc}
       approveUrl={`/lc/${lc.id}/approve_ofac/`}
       rejectUrl={`/lc/${lc.id}/reject_ofac/`}
-      requestUrl={`/lc/${lc.id}/request_ofac/`}
       title={"OFAC Company Sanctions"}
       status={titleCase(status)}
       initialRejectionReason={`The beneficiary ${beneficiary} is on the OFAC SDN sanction list.`}
@@ -350,7 +356,6 @@ const CountrySanctionCheck = ({lc, setLc}) => {
       status={titleCase(status)}
       approveUrl={`/lc/${lc.id}/approve_sanction/`}
       rejectUrl={`/lc/${lc.id}/reject_sanction/`}
-      requestUrl={`/lc/${lc.id}/request_sanction/`}
       initialRejectionReason={`The beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanction violations with your country (${clientCountry}).`}
       initialRequestComment={`Our records indicate that the beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanctions against your country (${clientCountry}). If this is a mistake, please provide reasoning to confirm so.`}
       error={countrySanctionMessage === null || countrySanctionMessage}
@@ -381,19 +386,18 @@ const ImportLicenseCheck = ({lc, setLc}) => {
   return (
       <ComplianceCheck
           lc={lc}
-          type={"country"}
+          type={"license"}
           setLc={setLc}
           title={"Import License/Permits"}
           status={titleCase(status)}
           approveUrl={`/lc/${lc.id}/approve_license/`}
           rejectUrl={`/lc/${lc.id}/reject_license/`}
-          requestUrl={`/lc/${lc.id}/request_license/`}
           initialRejectionReason={`There may an additional permit/license required for the goods marked`}
           initialRequestComment={`Our records indicate that there are additional permits required to ship this good. If this is a mistake, please provide reasoning to confirm so.`}
           error={licenseSanctionMessage === null || licenseSanctionMessage}
           errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
       >
-        {licenseSanctionMessage.length > 1 ?  <div style={{paddingLeft: 20, width: "70%"}}>{licenseSanctionMessage}</div>  :
+        {licenseSanctionMessage.length > 1 ?  <div style = {{paddingTop: 20, paddingLeft: 20}}>{licenseSanctionMessage}</div>  :
             <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this transaction.</div>}
       </ComplianceCheck>
   )
