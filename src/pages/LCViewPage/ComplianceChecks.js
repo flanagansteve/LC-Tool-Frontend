@@ -247,6 +247,7 @@ const SanctionInfo = ({sanction}) => {
   )
 };
 
+
 const ComplianceCheck = ({
   lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage,
   children, status, approveUrl, rejectUrl, requestUrl, type
@@ -361,6 +362,49 @@ const CountrySanctionCheck = ({lc, setLc}) => {
   )
 };
 
+const ImportLicenseCheck = ({lc, setLc}) => {
+  const beneficiary = get(lc, 'beneficiary.name');
+  const beneficiaryCountry = get(lc, 'beneficiary.country');
+  const clientCountry = get(lc, "client.country");
+  const licenseSanctionMessage = get(lc, "importLicenseMessage");
+  const good = get(lc, "merchDescription")
+  const status = get(lc, "importLicenseApproval");
+  let message;
+  if (licenseSanctionMessage === null || licenseSanctionMessage === "" ) {
+    message = `Could not find any permits or licenses required for this transaction.
+    Please contact steve@bountium.org if you would like additionaly information.`;
+  }
+  else {
+    message = <div>{licenseSanctionMessage}</div>;
+  }
+
+  return (
+      <ComplianceCheck
+          lc={lc}
+          type={"country"}
+          setLc={setLc}
+          title={"Import License/Permits"}
+          status={titleCase(status)}
+          approveUrl={`/lc/${lc.id}/approve_license/`}
+          rejectUrl={`/lc/${lc.id}/reject_license/`}
+          requestUrl={`/lc/${lc.id}/request_license/`}
+          initialRejectionReason={`There may an additional permit/license required for the goods marked`}
+          initialRequestComment={`Our records indicate that there are additional permits required to ship this good. If this is a mistake, please provide reasoning to confirm so.`}
+          error={licenseSanctionMessage === null || licenseSanctionMessage}
+          errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
+      >
+        {licenseSanctionMessage.length > 1 ?  <div style={{paddingLeft: 20, width: "70%"}}>{licenseSanctionMessage}</div>  :
+            <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this transaction.</div>}
+      </ComplianceCheck>
+  )
+};
+
+
+
+
+
+
+
 const ComplianceChecks = ({lc, setLc}) => {
   return (
     <Panel title="Compliance Checks">
@@ -371,6 +415,7 @@ const ComplianceChecks = ({lc, setLc}) => {
       </DocumentaryEntryFlex>
       <CompanyOFACCheck lc={lc} setLc={setLc}/>
       <CountrySanctionCheck lc={lc} setLc={setLc}/>
+      <ImportLicenseCheck lc={lc} setLc={setLc} />
     </Panel>
   );
 };
