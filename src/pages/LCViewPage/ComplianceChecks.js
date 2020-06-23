@@ -369,7 +369,6 @@ const ImportLicenseCheck = ({lc, setLc}) => {
   const licenseSanctionMessage = get(lc, "importLicenseMessage");
   const good = get(lc, "merchDescription")
   const status = get(lc, "importLicenseApproval");
-  console.log(status)
   let message;
   if (licenseSanctionMessage === null || licenseSanctionMessage === "" ) {
     message = `Could not find any permits or licenses required for this transaction.
@@ -407,7 +406,6 @@ const ImportLicenseCheck = ({lc, setLc}) => {
 
 
 const ComplianceChecks = ({lc, setLc}) => {
-  console.log(lc);
   return (
     <Panel title="Compliance Checks">
       <DocumentaryEntryFlex>
