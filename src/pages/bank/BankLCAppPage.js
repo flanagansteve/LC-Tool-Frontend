@@ -21,7 +21,7 @@ import StatusMessage from "../../components/ui/StatusMessage";
 import {useAuthentication, UserContext} from '../../utils/auth';
 
 import config from '../../config';
-import {Dropdown, SearchableSelect} from "../../components/ui/Dropdown";
+import {Dropdown, SearchableSelect, SearchableSelectHTS} from "../../components/ui/Dropdown";
 import {Modal} from "../../components/ui/Modal";
 import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
 import {RouteBlockingModal} from "../../components/ui/RouteBlockingModal";
@@ -318,6 +318,63 @@ const YesNoInput = ({ question }) => {
     </BasicInput>
   )
 };
+
+const HTSInput = ({question}) => {
+  const {values, setValues, initialValues, handleChange, setFieldValue} = useFormikContext();
+  const [, meta, helpers] = useField(question.key);
+  const { value } = meta;
+  const { setValue } = helpers;
+  const [suggested, setSuggested] = useState([]);
+  const beneficiaryAutocompleteTimeout = useRef(null);
+
+  const search_HTS = async () => {
+    clearTimeout(beneficiaryAutocompleteTimeout.current);
+    const timeoutId = setTimeout(() =>
+        fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
+
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        }).then( (response) => {
+          return response.json()
+        }).then( (json) => {
+          console.log(json);
+          setSuggested(json.results);
+        }).catch(() => {
+          setSuggested([]);
+        }), 400);
+    beneficiaryAutocompleteTimeout.current = timeoutId;
+  }
+
+
+
+
+  const onSelect = async (hts, description) => {
+    await setFieldValue("hts_code", hts);
+    await setValue(description);
+  };
+
+  const inputComponent =
+      <SearchableSelectHTS
+          onSelect={onSelect}
+          items={suggested}
+          questionKey={question.key}
+          handleChange={handleChange}
+      />
+
+
+  return (
+      <BasicInput question={question} disabled={question.disabledTooltip}>
+        {!question.disabledTooltip && inputComponent}
+        <ButtonWrapper>
+        <Button onClick={search_HTS} type = {"button"}>Search HTS Code</Button>
+        </ButtonWrapper>
+        <QuestionText style = {{paddingTop: 10}}>OR fill out manually below</QuestionText>
+      </BasicInput>
+  );
+};
+
 
 const AllRadiosWrapper = styled.div`
   display: flex;
@@ -671,6 +728,7 @@ const TYPE_TO_COMPONENT = {
   decimal: NumberInput,
   number: NumberInput,
   boolean: YesNoInput,
+  hts : HTSInput,
   radio: RadioInput,
   date: DateInput,
   checkbox: CheckboxInput,
@@ -711,6 +769,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   decimal: number(),
   number: number(),
   boolean: boolean().nullable(),
+  hts : string(),
   radio: string().nullable(),
   date: date(),
   checkbox: array().of(string())
@@ -960,6 +1019,7 @@ const BankLCAppPage = ({ match }) => {
         setSections(sections);
         setSelectedSectionIndex(0);
         setInitialValues(initialValues);
+
         setLCApp(json);
       })
     }
