@@ -133,18 +133,9 @@ const SmallHeader = styled.div`
   margin-right: 50px;
 `;
 
-const RequestClarificationModal = ({lc, initialReason, modal, setModal, type, setLc, client, beneficiary}) => {
+const RequestClarificationModal = ({lc, initialReason, modal, setModal, field, setLc, client, beneficiary}) => {
   const [comment, setComment] = useState(initialReason);
   const textAreaRef = useRef(null);
-
-  let field;
-  if (type === "company") {
-    field = "ofacBankApproval"
-  } else if (type === "country") {
-    field =  "sanctionBankApproval";
-  } else if (type === "license") {
-    field = "importLicenseApproval";
-  }
 
   useEffect(() => {
     if (modal === "requestClarification") {
@@ -155,7 +146,8 @@ const RequestClarificationModal = ({lc, initialReason, modal, setModal, type, se
   const onRequest = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
       lc: {[field]: "requested"},
-      comment: {action: "requested clarification on the beneficiary", message: comment}
+      comment: {action: "requested clarification on the beneficiary", message: comment},
+      holdStatus: true
     }).then(data => setLc(data.updatedLc));
     setModal("");
   };
@@ -170,7 +162,7 @@ const RequestClarificationModal = ({lc, initialReason, modal, setModal, type, se
   )
 };
 
-const RejectionModal = ({initialReason, modal, setModal, rejectUrl, setLc}) => {
+const RejectionModal = ({lc, initialReason, modal, setModal, field, setLc}) => {
   const [rejectionReason, setRejectionReason] = useState(initialReason);
   const textAreaRef = useRef(null);
 
@@ -181,7 +173,11 @@ const RejectionModal = ({initialReason, modal, setModal, rejectUrl, setLc}) => {
   }, [modal]);
 
   const onReject = () => {
-    makeAPIRequest(rejectUrl, "PUT").then(data => setLc(data.updatedLc));
+    makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+      lc: {[field]: "rejected"},
+      comment: {action: "rejected the LC", message: rejectionReason},
+      holdStatus: true
+    }).then(data => setLc(data.updatedLc));
     setModal("");
   };
 
@@ -254,24 +250,36 @@ const SanctionInfo = ({sanction}) => {
   )
 };
 
-
 const ComplianceCheck = ({
-  lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage,
-  children, status, approveUrl, rejectUrl, type
+  lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage, children, status, type
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [modal, setModal] = useState("");
 
+  let field;
+  if (type === "company") {
+    field = "ofacBankApproval"
+  } else if (type === "country") {
+    field = "sanctionBankApproval";
+  } else if (type === "license") {
+    field = "importLicenseApproval";
+  } else if (type === "boycott") {
+    field = "boycottLanguageStatus"
+  }
+
   const onWaiveClick = () => {
-    makeAPIRequest(approveUrl, "PUT").then(data => setLc(data.updatedLc));
+    makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
+      lc: {[field]: "accepted"},
+      holdStatus: true
+    }).then(data => setLc(data.updatedLc));
   };
 
   return (
     <DocumentaryEntryWrapper>
       <RejectionModal modal={modal} setModal={setModal} initialReason={initialRejectionReason}
-                      rejectUrl={rejectUrl} setLc={setLc}/>
+                      field={field} setLc={setLc} lc={lc}/>
       <RequestClarificationModal lc={lc} modal={modal} setModal={setModal} initialReason={initialRequestComment}
-                                  setLc={setLc} client={lc?.client} type={type}
+                                 setLc={setLc} client={lc?.client} field={field}
                                  beneficiary={lc?.beneficiary}/>
       <DocumentaryEntryFlex>
         <div>
@@ -314,8 +322,6 @@ const CompanyOFACCheck = ({lc, setLc}) => {
       lc={lc}
       type={"company"}
       setLc={setLc}
-      approveUrl={`/lc/${lc.id}/approve_ofac/`}
-      rejectUrl={`/lc/${lc.id}/reject_ofac/`}
       title={"OFAC Company Sanctions"}
       status={titleCase(status)}
       initialRejectionReason={`The beneficiary ${beneficiary} is on the OFAC SDN sanction list.`}
@@ -325,7 +331,8 @@ const CompanyOFACCheck = ({lc, setLc}) => {
         : ""} error${sanctions.length !== 1 ? "s" : ""}${sanctions.length === 0 ? " found" : ""}`}
     >
       {sanctions.length > 0 ? sanctions.map(sanction => <SanctionInfo key={sanction.id} sanction={sanction}/>) :
-        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for company {beneficiary}.</div>}
+        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate sanction violations for
+          company {beneficiary}.</div>}
     </ComplianceCheck>
   )
 };
@@ -354,8 +361,6 @@ const CountrySanctionCheck = ({lc, setLc}) => {
       setLc={setLc}
       title={"Country Sanctions"}
       status={titleCase(status)}
-      approveUrl={`/lc/${lc.id}/approve_sanction/`}
-      rejectUrl={`/lc/${lc.id}/reject_sanction/`}
       initialRejectionReason={`The beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanction violations with your country (${clientCountry}).`}
       initialRequestComment={`Our records indicate that the beneficiary ${beneficiary}'s country (${beneficiaryCountry}) has sanctions against your country (${clientCountry}). If this is a mistake, please provide reasoning to confirm so.`}
       error={countrySanctionMessage === null || countrySanctionMessage}
@@ -372,25 +377,91 @@ const ImportLicenseCheck = ({lc, setLc}) => {
   const status = get(lc, "importLicenseApproval");
 
   return (
-      <ComplianceCheck
-          lc={lc}
-          type={"license"}
-          setLc={setLc}
-          title={"Import License/Permits"}
-          status={titleCase(status)}
-          approveUrl={`/lc/${lc.id}/approve_license/`}
-          rejectUrl={`/lc/${lc.id}/reject_license/`}
-          initialRejectionReason={`There may an additional permit/license required for the goods marked`}
-          initialRequestComment={`Our records indicate that there are additional permits required to ship this good. If this is a mistake, please provide reasoning to confirm so.`}
-          error={licenseSanctionMessage === null || licenseSanctionMessage}
-          errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
-      >
-        {licenseSanctionMessage?.length > 1 ?  <div style = {{paddingTop: 20, paddingLeft: 20}}>{licenseSanctionMessage}</div>  :
-            <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this transaction.</div>}
-      </ComplianceCheck>
+    <ComplianceCheck
+      lc={lc}
+      type={"license"}
+      setLc={setLc}
+      title={"Import License/Permits"}
+      status={titleCase(status)}
+      initialRejectionReason={`There may an additional permit/license required for the goods marked.`}
+      initialRequestComment={`Our records indicate that there are additional permits required to ship this good. If this is a mistake, please provide reasoning to confirm so.`}
+      error={licenseSanctionMessage === null || licenseSanctionMessage}
+      errorMessage={licenseSanctionMessage === " " ? null : "1 potential error"}
+    >
+      {licenseSanctionMessage?.length > 1 ? <div
+          style={{paddingTop: 20, paddingLeft: 20}}>{licenseSanctionMessage}</div> :
+        <div style={{paddingLeft: 20, width: "70%"}}>Did not find any immediate license/permits required for this
+          transaction.</div>}
+    </ComplianceCheck>
   )
 };
 
+const BoycottLanguageCheck = ({lc, setLc}) => {
+  const boycotts = get(lc, 'boycottLanguage');
+  const status = get(lc, 'boycottLanguageStatus');
+
+  const boycottSourceToReadable = (source) => {
+    if (source === "otherInstructions") {
+      return "'Other instructions' in the LC application";
+    }
+  };
+
+  const boycottToReadable = (source, boycotts) => {
+    if (source === "otherInstructions") {
+      const indices = [];
+      boycotts.map(boycott => {
+        const startIndex = lc.otherInstructions.indexOf(boycott.phrase);
+        indices.push([startIndex, startIndex + boycott.phrase.length])
+      });
+      indices.sort((a, b) => a[0] - b[0]);
+      const cmps = [<span>{lc.otherInstructions.substring(0, indices[0][0])}</span>];
+      indices.forEach((indexes, index) => {
+        if (index > 0) {
+          cmps.push(<span>{lc.otherInstructions.substring(indices[index - 1][1], indexes[0])}</span>);
+        }
+        cmps.push(<span style={{fontWeight: 600}}>{lc.otherInstructions.substring(indexes[0], indexes[1])}</span>);
+      });
+      cmps.push(<span>{lc.otherInstructions.substring(indices[indices.length - 1][1])}</span>)
+      return (
+        <div style={{fontSize: 14, paddingLeft: 20, fontStyle: "italic"}}>
+          "{cmps.map(cmp => cmp)}"
+        </div>
+      )
+    }
+  };
+
+  return (
+    <ComplianceCheck
+      lc={lc}
+      type={"boycott"}
+      setLc={setLc}
+      title={"Boycott Language"}
+      status={titleCase(status)}
+      initialRejectionReason={`There is boycott language in this LC.`}
+      initialRequestComment={`Our records indicate that there is boycott language in this LC. If this is a mistake, please provide reasoning to confirm so.`}
+      error={boycotts === null || Object.keys(boycotts).length > 0}
+      errorMessage={`${Object.keys(boycotts).length > 0 ? Object.keys(boycotts).length : "No"} ${Object.keys(
+        boycotts).length > 0 ? "potential" : ""} error${Object.keys(boycotts).length !== 1 ? "s" : ""}${Object.keys(
+        boycotts).length === 0 ? " found" : ""}`}
+    >
+      {Object.keys(boycotts).length > 0 ?
+        <div>
+          <div style={{paddingLeft: 20, width: "70%", paddingBottom: 10}}>
+            This LC potentially violates United States Anti-Boycott laws. Please click&nbsp;
+            <a target="_blank" rel="noopener noreferrer" href={"https://www.bis.doc.gov/index.php/enforcement/oac"}>here</a>
+            &nbsp;for more information.
+          </div>
+          {Object.entries(boycotts).map(([boycottSource, boycotts], boycottSourceIndex) => (
+          <div style={{paddingLeft: 40}} key={boycottSourceIndex}>
+            <div style={{fontSize: 19, width: "70%"}}>
+              From {boycottSourceToReadable(boycottSource)}:
+            </div>
+            {boycottToReadable(boycottSource, boycotts)}
+          </div>))}
+        </div> : <div style={{paddingBottom: 20}}>No immediate boycott language found in the LC.</div>}
+    </ComplianceCheck>
+  )
+};
 
 const ComplianceChecks = ({lc, setLc}) => {
   return (
@@ -402,7 +473,8 @@ const ComplianceChecks = ({lc, setLc}) => {
       </DocumentaryEntryFlex>
       <CompanyOFACCheck lc={lc} setLc={setLc}/>
       <CountrySanctionCheck lc={lc} setLc={setLc}/>
-      <ImportLicenseCheck lc={lc} setLc={setLc} />
+      <ImportLicenseCheck lc={lc} setLc={setLc}/>
+      <BoycottLanguageCheck lc={lc} setLc={setLc}/>
     </Panel>
   );
 };
