@@ -17,6 +17,8 @@ import {Dropdown, SearchableSelect, SearchableSelectHTS} from "../../components/
 import {Modal} from "../../components/ui/Modal";
 import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
 import {RouteBlockingModal} from "../../components/ui/RouteBlockingModal";
+import Checkbox from '@material-ui/core/Checkbox';
+
 
 const disabledBackgroundColor = `#c3c1c3`;
 const disabledColor = `black`;
@@ -336,25 +338,33 @@ const HTSInput = ({question}) => {
   const { setValue } = helpers;
   const [suggested, setSuggested] = useState([]);
   const beneficiaryAutocompleteTimeout = useRef(null);
+  const [useSuggest, setUseSuggest] = useState(true);
 
-  const search_HTS = async () => {
-    clearTimeout(beneficiaryAutocompleteTimeout.current);
-    const timeoutId = setTimeout(() =>
-        fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
 
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        }).then( (response) => {
-          return response.json()
-        }).then( (json) => {
-          console.log(json);
-          setSuggested(json.results);
-        }).catch(() => {
-          setSuggested([]);
-        }), 400);
-    beneficiaryAutocompleteTimeout.current = timeoutId;
+  useEffect(() => {
+    searchHTSCodes();
+  }, [value]);
+
+  async function searchHTSCodes() {
+    if (value && value.length > 1 && useSuggest === true) {
+      clearTimeout(beneficiaryAutocompleteTimeout.current);
+      const timeoutId = setTimeout(() =>
+          fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
+
+            headers: {
+              'Accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+          }).then((response) => {
+            return response.json()
+          }).then((json) => {
+            console.log(json);
+            setSuggested(json.results);
+          }).catch(() => {
+            setSuggested([]);
+          }), 400);
+      beneficiaryAutocompleteTimeout.current = timeoutId;
+    }
   }
 
 
@@ -376,11 +386,19 @@ const HTSInput = ({question}) => {
 
   return (
       <BasicInput question={question} disabled={question.disabledTooltip}>
-        {!question.disabledTooltip && inputComponent}
-        <ButtonWrapper>
-        <Button onClick={search_HTS} type = {"button"}>Search HTS Code</Button>
-        </ButtonWrapper>
-        <QuestionText style = {{paddingTop: 10}}>OR fill out manually below</QuestionText>
+        <AllCheckboxesWrapper>
+          <Checkbox
+    style = {{color: config.accentColor}}
+    checked={useSuggest}
+    onChange={() => {
+      setUseSuggest(!useSuggest);
+      searchHTSCodes();
+    }}
+    name="suggestCheck"
+    />
+          <QuestionText style = {{paddingTop: 10}}>Suggest an HTS classification</QuestionText>
+        </AllCheckboxesWrapper>
+        {useSuggest === true ? inputComponent :  <StyledFormInput type="text" name={question.key}/>}
       </BasicInput>
   );
 };
