@@ -264,7 +264,9 @@ const ComplianceCheck = ({
   } else if (type === "license") {
     field = "importLicenseApproval";
   } else if (type === "boycott") {
-    field = "boycottLanguageStatus"
+    field = "boycottLanguageStatus";
+  } else if (type === "believablePrice") {
+    field = "believablePriceOfGoodsStatus";
   }
 
   const onWaiveClick = () => {
