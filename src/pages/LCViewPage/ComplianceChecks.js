@@ -448,17 +448,65 @@ const BoycottLanguageCheck = ({lc, setLc}) => {
         <div>
           <div style={{paddingLeft: 20, width: "70%", paddingBottom: 10}}>
             This LC potentially violates United States Anti-Boycott laws. Please click&nbsp;
-            <a target="_blank" rel="noopener noreferrer" href={"https://www.bis.doc.gov/index.php/enforcement/oac"}>here</a>
+            <a target="_blank" rel="noopener noreferrer"
+               href={"https://www.bis.doc.gov/index.php/enforcement/oac"}>here</a>
             &nbsp;for more information.
           </div>
           {Object.entries(boycotts).map(([boycottSource, boycotts], boycottSourceIndex) => (
-          <div style={{paddingLeft: 40}} key={boycottSourceIndex}>
-            <div style={{fontSize: 19, width: "70%"}}>
-              From {boycottSourceToReadable(boycottSource)}:
-            </div>
-            {boycottToReadable(boycottSource, boycotts)}
-          </div>))}
+            <div style={{paddingLeft: 40}} key={boycottSourceIndex}>
+              <div style={{fontSize: 19, width: "70%"}}>
+                From {boycottSourceToReadable(boycottSource)}:
+              </div>
+              {boycottToReadable(boycottSource, boycotts)}
+            </div>))}
         </div> : <div style={{paddingBottom: 20}}>No immediate boycott language found in the LC.</div>}
+    </ComplianceCheck>
+  )
+};
+
+const BelievablePriceOfGoods = ({lc, setLc}) => {
+  const goodsInfo = get(lc, 'goodsInfo');
+  const status = get(lc, 'believablePriceOfGoodsStatus');
+  const unitsPurchased = parseFloat(get(lc, 'unitsPurchased'));
+  const range = goodsInfo && [Math.max(0,
+    unitsPurchased * (parseFloat(goodsInfo.mean) - 2 * parseFloat(goodsInfo.standardDeviation))),
+    unitsPurchased * (parseFloat(goodsInfo.mean) + 2 * parseFloat(goodsInfo.standardDeviation))];
+  const credit = parseFloat(get(lc, 'creditAmt'));
+  const error = range && (credit < range[0] || credit > range[1]);
+  let initialRejectionReason = "";
+  let initialRequestComment = "";
+  let cmp = "Did not find any immediate irregularities with the price of the goods.";
+  if (error && credit < range[0]) {
+    initialRejectionReason = "The price of the goods is too low.";
+    initialRequestComment = "Our records indicate that the price of the goods is too low. If this is a mistake, please provide reasoning to confirm so.";
+    cmp = <div>The price of the goods for HTS code {goodsInfo.htsCode} (${credit}) may be too low. <a target="_blank" rel="noopener noreferrer" href={"https://comtrade.un.org/Data/"}>These records</a> indicate the range should fall somewhere between [${range[0]} - ${range[1]}].</div>
+  } else if (error && credit > range[1]) {
+    initialRejectionReason = "The price of the goods is too high.";
+    initialRequestComment = "Our records indicate that the price of the goods is too high. If this is a mistake, please provide reasoning to confirm so.";
+    cmp = <div>The price of the goods for HTS code {goodsInfo.htsCode} (${credit}) may be too high. <a target="_blank" rel="noopener noreferrer" href={"https://comtrade.un.org/Data/"}>These records</a> indicate the range should fall somewhere between [${range[0]} - ${range[1]}].</div>
+  }
+
+  const purchasedItem = get(lc, 'purchasedItem');
+  const unitOfMeasure = get(lc, 'unitOfMeasure');
+
+  return (
+    <ComplianceCheck
+      lc={lc}
+      type={"believablePrice"}
+      setLc={setLc}
+      title={"Believable Price of Goods"}
+      status={titleCase(status)}
+      initialRejectionReason={initialRejectionReason}
+      initialRequestComment={initialRequestComment}
+      error={error}
+      errorMessage={error && "1 potential error"}
+    >
+      <div style={{fontSize: 19, paddingLeft: 20, width: "70%"}}>
+        {purchasedItem}: ({unitsPurchased} {unitOfMeasure}):
+      </div>
+      <div style={{paddingLeft: 40}}>
+        {cmp}
+      </div>
     </ComplianceCheck>
   )
 };
@@ -475,6 +523,7 @@ const ComplianceChecks = ({lc, setLc}) => {
       <CountrySanctionCheck lc={lc} setLc={setLc}/>
       <ImportLicenseCheck lc={lc} setLc={setLc}/>
       <BoycottLanguageCheck lc={lc} setLc={setLc}/>
+      <BelievablePriceOfGoods lc={lc} setLc={setLc}/>
     </Panel>
   );
 };
