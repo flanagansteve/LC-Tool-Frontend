@@ -301,6 +301,19 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
   );
 };
 
+const DropdownInput = ({question}) => {
+  const [, meta, helpers] = useField(question.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  return (
+    <BasicInput question={question}>
+      <Dropdown items={question.options} onChange={item => setValue(item)}
+                selectedIndex={question.options.indexOf(value)}/>
+    </BasicInput>
+  )
+};
+
 const NumberInput = ({question}) => {
   return (
     <BasicInput question={question} disabled={question.disabledTooltip}>
@@ -330,35 +343,31 @@ const YesNoInput = ({question}) => {
 };
 
 const HTSInput = ({question}) => {
-  const {values, setValues, initialValues, handleChange, setFieldValue} = useFormikContext();
+  const {handleChange, setFieldValue} = useFormikContext();
   const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
+  const {value} = meta;
+  const {setValue} = helpers;
   const [suggested, setSuggested] = useState([]);
   const beneficiaryAutocompleteTimeout = useRef(null);
 
   const search_HTS = async () => {
     clearTimeout(beneficiaryAutocompleteTimeout.current);
     const timeoutId = setTimeout(() =>
-        fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
-
-          headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json',
-          },
-        }).then( (response) => {
-          return response.json()
-        }).then( (json) => {
-          console.log(json);
-          setSuggested(json.results);
-        }).catch(() => {
-          setSuggested([]);
-        }), 400);
+      fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+      }).then((response) => {
+        return response.json()
+      }).then((json) => {
+        console.log(json);
+        setSuggested(json.results);
+      }).catch(() => {
+        setSuggested([]);
+      }), 400);
     beneficiaryAutocompleteTimeout.current = timeoutId;
-  }
-
-
-
+  };
 
   const onSelect = async (hts, description) => {
     await setFieldValue("hts_code", hts);
@@ -366,25 +375,23 @@ const HTSInput = ({question}) => {
   };
 
   const inputComponent =
-      <SearchableSelectHTS
-          onSelect={onSelect}
-          items={suggested}
-          questionKey={question.key}
-          handleChange={handleChange}
-      />
-
+    <SearchableSelectHTS
+      onSelect={onSelect}
+      items={suggested}
+      questionKey={question.key}
+      handleChange={handleChange}
+    />;
 
   return (
-      <BasicInput question={question} disabled={question.disabledTooltip}>
-        {!question.disabledTooltip && inputComponent}
-        <ButtonWrapper>
-        <Button onClick={search_HTS} type = {"button"}>Search HTS Code</Button>
-        </ButtonWrapper>
-        <QuestionText style = {{paddingTop: 10}}>OR fill out manually below</QuestionText>
-      </BasicInput>
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && inputComponent}
+      <ButtonWrapper>
+        <Button onClick={search_HTS} type={"button"}>Search HTS Code</Button>
+      </ButtonWrapper>
+      <QuestionText style={{paddingTop: 10}}>OR fill out manually below</QuestionText>
+    </BasicInput>
   );
 };
-
 
 const AllRadiosWrapper = styled.div`
   display: flex;
@@ -755,12 +762,13 @@ const TYPE_TO_COMPONENT = {
   decimal: NumberInput,
   number: NumberInput,
   boolean: YesNoInput,
-  hts : HTSInput,
+  hts: HTSInput,
   radio: RadioInput,
   date: DateInput,
   checkbox: CheckboxInput,
   object: ObjectInput,
   array_of_objs: DocReqInput,
+  dropdown: DropdownInput
 };
 
 const createDefault = question => {
@@ -786,6 +794,7 @@ const TYPE_TO_DEFAULT = {
   checkbox: [],
   object: {},
   array_of_objs: [],
+  dropdown: ""
 };
 
 const REQUIRED_FIELD_MSG = "This field is required.";
@@ -796,10 +805,11 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   decimal: number(),
   number: number(),
   boolean: boolean().nullable(),
-  hts : string(),
+  hts: string(),
   radio: string().nullable(),
   date: date(),
-  checkbox: array().of(string())
+  checkbox: array().of(string()),
+  dropdown: string()
 };
 
 const createChildrenShape = question => {
