@@ -268,6 +268,9 @@ const ComplianceCheck = ({
   } else if (type === "believablePrice") {
     field = "believablePriceOfGoodsStatus";
   }
+  else if (type === "dueAuthorization") {
+    field = "dueAuthorization";
+  }
 
   const onWaiveClick = () => {
     makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
@@ -298,7 +301,7 @@ const ComplianceCheck = ({
           </Subtitle>
         </div>
         <ButtonWrapper style={{position: "relative"}}>
-          <StyledButton selected={status === "Accepted"} onClick={onWaiveClick}>Waive</StyledButton>
+          <StyledButton selected={status === "Accepted"} onClick={onWaiveClick}>{field === 'dueAuthorization' ? 'Authorize' : 'Waive'}</StyledButton>
           <StyledButton selected={status === "Rejected"} onClick={() => setModal("reject")}>Reject</StyledButton>
           {expanded && <StyledButton style={{position: "absolute", top: 40}} selected={status === "Requested"}
                                      onClick={() => setModal("requestClarification")}>
@@ -466,6 +469,41 @@ const BoycottLanguageCheck = ({lc, setLc}) => {
   )
 };
 
+const DueAuthorization = ({lc, setLc}) => {
+  const employee = get(lc, 'taskedClientEmployees[0]');
+  const issuer = get(lc, "issuer");
+  const initialRejectReason = "This employee is not Authorized"
+  const initialRequestComment = "Please provide proof of Authorization that this employee can represent an LC for this company";
+
+  const searchStatus = (authList) => {
+    for (let authItem of authList) {
+      if (authItem.bank.id === issuer.id) {
+        return titleCase(authItem.status);
+      }
+    }
+    return "error";
+  }
+
+  let status = searchStatus(employee.authorizedBanks);
+
+
+  return (
+      <ComplianceCheck
+          lc={lc}
+          type={"dueAuthorization"}
+          setLc={setLc}
+          title={"Due Authorization"}
+          status={status}
+          initialRejectionReason={initialRejectReason}
+          initialRequestComment={initialRequestComment}
+          error={status === "Accepted" ? false : true}
+          errorMessage={status !== "Accepted" && "1 potential error"}
+      >
+        {status === "Accepted" ? <div> {employee.name} is authorized to apply for an LC </div> : <div> {employee.name} is not authorized to apply for an LC</div>  }
+      </ComplianceCheck>
+  )
+}
+
 const BelievablePriceOfGoods = ({lc, setLc}) => {
   const goodsInfo = get(lc, 'goodsInfo');
   const status = get(lc, 'believablePriceOfGoodsStatus');
@@ -526,6 +564,7 @@ const ComplianceChecks = ({lc, setLc}) => {
       <ImportLicenseCheck lc={lc} setLc={setLc}/>
       <BoycottLanguageCheck lc={lc} setLc={setLc}/>
       <BelievablePriceOfGoods lc={lc} setLc={setLc}/>
+      <DueAuthorization lc={lc} setLc={setLc}/>
     </Panel>
   );
 };
