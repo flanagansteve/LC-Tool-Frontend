@@ -1,4 +1,5 @@
 import React from "react";
+import { NavLink } from "react-router-dom";
 import styled from "styled-components";
 import MoonLoader from "react-spinners/MoonLoader";
 import StatusMessage from "./ui/StatusMessage";
@@ -23,7 +24,7 @@ const Subtitle = styled.h2`
   color: #555;
 `;
 
-const RightAlignedLink = styled.a`
+const RightAlignedLink = styled(NavLink)`
   float : right;
   padding: 10px 0;
   color: #00d;
@@ -45,7 +46,7 @@ const BasicLayout = ({ title, subtitle, link, linktext, isLoading, children,
     <Margin style={marginStyle}>
       <Title>{title}</Title>
       {subtitle && <Subtitle>{subtitle}</Subtitle>}
-      {link && <RightAlignedLink href={link}>{linktext}</RightAlignedLink>}
+      {link && <RightAlignedLink to={link}>{linktext}</RightAlignedLink>}
       <Content>
         {isLoading ? (
           <MoonLoader
