@@ -32,9 +32,6 @@ const ClaimBeneficiaryStatusPage = ({ match, history }) => {
   const [lc, setLc] = useState(null);
   const [user] = useContext(UserContext);
   const { status, setError, setSuccess } = useStatus();
-  if (user && user.bank) history.push('/'); // redirect if wrong user type
-  // TODO come up with a better way to do that ^
-  console.log(lc)
 
   useEffect(() => {
     makeAPIRequest(`/lc/${lcid}/`, 'GET')

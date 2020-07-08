@@ -1,15 +1,11 @@
-import React, { useState } from 'react';
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-} from 'react-router-dom';
+import React, {useState} from 'react';
+import {BrowserRouter as Router, Route, Switch, Redirect} from 'react-router-dom';
 
-import GlobalStyle, { CSSReset } from './GlobalStyle'
+import GlobalStyle, {CSSReset} from './GlobalStyle'
 import HomePage from './pages/HomePage/HomePage';
 import LoginPage from './pages/LoginPage/LoginPage';
 import Nav from './components/Nav';
-import { UserContext } from './utils/auth';
+import {UserContext} from './utils/auth';
 import BankSignUpPage from './pages/bank/BankSignUpPage';
 import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
@@ -41,33 +37,47 @@ function App() {
   return (
     <UserContext.Provider value={[user, setUser]}>
       <Router>
-        <CSSReset />
-        <GlobalStyle />
-        <Nav user={user} setUser={setUser} />
+        <CSSReset/>
+        <GlobalStyle/>
+        <Nav user={user} setUser={setUser}/>
         <Switch>
-          <Route path="/create" />
-          <Route path="/manage" />
-          <Route path="/bank/register/:bankid" component={BankEmployeeSignUpPage} />
-          <Route path="/bank/register" component={BankSignUpPage} />
-          <Route path="/bank/invite" component={BankInvitePage} />
-          <Route path="/bank/account" component={BankManageAccountPage} />
-          <Route path="/lc/:lcid" component={LCViewPage} />
-          <Route path="/bank/lcs/client/:clientid" component={BankLCFeedPageByClient} />
-          <Route path="/bank/lcs/live" component={BankLiveLCFeedPage} />
-          <Route path="/bank/lcs/apps" component={BankLCAppFeedPage} />
-          <Route path="/bank/lcs" component={BankLCFeedPage} />
-          <Route path="/bank/:bankid/application" component={BankLCAppPage} />
-          <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage} />
-          <Route path="/business/register" component={BusinessSignUpPage} />
-          <Route path="/business/invite" component={BusinessInvitePage} />
-          <Route path="/business/account" component={BusinessManageAccountPage} />
-          <Route path="/business/claimBeneficiary/:lcid" component={ClaimBeneficiaryStatusPage} />
-          <Route path="/business/lcs/client/" component={ClientLCFeedPage} />
-          <Route path="/business/lcs/beneficiary/" component={BeneficiaryLCFeedPage} />
-          <Route path="/business/lcs/" component={ClientLCFeedPage} />
-          <Route path="/banks" component={BankDirectoryPage} />
+          <Route path="/create"/>
+          <Route path="/manage"/>
+          <Route path="/bank/register/:bankid" component={BankEmployeeSignUpPage}/>
+          <Route path="/bank/register" component={BankSignUpPage}/>
+          <Route path="/bank/invite" render={props => user && user.business ? <Redirect to={"/business/invite"}/> :
+            <BankInvitePage {...props}/>}/>
+          <Route path="/bank/account" render={props => user && user.business ? <Redirect to={"/business/account"}/> :
+            <BankManageAccountPage {...props}/>}/>
+          <Route path="/lc/:lcid" component={LCViewPage}/>
+          <Route path="/bank/lcs/client/:clientid" render={props => user && user.business ? <Redirect to={"/"}/> :
+            <BankLCFeedPageByClient {...props}/>}/>
+          <Route path="/bank/lcs/live" render={props => user && user.business ? <Redirect to={"/"}/> :
+            <BankLiveLCFeedPage {...props}/>}/>
+          <Route path="/bank/lcs/apps" render={props => user && user.business ? <Redirect to={"/"}/> :
+            <BankLCAppFeedPage {...props}/>}/>
+          <Route path="/bank/lcs" render={props => user && user.business ? <Redirect to={"/"}/> :
+            <BankLCFeedPage {...props}/>}/>
+          <Route path="/bank/:bankid/application"
+                 render={props => user && user.bank ? <Redirect to={"/"}/> : <BankLCAppPage {...props}/>}/>
+          <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage}/>
+          <Route path="/business/register" component={BusinessSignUpPage}/>
+          <Route path="/business/invite" render={props => user && user.bank ? <Redirect to={"/bank/invite"}/> :
+            <BusinessInvitePage {...props}/>}/>
+          <Route path="/business/account" render={props => user && user.bank ? <Redirect to={"/bank/account"}/> :
+            <BusinessManageAccountPage {...props}/>}/>
+          <Route path="/business/claimBeneficiary/:lcid" render={props => user && user.bank ? <Redirect to={"/"}/> :
+            <ClaimBeneficiaryStatusPage {...props}/>}/>
+          <Route path="/business/lcs/client/" render={props => user && user.bank ? <Redirect to={"/"}/> :
+            <ClientLCFeedPage {...props}/>}/>
+          <Route path="/business/lcs/beneficiary/" render={props => user && user.bank ? <Redirect to={"/"}/> :
+            <BeneficiaryLCFeedPage {...props}/>}/>
+          <Route path="/business/lcs/" render={props => user && user.bank ? <Redirect to={"/"}/> :
+            <ClientLCFeedPage {...props}/>}/>
+          <Route path="/banks" render={props => user && user.bank ? <Redirect to={"/"}/> :
+            <BankDirectoryPage {...props}/>}/>
           <Route path="/login" component={LoginPage}/>
-          <Route path="/" component={HomePage} />
+          <Route path="/" component={HomePage}/>
         </Switch>
       </Router>
     </UserContext.Provider>
