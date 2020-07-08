@@ -472,7 +472,7 @@ const BoycottLanguageCheck = ({lc, setLc}) => {
 const DueAuthorization = ({lc, setLc}) => {
   const employee = get(lc, 'taskedClientEmployees[0]');
   const issuer = get(lc, "issuer");
-  const initialRejectReason = "This employee is not Authorized"
+  const initialRejectReason = "This employee is not Authorized";
   const initialRequestComment = "Please provide proof of Authorization that this employee can represent an LC for this company";
 
   const searchStatus = (authList) => {
@@ -482,9 +482,9 @@ const DueAuthorization = ({lc, setLc}) => {
       }
     }
     return "error";
-  }
+  };
 
-  let status = searchStatus(employee.authorizedBanks);
+  let status = searchStatus(employee.authorizedBanks || []);
 
 
   return (
@@ -496,13 +496,13 @@ const DueAuthorization = ({lc, setLc}) => {
           status={status}
           initialRejectionReason={initialRejectReason}
           initialRequestComment={initialRequestComment}
-          error={status === "Accepted" ? false : true}
+          error={status !== "Accepted"}
           errorMessage={status !== "Accepted" && "1 potential error"}
       >
         {status === "Accepted" ? <div> {employee.name} is authorized to apply for an LC </div> : <div> {employee.name} is not authorized to apply for an LC</div>  }
       </ComplianceCheck>
   )
-}
+};
 
 const BelievablePriceOfGoods = ({lc, setLc}) => {
   const goodsInfo = get(lc, 'goodsInfo');
