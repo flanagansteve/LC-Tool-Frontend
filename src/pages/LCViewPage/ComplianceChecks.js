@@ -269,10 +269,8 @@ const ComplianceCheck = ({
     field = "believablePriceOfGoodsStatus";
   }
   else if (type === "dueAuthorization") {
-    console.log(status);
     field = "dueAuthorization";
   }
-  console.log(lc);
 
   // Unauthorize the employee submitting the LC
   const Reject = () => {
