@@ -40,6 +40,7 @@ export const Dropdown = ({ items, onChange, selectedIndex }) => {
             <div style={{borderRight: "1px solid #cdcdcd", padding: "10px", flex: 1, wordBreak: "break-word"}}>{items[selectedIndex]}</div>
             <div style={{width: "20px", alignSelf: "center", paddingLeft: "5px"}}>
               <FontAwesomeIcon
+                  style = {{cursor: "pointer"}}
                   icon={faChevronDown}
                   size="lg"
                   color="#000"

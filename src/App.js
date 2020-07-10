@@ -11,6 +11,7 @@ import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
 import BankLCAppFeedPage from './pages/bank/feeds/BankLCAppFeedPage';
 import BankLiveLCFeedPage from './pages/bank/feeds/BankLiveLCFeedPage';
+import BankClientFeedPage from './pages/bank/feeds/BankClientFeedPage';
 import BankLCFeedPage from './pages/bank/feeds/BankLCFeedPage';
 import BankLCFeedPageByClient from './pages/bank/feeds/BankLCFeedPageByClient';
 import LCViewPage from './pages/LCViewPage/LCViewPage';
@@ -24,6 +25,7 @@ import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBenefi
 import ClientLCFeedPage from './pages/business/feeds/ClientLCFeedPage';
 import BeneficiaryLCFeedPage from './pages/business/feeds/BeneficiaryLCFeedPage';
 import BankDirectoryPage from './pages/business/feeds/BankDirectoryPage';
+import ManageClientFeed from "./pages/bank/feeds/ManageClientFeed";
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -50,6 +52,8 @@ function App() {
           <Route path="/bank/account" render={props => user && user.business ? <Redirect to={"/business/account"}/> :
             <BankManageAccountPage {...props}/>}/>
           <Route path="/lc/:lcid" component={LCViewPage}/>
+            <Route path="/bank/lcs/clients" render ={props => user && user.business ? <Redirect to={"/"}/> :
+                <BankClientFeedPage {...props}/>} />
           <Route path="/bank/lcs/client/:clientid" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLCFeedPageByClient {...props}/>}/>
           <Route path="/bank/lcs/live" render={props => user && user.business ? <Redirect to={"/"}/> :
@@ -60,6 +64,8 @@ function App() {
             <BankLCFeedPage {...props}/>}/>
           <Route path="/bank/:bankid/application"
                  render={props => user && user.bank ? <Redirect to={"/"}/> : <BankLCAppPage {...props}/>}/>
+          <Route path = "/bank/client/:clientid" render ={props => user && user.business ? <Redirect to={"/"}/> :
+             <ManageClientFeed {...props}/>} />
           <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage}/>
           <Route path="/business/register" component={BusinessSignUpPage}/>
           <Route path="/business/invite" render={props => user && user.bank ? <Redirect to={"/bank/invite"}/> :

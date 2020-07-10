@@ -218,7 +218,7 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
 
   useEffect(() => {
     if (status.status !== "success" && !appliedTemplate && (question.key === "beneficiary_name" || question.key
-      === "purchased_item")) {
+      === "purchased_item" || question.key === "applicant_country")) {
       clearTimeout(autofillTemplateTimeout.current);
       const timeoutId = setTimeout(() => {
         const params = {};
@@ -272,6 +272,7 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
     }
   }, [value]);
 
+  // TODO do i want the purchased item here ?
   useEffect(() => {
     if (question.key === "beneficiary_name") {
       clearTimeout(beneficiaryAutocompleteTimeout.current);
@@ -282,8 +283,10 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
     }
   }, [value]);
 
+
   const onSelect = async item => {
     await setFieldValue("beneficiary_address", item.address);
+    await setFieldValue("beneficiary_country", item.country);
     await setValue(item.name);
   };
 
@@ -353,6 +356,7 @@ const HTSInput = ({question}) => {
   const beneficiaryAutocompleteTimeout = useRef(null);
   const [useSuggest, setUseSuggest] = useState(true);
 
+
   useEffect(() => {
     searchHTSCodes();
   }, [value]);
@@ -360,6 +364,8 @@ const HTSInput = ({question}) => {
   async function searchHTSCodes() {
     if (value && value.length > 1 && useSuggest === true) {
       clearTimeout(beneficiaryAutocompleteTimeout.current);
+      makeAPIRequest(`/business/autocomplete/?string=${value}`)
+          .then(suggested => setSuggested(suggested));
       const timeoutId = setTimeout(() =>
           fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
 
@@ -1116,7 +1122,11 @@ const BankLCAppPage = ({match}) => {
               initialValues[q.key] = user.business.name;
             } else if (user && q.key === 'applicant_address') {
               initialValues[q.key] = user.business.address;
-            } else {
+            }
+            else if (user && q.key === 'applicant_country') {
+              initialValues[q.key] = user.business.country;
+            }
+            else {
               initialValues[q.key] = createDefault(q);
             }
           });
