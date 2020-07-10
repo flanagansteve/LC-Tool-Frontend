@@ -52,6 +52,8 @@ function App() {
           <Route path="/bank/account" render={props => user && user.business ? <Redirect to={"/business/account"}/> :
             <BankManageAccountPage {...props}/>}/>
           <Route path="/lc/:lcid" component={LCViewPage}/>
+            <Route path="/bank/lcs/clients" render ={props => user && user.business ? <Redirect to={"/"}/> :
+                <BankClientFeedPage {...props}/>} />
           <Route path="/bank/lcs/client/:clientid" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLCFeedPageByClient {...props}/>}/>
           <Route path="/bank/lcs/live" render={props => user && user.business ? <Redirect to={"/"}/> :
@@ -62,6 +64,8 @@ function App() {
             <BankLCFeedPage {...props}/>}/>
           <Route path="/bank/:bankid/application"
                  render={props => user && user.bank ? <Redirect to={"/"}/> : <BankLCAppPage {...props}/>}/>
+          <Route path = "/bank/client/:clientid" render ={props => user && user.business ? <Redirect to={"/"}/> :
+             <ManageClientFeed {...props}/>} />
           <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage}/>
           <Route path="/business/register" component={BusinessSignUpPage}/>
           <Route path="/business/invite" render={props => user && user.bank ? <Redirect to={"/bank/invite"}/> :
