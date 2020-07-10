@@ -94,7 +94,7 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
       model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
     if (userType === "issuer" && (!approvedCreditAmt || parseFloat(totalCredit) +
       parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
-      setModal("creditOverflow");
+      setModal("creditOverflowApprove");
     } else {
       makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
       .then(json => setLc({...lc, [`${userType}Approved`]: true}));
@@ -667,6 +667,9 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing, totalC
     if (!error && selectedButtonIndices[0]) {
       await makeAPIRequest(`/bank/${lc.issuer.id}/business/${lc.client.id}/approved_credit/`, "PUT",
         {approvedCreditAmt: parseFloat(increaseApprovedCreditValue) + parseFloat(approvedCredit)});
+      if (modal === "creditOverflowApprove" && !selectedButtonIndices[1]) {
+        await makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true});
+      }
       refreshLc();
       setModal(false);
     }
@@ -681,9 +684,11 @@ const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing, totalC
   };
 
   return (
-    <Modal containerStyle={{width: "55%"}} show={modal === "creditOverflow"} title={"Credit Overflow"}
-           error={submissionAttempts > 0 && error} onCancel={() => setModal(false)}
-           selectDisabled={submissionAttempts > 0 && error} onSelect={onSelect}>
+    <Modal containerStyle={{width: "55%"}} show={modal === "creditOverflow" || modal === "creditOverflowApprove"}
+           title={"Credit Overflow"} error={submissionAttempts > 0 && error} onCancel={() => setModal(false)}
+           selectDisabled={submissionAttempts > 0 && error} onSelect={onSelect}
+           selectButton={modal === "creditOverflowApprove" && selectedButtonIndices[0] && !selectedButtonIndices[1]
+           ? "Select and Approve" : "Select"}>
       <div>
         Approving this LC will exceed the current approved credit ({approvedCredit}) for {get(lc,
         "client.name")} by {overflow}.

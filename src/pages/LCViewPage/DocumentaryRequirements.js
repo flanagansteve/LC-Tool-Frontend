@@ -75,7 +75,7 @@ const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
   );
   return (
     <ModalBackground show={show}>
-      {docReq && docReq.linkToSubmittedDoc ? (
+      {show === "view" ? (
       <ModalWrapper>
         <ViewModal docReq={docReq}/>
         <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
@@ -625,7 +625,7 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
             </div>
             <div>
               {live && linkToSubmittedDoc && <Button style={{ marginRight: "10px", minWidth: '80px' }}
-                onClick={() => showModal(docReq, lcid)}>View</Button>}
+                onClick={() => showModal(docReq, lcid, "view")}>View</Button>}
             </div>
             <div>
               {linkToSubmittedDoc && (
@@ -637,7 +637,7 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
                 status !== "Approved" &&
                 (!linkToSubmittedDoc || rejected) && (
                   <Button style={{ marginRight: "10px", minWidth: '80px' }}
-                onClick={() => showModal(docReq, lcid)}>Create</Button>
+                onClick={() => showModal(docReq, lcid, "create")}>Create</Button>
                 )}
             </div>
           </DocumentaryEntryFlex>
@@ -670,8 +670,8 @@ const useModal = () => {
   const [modalDocReq, setModalDocReq] = useState(null);
 
   return {
-    showModal: (docReq, lcid) => {
-      setIsModalShowing(true);
+    showModal: (docReq, lcid, modalType) => {
+      setIsModalShowing(modalType);
       setModalDocReq({...docReq, lcid});
     },
     hideModal: () => setIsModalShowing(false),

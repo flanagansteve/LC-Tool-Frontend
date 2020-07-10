@@ -84,7 +84,7 @@ const LCListEntry = ({ lc }) => {
   return (
       <StyledLink to={`/lc/${lc.id}`}>
       <ListEntryWrapper>
-        <ListEntryField>{lc.client.name}</ListEntryField>
+        <ListEntryField>{get(lc, 'client.name') || "Unknown"}</ListEntryField>
         <ListEntryField>{get(lc, 'beneficiary.name') || "Unknown"}</ListEntryField>
         <ListEntryField>{lc.applicationDate}</ListEntryField>
         <ListEntryField>{lc.draftPresentationDate || "N/A"}</ListEntryField>
