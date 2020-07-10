@@ -113,6 +113,7 @@ const LCFeed = ({ title, user, url, hideSearch }) => {
       title={title}
       isLoading={!shownLcs}
     >
+
     {/* "Heading" of the feed - delete if you think it unnecessary*/}
     <div>
       {!hideSearch && <Filter lcs={lcs} setShownLcs={setShownLcs} />}

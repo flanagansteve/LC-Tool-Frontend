@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {Fragment, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components';
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
@@ -269,15 +269,43 @@ const ComplianceCheck = ({
     field = "believablePriceOfGoodsStatus";
   }
   else if (type === "dueAuthorization") {
+    console.log(status);
     field = "dueAuthorization";
   }
+  console.log(lc);
+
+  // Unauthorize the employee submitting the LC
+  const Reject = () => {
+      makeAPIRequest(`/business/${lc.taskedClientEmployees[0].id}/${lc.issuer.id}/${"Unauthorized"}/`, 'PUT')
+          .then(json => {
+            console.log(json);
+            window.location.reload(true);
+          }).catch((error) => {console.log(error)})
+  }
+
+  //  Authorize the employee submitting the LC
+  const Authorize = () => {
+    makeAPIRequest(`/business/${lc.taskedClientEmployees[0].id}/${lc.issuer.id}/${"Authorized"}/`, 'PUT')
+        .then(json => {
+          console.log(json);
+          window.location.reload(true);
+        }).catch((error) => {console.log(error)})
+  }
+
 
   const onWaiveClick = () => {
+    // certain fields wont be able to be handled by the same update (just in case it gets here from the request modal somehow)
+    if (field === "dueAuthorization") {
+      return;
+    }
+
     makeAPIRequest(`/lc/${get(lc, 'id')}/`, 'PUT', {
       lc: {[field]: "accepted"},
       holdStatus: true
     }).then(data => setLc(data.updatedLc));
   };
+
+
 
   return (
     <DocumentaryEntryWrapper>
@@ -301,9 +329,11 @@ const ComplianceCheck = ({
           </Subtitle>
         </div>
         <ButtonWrapper style={{position: "relative"}}>
-          <StyledButton selected={status === "Accepted"} onClick={onWaiveClick}>{field === 'dueAuthorization' ? 'Authorize' : 'Waive'}</StyledButton>
-          <StyledButton selected={status === "Rejected"} onClick={() => setModal("reject")}>Reject</StyledButton>
-          {expanded && <StyledButton style={{position: "absolute", top: 40}} selected={status === "Requested"}
+          {field === "dueAuthorization" ? <Fragment><StyledButton selected={status === "Authorized"} onClick={Authorize}>Authorize</StyledButton>
+                <StyledButton selected={status === "Unauthorized"} onClick={Reject}>Reject</StyledButton> </Fragment>
+              : <Fragment><StyledButton selected={status === "Accepted"} onClick={onWaiveClick}>{field === 'dueAuthorization' ? 'Authorize' : 'Waive'}</StyledButton>
+            <StyledButton selected={status === "Rejected"} onClick={() => setModal("reject")}>Reject</StyledButton></Fragment> }
+          {expanded && field !=="dueAuthorization" && <StyledButton style={{position: "absolute", top: 40}} selected={status === "Requested"}
                                      onClick={() => setModal("requestClarification")}>
             Request More Info</StyledButton>}
         </ButtonWrapper>
@@ -496,10 +526,10 @@ const DueAuthorization = ({lc, setLc}) => {
           status={status}
           initialRejectionReason={initialRejectReason}
           initialRequestComment={initialRequestComment}
-          error={status === "Accepted" ? false : true}
-          errorMessage={status !== "Accepted" && "1 potential error"}
+          error={status === "Authorized" ? false : true}
+          errorMessage={status !== "Authorized" && "1 potential error"}
       >
-        {status === "Accepted" ? <div> {employee.name} is authorized to apply for an LC </div> : <div> {employee.name} is not authorized to apply for an LC</div>  }
+        {status === "Authorized" ? <div> {employee.name} is authorized to apply for an LC </div> : <div> {employee.name} is not authorized to apply for an LC</div>  }
       </ComplianceCheck>
   )
 }

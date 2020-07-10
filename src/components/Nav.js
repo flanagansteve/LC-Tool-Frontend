@@ -211,6 +211,7 @@ const Nav = ({ user, setUser }) => {
             Review LC Applications
           </StyledNavLink>}
           {user.bank && <StyledNavLink to="/bank/lcs/live">Manage Live LCs</StyledNavLink>}
+            {user.bank && <StyledNavLink to="/bank/lcs/clients">Manage Clients </StyledNavLink>}
         </>
       )}
       <LoginSection user={user} setUser={setUser} />

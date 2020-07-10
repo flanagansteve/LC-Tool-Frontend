@@ -15,6 +15,7 @@ import BankInvitePage from './pages/bank/BankInvitePage';
 import BankManageAccountPage from './pages/bank/BankManageAccountPage';
 import BankLCAppFeedPage from './pages/bank/feeds/BankLCAppFeedPage';
 import BankLiveLCFeedPage from './pages/bank/feeds/BankLiveLCFeedPage';
+import BankClientFeedPage from './pages/bank/feeds/BankClientFeedPage';
 import BankLCFeedPage from './pages/bank/feeds/BankLCFeedPage';
 import BankLCFeedPageByClient from './pages/bank/feeds/BankLCFeedPageByClient';
 import LCViewPage from './pages/LCViewPage/LCViewPage';
@@ -28,6 +29,7 @@ import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBenefi
 import ClientLCFeedPage from './pages/business/feeds/ClientLCFeedPage';
 import BeneficiaryLCFeedPage from './pages/business/feeds/BeneficiaryLCFeedPage';
 import BankDirectoryPage from './pages/business/feeds/BankDirectoryPage';
+import ManageClientFeed from "./pages/bank/feeds/ManageClientFeed";
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -55,6 +57,8 @@ function App() {
           <Route path="/bank/lcs/client/:clientid" component={BankLCFeedPageByClient} />
           <Route path="/bank/lcs/live" component={BankLiveLCFeedPage} />
           <Route path="/bank/lcs/apps" component={BankLCAppFeedPage} />
+          <Route path="/bank/lcs/clients" component={BankClientFeedPage} />
+          <Route path = "/bank/client/:clientid" component={ManageClientFeed} />
           <Route path="/bank/lcs" component={BankLCFeedPage} />
           <Route path="/bank/:bankid/application" component={BankLCAppPage} />
           <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage} />
