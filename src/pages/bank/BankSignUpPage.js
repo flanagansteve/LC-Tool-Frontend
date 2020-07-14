@@ -48,7 +48,11 @@ const FormFooter = styled.div`
 const requiredMsg = 'This field is required.';
 
 const signUpFormValidationSchema = object().shape({
-  newBankName: string().required(requiredMsg),
+    newBankName: string().required(requiredMsg),
+    newBankCountry: string().required(requiredMsg),
+    newBankAddress: string().required(requiredMsg),
+    newBankEmail: string().required(requiredMsg),
+    newBankWebsite: string(),
   name: string().required(requiredMsg),
   title: string().required(requiredMsg),
   email: string().email('Please enter a valid email address.').required(requiredMsg),
@@ -89,7 +93,7 @@ const BankSignUpPage = ({ history }) => {
     >
     <Formik
       initialValues={{
-        newBankName: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
+        newBankName: '', newBankCountry: '', newBankAddress: '', newBankEmail: '', newBankWebsite: '', name: '', title: '', email: '', password: '', passwordConfirm: '',
       }}
       onSubmit={(values, { setSubmitting }) => {
         setSubmitting(true);
@@ -109,7 +113,28 @@ const BankSignUpPage = ({ history }) => {
           name="newBankName"
           type="text"
         />
-        <FormInput
+          <FormInput
+              title="Bank Country"
+              name="newBankCountry"
+              type="text"
+          />
+          <FormInput
+              title="Bank Mailing Address"
+              name="newBankAddress"
+              type="text"
+          />
+          <FormInput
+              title="Bank Primary Contact Email"
+              name="newBankEmail"
+              type="text"
+          />
+
+          <FormInput
+              title="Bank Website (Optional)"
+              name="newBankWebsite"
+              type="text"
+          />
+          <FormInput
           title="Your Name"
           name="name"
           type="text"

@@ -214,11 +214,12 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
   const autofillTemplateTimeout = useRef();
   const beneficiaryAutocompleteTimeout = useRef(null);
 
+
   const [suggested, setSuggested] = useState([]);
 
   useEffect(() => {
     if (status.status !== "success" && !appliedTemplate && (question.key === "beneficiary_name" || question.key
-      === "purchased_item" || question.key === "applicant_country")) {
+      === "purchased_item" || question.key === "applicant_country" || question.key === "advising_bank")) {
       clearTimeout(autofillTemplateTimeout.current);
       const timeoutId = setTimeout(() => {
         const params = {};
@@ -283,6 +284,20 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
     }
   }, [value]);
 
+  useEffect(() => {
+    if (question.key === "advising_bank") {
+      clearTimeout(beneficiaryAutocompleteTimeout.current);
+      const timeoutId = setTimeout(() =>
+          makeAPIRequest(`/bank/autocomplete`)
+              .then(suggested => {
+                console.log(suggested);
+                setSuggested(suggested);
+              })
+              .catch(error => console.log(error)), 400);
+      beneficiaryAutocompleteTimeout.current = timeoutId;
+    }
+  }, [value]);
+
 
   const onSelect = async item => {
     await setFieldValue("beneficiary_address", item.address);
@@ -290,7 +305,7 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
     await setValue(item.name);
   };
 
-  const inputComponent = question.key === "beneficiary_name" ?
+  const inputComponent = question.key === "beneficiary_name" || question.key === "advising_bank" ?
     <SearchableSelect
       onSelect={onSelect}
       items={suggested}

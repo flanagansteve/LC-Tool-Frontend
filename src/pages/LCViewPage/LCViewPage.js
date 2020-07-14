@@ -163,7 +163,29 @@ const HistoryOrder = styled.div`
   justify-content: space-between;
 `;
 
+
+const AdvisingBank = ({lc}) => {
+  console.log(lc);
+  const advisingBank = get(lc, 'advisingBank');
+
+  return (
+      <Panel title="Advisor Information">
+        <ClientInformationWrapper>
+          {advisingBank ?
+              <div>
+                <p> {advisingBank.name}</p>
+                <p> {advisingBank.address}</p>
+                <p> {advisingBank.country}</p>
+                <p> {advisingBank.email}</p>
+              </div>: <p>None</p>}
+
+        </ClientInformationWrapper>
+      </Panel>
+  )
+}
+
 const ClientInformation = ({lc}) => {
+  console.log(lc)
   const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
   const [clientOrders, setClientOrders] = useState(null);
@@ -543,9 +565,10 @@ const OrderDetails = ({lc, refreshLc, stateName, userType, live, modal, setModal
         }}
       >
         {() => (<div>
+              {userType === "issuer" || userType === "client" ?
             <CreditOverflowPopup
               setModal={setModal} modal={modal} setEditing={setEditing}
-              lc={lc} refreshLc={refreshLc} totalCredit={totalCredit}/>
+              lc={lc} refreshLc={refreshLc} totalCredit={totalCredit}/>: null}
             <Form>
               {editing && <SubmitSection/>}
               <div style={{display: 'flex'}}>
@@ -783,15 +806,20 @@ const LCViewPage = ({match}) => {
   const [lc, setLc] = useState(null);
   const [totalCredit, setTotalCredit] = useState();
   let userType = 'unknown';
-  if (get(user, 'bank')) {
+  if (get(user, 'bank.id') === get(lc, 'issuer.id')) {
     userType = 'issuer';
-  } else if (get(user, 'business')) {
+  }
+  if (get(user, 'bank.id') === get(lc, 'advisingBank.id')) {
+    userType = 'advisor';
+  }
+  else if (get(user, 'business')) {
     if (get(user, 'business.id') === get(lc, 'client.id')) {
       userType = 'client';
     } else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) {
       userType = 'beneficiary';
     }
   }
+
   const live = get(lc, 'beneficiaryApproved') && get(lc, 'clientApproved') && get(lc, 'issuerApproved');
   // get state of order
   const a = {
@@ -844,6 +872,7 @@ const LCViewPage = ({match}) => {
                        stateName={stateName} setModal={setModal}/>
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
+          <AdvisingBank lc={lc} />
           <Comments lc={lc} setLc={setLc} comments={lc?.comments} userType={userType}/>
         </LeftColumn>
         <RightColumn>
