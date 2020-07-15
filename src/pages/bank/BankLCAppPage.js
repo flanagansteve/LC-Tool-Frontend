@@ -31,7 +31,7 @@ const InputWrapper = styled.div`
   border: 1px solid #cdcdcd;
   transition: border 0.3s;
   background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
-  
+
   ${props => !props.disabled && `&:hover {
     border: 1px solid ${config.accentColor};
   }`}
@@ -340,6 +340,26 @@ const YesNoInput = ({question}) => {
         <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
         <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
       </ButtonWrapper>}
+    </BasicInput>
+  )
+};
+
+const MultipleChoiceOtherInput = ({question}) => {
+  const [, meta, helpers] = useField(question.key);
+  const {handleChange} = useFormikContext();
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  const onSelect = (item) => {
+    setValue(item.name);
+  };
+
+  const options = question.options.map((item, itemIndex) => ({id: itemIndex, name: item}))
+
+  return (
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      <SearchableSelect questionKey={question.key} items={options}
+      handleChange={handleChange} onSelect={onSelect}/>
     </BasicInput>
   )
 };
@@ -787,7 +807,8 @@ const TYPE_TO_COMPONENT = {
   checkbox: CheckboxInput,
   object: ObjectInput,
   array_of_objs: DocReqInput,
-  dropdown: DropdownInput
+  dropdown: DropdownInput,
+  multiple_choice_with_other: MultipleChoiceOtherInput
 };
 
 const createDefault = question => {
@@ -813,7 +834,8 @@ const TYPE_TO_DEFAULT = {
   checkbox: [],
   object: {},
   array_of_objs: [],
-  dropdown: ""
+  dropdown: "",
+  multiple_choice_with_other: ""
 };
 
 const REQUIRED_FIELD_MSG = "This field is required.";
@@ -828,7 +850,8 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   radio: string().nullable(),
   date: date(),
   checkbox: array().of(string()),
-  dropdown: string()
+  dropdown: string(),
+  multiple_choice_with_other: string()
 };
 
 const createChildrenShape = question => {
