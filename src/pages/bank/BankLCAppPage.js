@@ -19,7 +19,6 @@ import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
 import {RouteBlockingModal} from "../../components/ui/RouteBlockingModal";
 import Checkbox from '@material-ui/core/Checkbox';
 
-
 const disabledBackgroundColor = `#c3c1c3`;
 const disabledColor = `black`;
 
@@ -206,108 +205,28 @@ const BasicInput = ({question, children, subtitle}) => {
   )
 };
 
-const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
-  const {values, setValues, initialValues, handleChange, setFieldValue} = useFormikContext();
+const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate, bankId}) => {
+  const {handleChange} = useFormikContext();
   const [, meta, helpers] = useField(question.key);
   const {value} = meta;
   const {setValue} = helpers;
-  const autofillTemplateTimeout = useRef();
-  const beneficiaryAutocompleteTimeout = useRef(null);
-
+  const autocompleteTimeout = useRef(null);
 
   const [suggested, setSuggested] = useState([]);
 
   useEffect(() => {
-    if (status.status !== "success" && !appliedTemplate && (question.key === "beneficiary_name" || question.key
-      === "purchased_item" || question.key === "applicant_country" || question.key === "advising_bank")) {
-      clearTimeout(autofillTemplateTimeout.current);
-      const timeoutId = setTimeout(() => {
-        const params = {};
-        if (values.beneficiary_name) {
-          params.beneficiary_name = values.beneficiary_name;
-        }
-        if (values.purchased_item) {
-          params.purchased_item = values.purchased_item;
-        }
-        const paramString = Object.entries(params).map(([key, value]) => `${key}=${value}`).join("&");
-        if (paramString) {
-          makeAPIRequest(`/lc/digital_app_templates/?${paramString}`).then(result => {
-            if (result.length) {
-              const Component = (
-                <div>
-                  <div style={{display: "flex"}}>
-                    <span style={{flex: 1}}/>
-                    <StyledIcon onClick={() => setStatus({status: null, message: ""})}
-                                icon={faTimes} style={{color: "black"}}/>
-                  </div>
-                  <div style={{color: "black"}}>Load Template with Similar Answers:</div>
-                  <div style={{paddingTop: 10}}>
-                    {result.map(template => (
-                      <div key={template.id} style={{paddingTop: 5}}>
-                        <ClickableText onClick={async () => {
-                          setStatus({status: null, message: ""});
-                          await loadTemplateAnswers({
-                            lcApp,
-                            selectedTemplate: template,
-                            values,
-                            initialValues,
-                            setValues,
-                            setAppliedTemplate,
-                            setStatus
-                          });
-                        }}>
-                          {template.templateName}
-                        </ClickableText></div>
-                    ))}
-                  </div>
-                </div>
-              );
-              setStatus({status: "info", message: Component});
-            } else {
-              setStatus({status: null, message: ""});
-            }
-          });
-        }
-      }, 500);
-      autofillTemplateTimeout.current = timeoutId;
-    }
-  }, [value]);
-
-  // TODO do i want the purchased item here ?
-  useEffect(() => {
-    if (question.key === "beneficiary_name") {
-      clearTimeout(beneficiaryAutocompleteTimeout.current);
-      const timeoutId = setTimeout(() =>
-        makeAPIRequest(`/business/autocomplete/?string=${value}`)
-        .then(suggested => setSuggested(suggested)), 400);
-      beneficiaryAutocompleteTimeout.current = timeoutId;
-    }
-  }, [value]);
-
-  useEffect(() => {
     if (question.key === "advising_bank") {
-      clearTimeout(beneficiaryAutocompleteTimeout.current);
+      clearTimeout(autocompleteTimeout.current);
       const timeoutId = setTimeout(() =>
-          makeAPIRequest(`/bank/autocomplete`)
-              .then(suggested => {
-                console.log(suggested);
-                setSuggested(suggested);
-              })
-              .catch(error => console.log(error)), 400);
-      beneficiaryAutocompleteTimeout.current = timeoutId;
+        makeAPIRequest(`/bank/autocomplete/?string=${value}&exclude_ids=[${bankId}]`)
+        .then(suggested => setSuggested(suggested)), 400);
+      autocompleteTimeout.current = timeoutId;
     }
   }, [value]);
 
-
-  const onSelect = async item => {
-    await setFieldValue("beneficiary_address", item.address);
-    await setFieldValue("beneficiary_country", item.country);
-    await setValue(item.name);
-  };
-
-  const inputComponent = question.key === "beneficiary_name" || question.key === "advising_bank" ?
+  const inputComponent = ["advising_bank"].includes(question.key) ?
     <SearchableSelect
-      onSelect={onSelect}
+      onSelect={async item => await setValue(item.name)}
       items={suggested}
       questionKey={question.key}
       handleChange={handleChange}
@@ -316,6 +235,8 @@ const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appl
 
   return (
     <BasicInput question={question} disabled={question.disabledTooltip}>
+      <SuggestTemplates question={question} status={status} appliedTemplate={appliedTemplate} lcApp={lcApp}
+                        setStatus={setStatus} setAppliedTemplate={setAppliedTemplate}/>
       {!question.disabledTooltip && inputComponent}
     </BasicInput>
   );
@@ -371,7 +292,6 @@ const HTSInput = ({question}) => {
   const beneficiaryAutocompleteTimeout = useRef(null);
   const [useSuggest, setUseSuggest] = useState(true);
 
-
   useEffect(() => {
     searchHTSCodes();
   }, [value]);
@@ -379,27 +299,24 @@ const HTSInput = ({question}) => {
   async function searchHTSCodes() {
     if (value && value.length > 1 && useSuggest === true) {
       clearTimeout(beneficiaryAutocompleteTimeout.current);
-      makeAPIRequest(`/business/autocomplete/?string=${value}`)
-          .then(suggested => setSuggested(suggested));
       const timeoutId = setTimeout(() =>
-          fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
+        fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
 
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-          }).then((response) => {
-            return response.json()
-          }).then((json) => {
-            console.log(json);
-            setSuggested(json.results);
-          }).catch(() => {
-            setSuggested([]);
-          }), 400);
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        }).then((response) => {
+          return response.json()
+        }).then((json) => {
+          console.log(json);
+          setSuggested(json.results);
+        }).catch(() => {
+          setSuggested([]);
+        }), 400);
       beneficiaryAutocompleteTimeout.current = timeoutId;
     }
   }
-
 
   const onSelect = async (hts, description) => {
     await setFieldValue("hts_code", hts);
@@ -418,17 +335,17 @@ const HTSInput = ({question}) => {
     <BasicInput question={question} disabled={question.disabledTooltip}>
       <AllCheckboxesWrapper>
         <Checkbox
-            style = {{color: config.accentColor}}
-            checked={useSuggest}
-            onChange={() => {
-              setUseSuggest(!useSuggest);
-              searchHTSCodes();
-            }}
-            name="suggestCheck"
+          style={{color: config.accentColor}}
+          checked={useSuggest}
+          onChange={() => {
+            setUseSuggest(!useSuggest);
+            searchHTSCodes();
+          }}
+          name="suggestCheck"
         />
-        <QuestionText style = {{paddingTop: 10}}>Suggest an HTS classification</QuestionText>
+        <QuestionText style={{paddingTop: 10}}>Suggest an HTS classification</QuestionText>
       </AllCheckboxesWrapper>
-      {useSuggest === true ? inputComponent :  <StyledFormInput type="text" name={question.key}/>}
+      {useSuggest === true ? inputComponent : <StyledFormInput type="text" name={question.key}/>}
     </BasicInput>
   );
 };
@@ -573,7 +490,7 @@ const ObjectNestedTypeComponent = ({question, value, setValue}) => {
   return componentMap[question.type];
 };
 
-const ObjectInput = ({question}) => {
+const ObjectInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate, bankId}) => {
   const [, meta, helpers] = useField(question.key);
   const {value} = meta;
   const {setValue} = helpers;
@@ -582,16 +499,123 @@ const ObjectInput = ({question}) => {
     <BasicInput question={question}>
       {!question.disabledTooltip && question.children.map(child => {
         const keyName = `${question.key}.${child.key}`;
+        let inputComponent = CommonNestedTypeComponent({question: child, keyName}) ||
+          ObjectNestedTypeComponent({question: child, value, setValue});
+        if (keyName === "beneficiary.name") {
+          inputComponent =
+            <BeneficiaryNameInput parent={question} child={child} status={status} setStatus={setStatus} lcApp={lcApp}
+                                  setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>
+        }
         return (
           <DocReqFieldWrapper key={keyName}>
             <span>{child.questionText}{child.required ? <Asterisk> *</Asterisk> : null}</span>
-            {CommonNestedTypeComponent({question: child, keyName}) ||
-            ObjectNestedTypeComponent({question: child, value, setValue})}
+            {inputComponent}
           </DocReqFieldWrapper>
         )
       })}
     </BasicInput>
   )
+};
+
+const BeneficiaryNameInput = ({parent, child, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
+  const autocompleteTimeout = useRef(null);
+  const [suggested, setSuggested] = useState([]);
+  const {handleChange} = useFormikContext();
+  const [, meta, helpers] = useField(parent.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  const keyName = `${parent.key}.${child.key}`;
+
+  const onBeneficiarySelect = async item => {
+    setValue({name: item.name, address: item.address, country: item.country})
+  };
+
+  useEffect(() => {
+    clearTimeout(autocompleteTimeout.current);
+    const timeoutId = setTimeout(() =>
+      makeAPIRequest(`/business/autocomplete/?string=${value.name}`)
+      .then(suggested => setSuggested(suggested)), 400);
+    autocompleteTimeout.current = timeoutId;
+  }, [value.name]);
+
+  return (
+    <React.Fragment>
+      <SuggestTemplates question={parent} keyName={keyName} status={status} appliedTemplate={appliedTemplate}
+                        lcApp={lcApp} setStatus={setStatus} setAppliedTemplate={setAppliedTemplate}/>
+      <SearchableSelect
+        onSelect={onBeneficiarySelect}
+        items={suggested}
+        questionKey={keyName}
+        handleChange={handleChange}
+      />
+    </React.Fragment>
+  )
+};
+
+const SuggestTemplates = ({question, keyName = question.key, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
+  const {values, setValues, initialValues} = useFormikContext();
+  const autofillTemplateTimeout = useRef();
+  const [, meta] = useField(question.key);
+  const {value} = meta;
+
+  useEffect(() => {
+    if (status.status !== "success" && !appliedTemplate && (keyName === "beneficiary.name" || keyName
+      === "purchased_item" || keyName === "applicant.country" || keyName === "advising_bank")) {
+      clearTimeout(autofillTemplateTimeout.current);
+      const timeoutId = setTimeout(() => {
+        const params = {};
+        if (values.beneficiary.name) {
+          params.beneficiary_name = values.beneficiary.name;
+        }
+        if (values.purchased_item) {
+          params.purchased_item = values.purchased_item;
+        }
+        const paramString = Object.entries(params).map(([key, value]) => `${key}=${value}`).join("&");
+        if (paramString) {
+          makeAPIRequest(`/lc/digital_app_templates/?${paramString}`).then(result => {
+            if (result.length) {
+              const Component = (
+                <div>
+                  <div style={{display: "flex"}}>
+                    <span style={{flex: 1}}/>
+                    <StyledIcon onClick={() => setStatus({status: null, message: ""})}
+                                icon={faTimes} style={{color: "black"}}/>
+                  </div>
+                  <div style={{color: "black"}}>Load Template with Similar Answers:</div>
+                  <div style={{paddingTop: 10}}>
+                    {result.map(template => (
+                      <div key={template.id} style={{paddingTop: 5}}>
+                        <ClickableText onClick={async () => {
+                          setStatus({status: null, message: ""});
+                          await loadTemplateAnswers({
+                            lcApp,
+                            selectedTemplate: template,
+                            values,
+                            initialValues,
+                            setValues,
+                            setAppliedTemplate,
+                            setStatus
+                          });
+                        }}>
+                          {template.templateName}
+                        </ClickableText></div>
+                    ))}
+                  </div>
+                </div>
+              );
+              setStatus({status: "info", message: Component});
+            } else {
+              setStatus({status: null, message: ""});
+            }
+          });
+        }
+      }, 500);
+      autofillTemplateTimeout.current = timeoutId;
+    }
+  }, [value]);
+
+  return null;
 };
 
 const ArrayNestedTypeComponent = ({question, parentQuestion, value, setValue, valueIndex, options}) => {
@@ -887,7 +911,7 @@ const loadTemplateAnswers = async ({lcApp, selectedTemplate, values, initialValu
       questionType[questionKey] === "checkbox") {
       value = JSON.parse(value);
     }
-    if (initialValues[questionKey] !== undefined) {
+    if (initialValues[questionKey] !== undefined && !_.isEmpty(value)) {
       values[questionKey] = value;
     }
     template[key] = value;
@@ -965,8 +989,8 @@ const SaveTemplate = ({setModal, values, lcApp, appliedTemplate, setStatus, setA
            selectDisabled={submitCount && saveTemplateError}
            onShow={() => {
              const fields = [];
-             if (values["beneficiary_name"]) {
-               fields.push(values["beneficiary_name"].trim());
+             if (values.beneficiary?.name) {
+               fields.push(values.beneficiary.name.trim());
              }
              if (values["purchased_item"]) {
                fields.push(values["purchased_item"].trim());
@@ -1133,15 +1157,13 @@ const BankLCAppPage = ({match}) => {
           initialValues = persistedLcApp;
         } else {
           json.forEach(q => {
-            if (user && q.key === 'applicant_name') {
-              initialValues[q.key] = user.business.name;
-            } else if (user && q.key === 'applicant_address') {
-              initialValues[q.key] = user.business.address;
-            }
-            else if (user && q.key === 'applicant_country') {
-              initialValues[q.key] = user.business.country;
-            }
-            else {
+            if (user && q.key === 'applicant') {
+              initialValues[q.key] = {
+                name: user.business.name,
+                address: user.business.address,
+                country: user.business.country
+              };
+            } else {
               initialValues[q.key] = createDefault(q);
             }
           });
@@ -1282,7 +1304,8 @@ const BankLCAppPage = ({match}) => {
                     const Component = TYPE_TO_COMPONENT[question.type];
                     return <Component
                       key={question.id} question={question} status={status} setStatus={setStatus} lcApp={lcApp}
-                      setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>;
+                      setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}
+                      bankId={match.params.bankid}/>;
                   })}
                 <div style={{display: "flex", marginLeft: "150px", marginRight: "150px"}}>
                   <Button
