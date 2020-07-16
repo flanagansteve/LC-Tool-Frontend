@@ -205,39 +205,12 @@ const BasicInput = ({question, children, subtitle}) => {
   )
 };
 
-const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate, bankId}) => {
-  const {handleChange} = useFormikContext();
-  const [, meta, helpers] = useField(question.key);
-  const {value} = meta;
-  const {setValue} = helpers;
-  const autocompleteTimeout = useRef(null);
-
-  const [suggested, setSuggested] = useState([]);
-
-  useEffect(() => {
-    if (question.key === "advising_bank") {
-      clearTimeout(autocompleteTimeout.current);
-      const timeoutId = setTimeout(() =>
-        makeAPIRequest(`/bank/autocomplete/?string=${value}&exclude_ids=[${bankId}]`)
-        .then(suggested => setSuggested(suggested)), 400);
-      autocompleteTimeout.current = timeoutId;
-    }
-  }, [value]);
-
-  const inputComponent = ["advising_bank"].includes(question.key) ?
-    <SearchableSelect
-      onSelect={async item => await setValue(item.name)}
-      items={suggested}
-      questionKey={question.key}
-      handleChange={handleChange}
-    /> :
-    <StyledFormInput type="text" name={question.key}/>;
-
+const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
   return (
     <BasicInput question={question} disabled={question.disabledTooltip}>
       <SuggestTemplates question={question} status={status} appliedTemplate={appliedTemplate} lcApp={lcApp}
                         setStatus={setStatus} setAppliedTemplate={setAppliedTemplate}/>
-      {!question.disabledTooltip && inputComponent}
+      {!question.disabledTooltip && <StyledFormInput type="text" name={question.key}/>}
     </BasicInput>
   );
 };
@@ -423,10 +396,11 @@ const CheckboxInput = ({question}) => {
 };
 
 const DocReqFieldWrapper = styled.div`
-  margin: 10px 0;
+  padding-top: 10px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid #cdcdcd;
+  ${props => props.disabled && `background-color: ${disabledBackgroundColor};`}
   > :first-child {
     width: 130px;
     font-weight: 300;
@@ -444,7 +418,7 @@ const StyledDocReqField = styled(Field)`
   width: calc(100% - 130px);
   line-height: 1em;
   color: #000;
-  background-color: #fff;
+  background-color: ${props => props.disabled ? disabledBackgroundColor : '#fff'};
 `;
 
 const StyledDocReqDiv = styled.div`
@@ -468,10 +442,14 @@ const DocReqTitle = styled.h3`
 
 const CommonNestedTypeComponent = ({question, keyName}) => {
   const componentMap = {
-    text: <StyledDocReqField type={"text"} disabled={question.disabled === "True"} name={keyName}/>,
-    number: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
-    decimal: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
-    date: <StyledDocReqField type={"date"} disabled={question.disabled === "True"} name={keyName}/>,
+    text: <StyledDocReqField type={"text"} disabled={question.disabled === "True" || question.disabledTooltip}
+                             name={keyName}/>,
+    number: <StyledDocReqField type={"number"} disabled={question.disabled === "True" || question.disabledTooltip}
+                               name={keyName}/>,
+    decimal: <StyledDocReqField type={"number"} disabled={question.disabled === "True" || question.disabledTooltip}
+                                name={keyName}/>,
+    date: <StyledDocReqField type={"date"} disabled={question.disabled === "True" || question.disabledTooltip}
+                             name={keyName}/>,
   };
   return componentMap[question.type];
 };
@@ -504,16 +482,49 @@ const ObjectInput = ({question, status, setStatus, lcApp, setAppliedTemplate, ap
         if (keyName === "beneficiary.name") {
           inputComponent =
             <BeneficiaryNameInput parent={question} child={child} status={status} setStatus={setStatus} lcApp={lcApp}
-                                  setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>
+                                  setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>;
+        } else if (keyName === "advising_bank.name") {
+          inputComponent = <AdvisingBankInput parent={question} child={child} bankId={bankId}/>;
         }
         return (
-          <DocReqFieldWrapper key={keyName}>
-            <span>{child.questionText}{child.required ? <Asterisk> *</Asterisk> : null}</span>
+          <DocReqFieldWrapper key={keyName} disabled={child.disabledTooltip}>
+            <span>{child.questionText}{child.required && !child.disabledTooltip ? <Asterisk> *</Asterisk> : null}</span>
             {inputComponent}
           </DocReqFieldWrapper>
         )
       })}
     </BasicInput>
+  )
+};
+
+const AdvisingBankInput = ({parent, child, bankId}) => {
+  const {handleChange} = useFormikContext();
+  const [, meta, helpers] = useField(parent.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+  const autocompleteTimeout = useRef(null);
+  const [suggested, setSuggested] = useState([]);
+
+  console.log(value);
+
+  const keyName = `${parent.key}.${child.key}`;
+
+  useEffect(() => {
+    clearTimeout(autocompleteTimeout.current);
+    const timeoutId = setTimeout(() =>
+      makeAPIRequest(`/bank/autocomplete/?string=${value.name}&exclude_ids=[${bankId}]`)
+      .then(suggested => setSuggested(suggested)), 400);
+    autocompleteTimeout.current = timeoutId;
+  }, [value]);
+
+  return (
+    <SearchableSelect
+      onSelect={item => setValue(
+        {...value, name: item.name, address: item.address, country: item.country, email: item.email})}
+      items={suggested}
+      questionKey={keyName}
+      handleChange={handleChange}
+    />
   )
 };
 
@@ -729,21 +740,37 @@ const contains = (option, answer) => {
 const markDisabled = async ({questions, values, setLCApp, validateForm}) => {
   let changed = false;
   const questionsCopy = questions.map(q => ({...q}));
-  questionsCopy.filter(q => q.disabled).forEach(q => {
-    const dependency = JSON.parse(q.disabled);
-    for (let option of dependency.answer) {
-      if (contains(option, values[dependency.key])) {
-        const parentQuestion = questions.find(potential => potential.key === dependency.key);
-        changed = changed || !q.disabledTooltip;
-        const message = (<span style={{color: "#58595A"}}>This question is redundant based on your earlier
-        answer to <ClickableText>'{parentQuestion.questionText}'</ClickableText></span>);
-        q.disabledTooltip = {text: message, parentKey: parentQuestion.key};
-        return;
+  questionsCopy.forEach(q => {
+    q.children.filter(childQ => childQ.disabled && childQ.disabled !== "True").forEach(childQ => {
+      const dependency = JSON.parse(childQ.disabled);
+      for (let option of dependency.answer) {
+        if (contains(option, values[q.key][dependency.key])) {
+          changed = changed || !childQ.disabledTooltip;
+          childQ.disabledTooltip = true;
+          return;
+        }
       }
-    }
-    if (q.disabledTooltip) {
-      q.disabledTooltip = undefined;
-      changed = true;
+      if (childQ.disabledTooltip) {
+        childQ.disabledTooltip = undefined;
+        changed = true;
+      }
+    });
+    if (q.disabled) {
+      const dependency = JSON.parse(q.disabled);
+      for (let option of dependency.answer) {
+        if (contains(option, values[dependency.key])) {
+          const parentQuestion = questions.find(potential => potential.key === dependency.key);
+          changed = changed || !q.disabledTooltip;
+          const message = (<span style={{color: "#58595A"}}>This question is redundant based on your earlier
+        answer to <ClickableText>'{parentQuestion.questionText}'</ClickableText></span>);
+          q.disabledTooltip = {text: message, parentKey: parentQuestion.key};
+          return;
+        }
+      }
+      if (q.disabledTooltip) {
+        q.disabledTooltip = undefined;
+        changed = true;
+      }
     }
   });
   if (changed) {
@@ -879,7 +906,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
 const createChildrenShape = question => {
   const shape = {};
   question.children.forEach(child => {
-    shape[child.key] = child.required ?
+    shape[child.key] = child.required && !child.disabledTooltip ?
       TYPE_TO_VALIDATION_SCHEMA[child.type].required(REQUIRED_FIELD_MSG) :
       TYPE_TO_VALIDATION_SCHEMA[child.type];
   });
