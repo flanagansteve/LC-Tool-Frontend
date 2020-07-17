@@ -25,6 +25,7 @@ import ClaimBeneficiaryStatusPage from './pages/business/beneficiary/ClaimBenefi
 import ClientLCFeedPage from './pages/business/feeds/ClientLCFeedPage';
 import BeneficiaryLCFeedPage from './pages/business/feeds/BeneficiaryLCFeedPage';
 import BankDirectoryPage from './pages/business/feeds/BankDirectoryPage';
+import AdvisorLCFeedPage from './pages/bank/feeds/AdvisorLCFeedPage';
 import ManageClientFeed from "./pages/bank/feeds/ManageClientFeed";
 
 // TODO It seems like having the presentational nav in this mostly-container
@@ -60,8 +61,12 @@ function App() {
             <BankLiveLCFeedPage {...props}/>}/>
           <Route path="/bank/lcs/apps" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLCAppFeedPage {...props}/>}/>
+          <Route path="/bank/lcs/advisor" render={props => user && user.business ? <Redirect to={"/"}/> :
+              <AdvisorLCFeedPage {...props}/>}/>
+          <Route path="/bank/lcs/issuer" render={props => user && user.business ? <Redirect to={"/"}/> :
+              <BankLCFeedPage {...props}/>}/>
           <Route path="/bank/lcs" render={props => user && user.business ? <Redirect to={"/"}/> :
-            <BankLCFeedPage {...props}/>}/>
+              <BankLCFeedPage {...props}/>}/>
           <Route path="/bank/:bankid/application"
                  render={props => user && user.bank ? <Redirect to={"/"}/> : <BankLCAppPage {...props}/>}/>
           <Route path = "/bank/client/:clientid" render ={props => user && user.business ? <Redirect to={"/"}/> :
