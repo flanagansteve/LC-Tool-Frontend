@@ -1,5 +1,6 @@
 import React, {useContext, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
+import { NavLink } from "react-router-dom";
 import {Field, Form, Formik, useField, useFormikContext} from "formik";
 import _, {get} from "lodash";
 import moment from "moment";
@@ -13,6 +14,9 @@ import Panel from './Panel';
 import config from '../../config';
 import {Modal} from "../../components/ui/Modal";
 import ComplianceChecks from "./ComplianceChecks";
+import { Link } from "react-router-dom";
+import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 
 // TODO break this file up into multiple files
 
@@ -23,12 +27,34 @@ const TwoColumnHolder = styled.div`
   display: flex;
 `;
 
+const StyledLink = styled(Link)`
+  text-decoration: none;
+  color: #000;
+  line-height: 1.25;
+`
+
 const LeftColumn = styled.div`
   flex-grow: 1;
   margin-right: 20px;
   min-width: 250px;
   max-width: 250px;
 `;
+
+const AdvisorTitle = styled.div`
+  max-width: 700px;
+  margin: 5px auto 20px;
+  margin: 5px auto 20px;
+  display: flex;
+  align-items: center;
+  ${props => props.clickable && `cursor: pointer;`}
+`;
+const  ExpandedAdvisor = styled.div`
+  padding-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.5;
+`;
+
+
 
 const RightColumn = styled.div`
   flex-grow: 6;
@@ -163,29 +189,68 @@ const HistoryOrder = styled.div`
   justify-content: space-between;
 `;
 
+const BankInfo = ({bank}) => {
+  console.log(bank);
+  return (
+      <ExpandedAdvisor>
+        <p>address-</p>
+        <p style = {{paddingLeft: 20}}>{bank.address}</p>
+        <p>email-</p>
+        <p style = {{paddingLeft: 20}}>{bank.email}</p>
+        <p>country-</p>
+        <p style = {{paddingLeft: 20}}>{bank.country}</p>
+      </ExpandedAdvisor>
+  )
+}
 
 const AdvisingBank = ({lc}) => {
-  console.log(lc);
   const advisingBank = get(lc, 'advisingBank');
+  const [expanded, setExpanded] = useState(false);
+
 
   return (
-      <Panel title="Advisor Information">
+      <Panel title="Advising Banks">
         <ClientInformationWrapper>
-          {advisingBank ?
-              <div>
-                <p> {advisingBank.name}</p>
-                <p> {advisingBank.address}</p>
-                <p> {advisingBank.country}</p>
-                <p> {advisingBank.email}</p>
-              </div>: <p>None</p>}
+          <AdvisorTitle style={{margin: "15px 0 0 0"}} clickable
+                       onClick={() => setExpanded((e) => !e)}>
+            {advisingBank ?
+                <a href={`/bank/profile/${advisingBank.id}`}>{advisingBank.name}</a>
+                : <p>None</p>}
+            <FontAwesomeIcon
+                icon={expanded ? faChevronDown : faChevronRight}
+                style={{color: config.accentColor, marginLeft: "10px"}}
+            />
+          </AdvisorTitle>
+          {expanded && advisingBank && <BankInfo bank={advisingBank} />}
+        </ClientInformationWrapper>
+      </Panel>
+  )
+}
 
+const IssuerBank = ({lc}) => {
+  const issuer = get(lc, 'issuer');
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+      <Panel title="Issuing Bank">
+        <ClientInformationWrapper>
+          {/*{advisingBank ?*/}
+          {/*      <a href={`/bank/profile/${advisingBank.id}`}>{advisingBank.name}</a>*/}
+          {/*    : <p>None</p>}*/}
+          <AdvisorTitle style={{margin: "15px 0 0 0"}} clickable
+                        onClick={() => setExpanded((e) => !e)}>
+            {issuer ?
+                <a href={`/bank/profile/${issuer.id}`}>{issuer.name}</a>
+                : <p>None</p>}
+          </AdvisorTitle>
+         <BankInfo bank={issuer} />
         </ClientInformationWrapper>
       </Panel>
   )
 }
 
 const ClientInformation = ({lc}) => {
-  console.log(lc)
+  console.log(lc);
   const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
   const [clientOrders, setClientOrders] = useState(null);
@@ -873,6 +938,7 @@ const LCViewPage = ({match}) => {
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
           <AdvisingBank lc={lc} />
+          {userType === 'issuer' ? null : <IssuerBank lc={lc} />}
           <Comments lc={lc} setLc={setLc} comments={lc?.comments} userType={userType}/>
         </LeftColumn>
         <RightColumn>
