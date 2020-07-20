@@ -129,9 +129,9 @@ const ProfileDropDown = ({ user, setUser, show }) => {
           : get(user, ["business", "name"])}
       </DropDownHeader>
       {user.bank && <DropDownLink>View LC Application</DropDownLink>}
-      <DropDownLink>
+      <DropDownNavLink to ={`${user.bank ? "/bank/profile" : "/business/profile"}`}>
         View {user.bank ? "Bank" : "Business"} Profile (Coming soon)
-      </DropDownLink>
+      </DropDownNavLink>
       <DropDownHeader>{user.name}</DropDownHeader>
       <DropDownNavLink to={`${user.bank ? "/bank" : "/business"}/account`}>
         View Profile
