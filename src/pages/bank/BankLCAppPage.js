@@ -282,7 +282,6 @@ const HTSInput = ({question}) => {
         }).then((response) => {
           return response.json()
         }).then((json) => {
-          console.log(json);
           setSuggested(json.results);
         }).catch(() => {
           setSuggested([]);
@@ -504,8 +503,6 @@ const AdvisingBankInput = ({parent, child, bankId}) => {
   const {setValue} = helpers;
   const autocompleteTimeout = useRef(null);
   const [suggested, setSuggested] = useState([]);
-
-  console.log(value);
 
   const keyName = `${parent.key}.${child.key}`;
 
@@ -880,6 +877,7 @@ const TYPE_TO_DEFAULT = {
   decimal: 0,
   number: 0,
   boolean: null,
+  hts: "",
   radio: null,
   date: (new Date()).toISOString().slice(0, 10),
   checkbox: [],
