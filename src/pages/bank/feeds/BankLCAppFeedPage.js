@@ -8,9 +8,11 @@ const BankLCAppFeedPage = () => {
   const [user] = useContext(UserContext);
   const bankid = get(user, ['bank', 'id']);
   return <LCFeed 
-    title="All LC Applications 📝" 
+    title="All LC Applications (Issuing) 📝"
     url={`/lc/by_bank/${bankid}/awaiting_issuer_approval/`}
     user={user}
+    currentlyOnIssuer
+    switchLink={"/bank/lcs/apps/advisor"}
     />
 }
 
