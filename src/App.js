@@ -49,6 +49,7 @@ function App() {
         <Switch>
           <Route path="/create"/>
           <Route path="/manage"/>
+          <Route path="/bank/register/:bankid/:lcid" component={BankEmployeeSignUpPage}/>
           <Route path="/bank/register/:bankid" component={BankEmployeeSignUpPage}/>
           <Route path="/bank/register" component={BankSignUpPage}/>
           <Route path="/bank/invite" render={props => user && user.business ? <Redirect to={"/business/invite"}/> :
@@ -77,6 +78,7 @@ function App() {
                  render={props => user && user.bank ? <Redirect to={"/"}/> : <BankLCAppPage {...props}/>}/>
           <Route path = "/bank/client/:clientid" render ={props => user && user.business ? <Redirect to={"/"}/> :
              <ManageClientFeed {...props}/>} />
+          <Route path="/business/register/:businessid/:lcid" component={BusinessEmployeeSignUpPage}/>
           <Route path="/business/register/:businessid" component={BusinessEmployeeSignUpPage}/>
           <Route path="/business/profile" render={props => user && user.bank ? <Redirect to={"/bank/profile"}/> :
               <BusinessProfile {...props}/>}/>

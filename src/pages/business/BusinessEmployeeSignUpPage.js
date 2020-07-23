@@ -97,7 +97,7 @@ const BusinessEmployeeSignUpPage = ({ history, match }) => {
         makeAPIRequest(`/business/${match.params.businessid}/register/`, "POST", values)
           .then((json) => {
             setUser({ ...json.userEmployee, business: json.usersEmployer });
-            history.push("/business/invite");
+            history.push(match.params.lcid ? `/lc/${match.params.lcid}` : "/business/invite");
           })
           .then(() => setSubmitting(false))
         .catch(e => {

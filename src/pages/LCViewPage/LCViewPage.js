@@ -873,11 +873,9 @@ const LCViewPage = ({match}) => {
   let userType = 'unknown';
   if (get(user, 'bank.id') === get(lc, 'issuer.id')) {
     userType = 'issuer';
-  }
-  if (get(user, 'bank.id') === get(lc, 'advisingBank.id')) {
+  } if (get(user, 'bank.id') === get(lc, 'advisingBank.id')) {
     userType = 'advisor';
-  }
-  else if (get(user, 'business')) {
+  } else if (get(user, 'business')) {
     if (get(user, 'business.id') === get(lc, 'client.id')) {
       userType = 'client';
     } else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) {

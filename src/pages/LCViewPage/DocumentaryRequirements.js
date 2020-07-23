@@ -1,15 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
-import { Formik, Field, Form, useField } from 'formik';
-import { object, string, number, boolean, array, date } from 'yup';
+import {Field, Form, Formik, useField} from 'formik';
+import {array, boolean, date, number, object, string} from 'yup';
 import Pdf from './Pdf';
 import MoonLoader from 'react-spinners/MoonLoader'
-import { css } from "@emotion/core";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronDown, faChevronRight, faCheckSquare } from "@fortawesome/free-solid-svg-icons";
-import { get, camelCase } from "lodash";
+import {css} from "@emotion/core";
+import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {faCheckSquare, faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
+import {camelCase, get} from "lodash";
 
-import { makeAPIRequest, postFile, objectToCamelCase } from '../../utils/api';
+import {makeAPIRequest, postFile} from '../../utils/api';
 import Panel from './Panel';
 import Button from '../../components/ui/Button';
 import config from "../../config";
@@ -59,65 +59,73 @@ const ModalButtonsWrapper = styled.div`
   margin: 20px auto 30px;
 `;
 
-const MODAL_TYPES = { CREATE: 'create', UPLOAD: 'upload'};
+const MODAL_TYPES = {CREATE: 'create', UPLOAD: 'upload'};
 
-const Modal = ({ show, docReq, hideModal, refreshLc, lc }) => {
+const Modal = ({show, docReq, hideModal, refreshLc, lc}) => {
   const [type, setType] = useState(MODAL_TYPES.CREATE);
-  if (docReq && docReq.type === 'generic') return (
-    <ModalBackground show={show}>
-    <ModalWrapper>
-      <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
-      <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-        <Button onClick={hideModal}>Close</Button>
-      </div>
-    </ModalWrapper>
-    </ModalBackground>
-  );
+  if (docReq && docReq.type === 'generic') {
+    return (
+      <ModalBackground show={show}>
+        <ModalWrapper>
+          <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
+          <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
+            <Button onClick={hideModal}>Close</Button>
+          </div>
+        </ModalWrapper>
+      </ModalBackground>
+    );
+  }
   return (
     <ModalBackground show={show}>
       {show === "view" ? (
-      <ModalWrapper>
-        <ViewModal docReq={docReq}/>
-        <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-          <Button onClick={hideModal}>Close</Button>
-        </div>
-      </ModalWrapper>
+        <ModalWrapper>
+          <ViewModal docReq={docReq}/>
+          <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
+            <Button onClick={hideModal}>Close</Button>
+          </div>
+        </ModalWrapper>
       ) : docReq && (
-      <ModalWrapper>
-        <ModalButtonsWrapper>
-          <Button onClick={() => setType(MODAL_TYPES.CREATE)} unselected={type !== MODAL_TYPES.CREATE}>Create Digital DocReq</Button>
-          <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF DocReq</Button>
-        </ModalButtonsWrapper>
-        {type === MODAL_TYPES.CREATE
-          ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal} lc={lc}/>
-          : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
-        }
-        <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
-          <Button onClick={hideModal}>Cancel</Button>
-        </div>
-      </ModalWrapper>
+        <ModalWrapper>
+          <ModalButtonsWrapper>
+            <Button onClick={() => setType(MODAL_TYPES.CREATE)} unselected={type !== MODAL_TYPES.CREATE}>Create Digital
+              DocReq</Button>
+            <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF
+              DocReq</Button>
+          </ModalButtonsWrapper>
+          {type === MODAL_TYPES.CREATE
+            ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal} lc={lc}/>
+            : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
+          }
+          <div style={{marginTop: '20px', display: 'flex', justifyContent: 'flex-end'}}>
+            <Button onClick={hideModal}>Cancel</Button>
+          </div>
+        </ModalWrapper>
       )}
     </ModalBackground>
   )
 };
 
-const ViewModal = ({ docReq }) => {
+const ViewModal = ({docReq}) => {
   const lcid = docReq && docReq.lcid;
   // NULL if the docreq is not digital
   const [digitalDocReq, setDigitalDocReq] = useState(null);
   useEffect(() => {
-    if (!docReq) return;
+    if (!docReq) {
+      return;
+    }
     makeAPIRequest(`/lc/${lcid}/doc_req/${docReq.id}/`)
-      .then(data => {
-        // HACK we can "guess" if there is a digital doc req if the seller name is defined
-        if (data.sellerName === undefined) {
-          setDigitalDocReq(null);
-        } else {
-          setDigitalDocReq(data);
-        }
-      });
+    .then(data => {
+      // HACK we can "guess" if there is a digital doc req if the seller name is defined
+      if (data.sellerName === undefined) {
+        setDigitalDocReq(null);
+      } else {
+        setDigitalDocReq(data);
+      }
+    });
   }, [docReq, lcid]);
-  if (!docReq) return null;
+  if (!docReq) {
+    return null;
+  }
   const fields = !digitalDocReq ? [] : [
     {title: "Seller Name", value: digitalDocReq.sellerName},
     {title: "Seller Address", value: digitalDocReq.sellerAddress},
@@ -140,7 +148,7 @@ const ViewModal = ({ docReq }) => {
   const link = docReq.linkToSubmittedDoc;
   return (
     <ModalFlex>
-    {digitalDocReq && (
+      {digitalDocReq && (
         <ModalLeftColumn>
           <DocReqTitle style={{marginTop: '0'}}>{docReq.docName}</DocReqTitle>
           {fields.map(field => field && (
@@ -150,17 +158,17 @@ const ViewModal = ({ docReq }) => {
             </div>
           ))}
         </ModalLeftColumn>
-    )}
-        <ModalRightColumn >
-          <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
+      )}
+      <ModalRightColumn>
+        <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px'}}>
           <DocReqTitle style={{margin: '0'}}>PDF Preview</DocReqTitle>
           <Button style={{padding: '5px 10px'}}>
             <a href={link} style={{color: "#fff", fontSize: '14px', textDecoration: 'none'}}>Download PDF</a>
           </Button>
-          </div>
-          {link && <Pdf src={`/api/lc/${lcid}/doc_req/${docReq.id}/file/`} />}
-        </ModalRightColumn>
-        </ModalFlex>
+        </div>
+        {link && <Pdf src={`/api/lc/${lcid}/doc_req/${docReq.id}/file/`}/>}
+      </ModalRightColumn>
+    </ModalFlex>
   )
 };
 
@@ -229,10 +237,9 @@ const StyledButton = styled.button`
   align-items: center;
 `;
 
-
-const BasicInput = ({ question, children, subtitle }) => {
+const BasicInput = ({question, children, subtitle}) => {
   const [, meta] = useField(question.key);
-  const { error, touched } = meta;
+  const {error, touched} = meta;
   return (
     <InputWrapper>
       <QuestionText>{question.questionText}{question.required ? (<Asterisk> *</Asterisk>) : null}</QuestionText>
@@ -243,7 +250,7 @@ const BasicInput = ({ question, children, subtitle }) => {
   )
 };
 
-const TextInput = ({ question }) => {
+const TextInput = ({question}) => {
   return (
     <BasicInput question={question}>
       <StyledFormInput type="text" name={question.key}/>
@@ -251,7 +258,7 @@ const TextInput = ({ question }) => {
   );
 };
 
-const NumberInput = ({ question }) => {
+const NumberInput = ({question}) => {
   return (
     <BasicInput question={question}>
       <StyledFormInput type="number" name={question.key}/>
@@ -259,10 +266,10 @@ const NumberInput = ({ question }) => {
   )
 };
 
-const YesNoInput = ({ question }) => {
+const YesNoInput = ({question}) => {
   const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
+  const {value} = meta;
+  const {setValue} = helpers;
 
   const handleClick = (val) => (e) => {
     e.preventDefault();
@@ -271,7 +278,7 @@ const YesNoInput = ({ question }) => {
 
   return (
     <BasicInput question={question}>
-      <ButtonWrapper style={{ justifyContent: 'center' }}>
+      <ButtonWrapper style={{justifyContent: 'center'}}>
         <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
         <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
       </ButtonWrapper>
@@ -284,29 +291,29 @@ const AllRadiosWrapper = styled.div`
   flex-wrap: wrap;
 `;
 
-const RadioInput = ({ question }) => {
+const RadioInput = ({question}) => {
   const options = JSON.parse(question.options);
   const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
+  const {value} = meta;
+  const {setValue} = helpers;
   const handleClick = (val) => (e) => {
     e.preventDefault();
     setValue(val);
   };
   return (
     <BasicInput question={question}>
-    <AllRadiosWrapper>
-      <ButtonWrapper>
-    {options && options.map((opt) => (
-        <StyledButton onClick={handleClick(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
-    ))}
-      </ButtonWrapper>
-    </AllRadiosWrapper>
+      <AllRadiosWrapper>
+        <ButtonWrapper>
+          {options && options.map((opt) => (
+            <StyledButton onClick={handleClick(opt)} selected={value === opt} key={opt}>{opt}</StyledButton>
+          ))}
+        </ButtonWrapper>
+      </AllRadiosWrapper>
     </BasicInput>
   )
 };
 
-const DateInput = ({ question }) => {
+const DateInput = ({question}) => {
   return (
     <BasicInput question={question}>
       <StyledFormInput type="date" name={question.key}/>
@@ -319,11 +326,11 @@ const AllCheckboxesWrapper = styled.div`
   flex-wrap: wrap;
 `;
 
-const CheckboxInput = ({ question }) => {
+const CheckboxInput = ({question}) => {
   const options = JSON.parse(question.options);
   const [, meta, helpers] = useField(question.key);
-  const { value } = meta;
-  const { setValue } = helpers;
+  const {value} = meta;
+  const {setValue} = helpers;
   const handleClick = (val) => (e) => {
     e.preventDefault();
     const i = value.indexOf(val);
@@ -336,16 +343,16 @@ const CheckboxInput = ({ question }) => {
 
   return (
     <BasicInput question={question} subtitle="Check all that apply.">
-    <AllCheckboxesWrapper>
-      <ButtonWrapper>
-    {options && options.map((opt) => (
-        <StyledButton onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
-        {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{ marginRight: '10px' }}/>}
-        {opt}
-        </StyledButton>
-    ))}
-      </ButtonWrapper>
-    </AllCheckboxesWrapper>
+      <AllCheckboxesWrapper>
+        <ButtonWrapper>
+          {options && options.map((opt) => (
+            <StyledButton onClick={handleClick(opt)} selected={value.indexOf(opt) !== -1} key={opt}>
+              {value.indexOf(opt) !== -1 && <FontAwesomeIcon icon={faCheckSquare} style={{marginRight: '10px'}}/>}
+              {opt}
+            </StyledButton>
+          ))}
+        </ButtonWrapper>
+      </AllCheckboxesWrapper>
     </BasicInput>
   )
 };
@@ -382,17 +389,21 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   checkbox: array().of(string()),
 };
 
-const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
+const CreateModal = ({docReq, hideModal, refreshLc, lc}) => {
   const [fields, setFields] = useState([]);
   const [suggestedFields, setSuggestedFields] = useState([]);
   useEffect(() => {
-    if (!docReq) return undefined;
+    if (!docReq) {
+      return undefined;
+    }
     makeAPIRequest(`/lc/supported_creatable_docs/${docReq.type}/`)
-      .then(d => setFields(d));
+    .then(d => setFields(d));
     makeAPIRequest(`/lc/${lc.id}/doc_req/${docReq.id}/autopopulate/`)
-      .then(s => setSuggestedFields(s));
+    .then(s => setSuggestedFields(s));
   }, [docReq]);
-  if (!docReq) return null;
+  if (!docReq) {
+    return null;
+  }
   const schemaObj = {};
   let initialValues = {};
   let validationSchema = null;
@@ -406,7 +417,9 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
         initialValues[q.key] = initialValue;
       }
     });
-    if (!initialValues[q.key]) initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+    if (!initialValues[q.key]) {
+      initialValues[q.key] = TYPE_TO_DEFAULT[q.type];
+    }
   });
   fields.forEach(q => {
     schemaObj[q.key] = TYPE_TO_VALIDATION_SCHEMA[q.type];
@@ -420,7 +433,7 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
       initialValues={initialValues}
       validationSchema={validationSchema}
       enableReinitialize
-      onSubmit={(values, { setSubmitting }) => {
+      onSubmit={(values, {setSubmitting}) => {
         setSubmitting(true);
         const app = {};
         Object.entries(values).forEach((kv) => {
@@ -430,51 +443,48 @@ const CreateModal = ({ docReq, hideModal, refreshLc, lc}) => {
             app[key] = value;
           }
         });
-        const { lcid, id } = docReq;
+        const {lcid, id} = docReq;
         makeAPIRequest(`/lc/${lcid}/doc_req/${id}/`, 'POST', app, true)
-          .then(() => hideModal())
-          .then(() => refreshLc())
-          .then(() => setSubmitting(false));
-          // .then(async res => {
-          //   let text = await res.text();
-          //   if (res.status === 200) {
-          //     localStorage.removeItem(`lc/${match.params.bankid}`);
-          //     setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you ASAP."});
-          //   } else {
-          //     if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
-          //     localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values))
-          //     setStatus({status: "error", message: `Error submitting form: ${text}`});
-          //   }
-          //   })
+        .then(() => hideModal())
+        .then(() => refreshLc())
+        .then(() => setSubmitting(false));
+        // .then(async res => {
+        //   let text = await res.text();
+        //   if (res.status === 200) {
+        //     localStorage.removeItem(`lc/${match.params.bankid}`);
+        //     setStatus({status: "success", message: "Your LC app has been sent in! The bank will get back to you
+        // ASAP."}); } else { if (text.length > 250) text = "Unknown server error. Please contact steve@bountium.org."
+        // localStorage.setItem(`lc/${match.params.bankid}`, JSON.stringify(values)) setStatus({status: "error",
+        // message: `Error submitting form: ${text}`}); } })
       }}
     >
-    {({ isSubmitting }) => (
-      isSubmitting ? <MoonLoader
-            size={45}
-            color={config.accentColor}
-            loading={true}
-            css={css`
+      {({isSubmitting}) => (
+        isSubmitting ? <MoonLoader
+          size={45}
+          color={config.accentColor}
+          loading={true}
+          css={css`
               margin: 0 auto;
             `}
-          /> : (
-      <Form>
-      <DocReqTitle>Create {docReq.docName}</DocReqTitle>
-      {fields && fields.map(question => {
-        const Component = TYPE_TO_COMPONENT[question.type];
-        return <Component key={question.key} question={question} />;
-      })}
-      <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
-      <Button disabled={isSubmitting} type="submit">Create</Button>
-      </div>
-      </Form>
+        /> : (
+          <Form>
+            <DocReqTitle>Create {docReq.docName}</DocReqTitle>
+            {fields && fields.map(question => {
+              const Component = TYPE_TO_COMPONENT[question.type];
+              return <Component key={question.key} question={question}/>;
+            })}
+            <div style={{display: "flex", justifyContent: "center", marginTop: "20px"}}>
+              <Button disabled={isSubmitting} type="submit">Create</Button>
+            </div>
+          </Form>
 
-          )
-    )}
-      </Formik>
+        )
+      )}
+    </Formik>
   )
 };
 
-const UploadModal = ({ docReq, refreshLc, hideModal }) => {
+const UploadModal = ({docReq, refreshLc, hideModal}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const uploadFile = (file) => {
     if (!file) {
@@ -482,33 +492,33 @@ const UploadModal = ({ docReq, refreshLc, hideModal }) => {
       return;
     }
     setIsSubmitting(true);
-    const { lcid, id } = docReq;
+    const {lcid, id} = docReq;
     postFile(`/lc/${lcid}/doc_req/${id}/`, file)
-      .then(() => hideModal())
-      .then(() => refreshLc())
-      .then(() => setIsSubmitting(false));
+    .then(() => hideModal())
+    .then(() => refreshLc())
+    .then(() => setIsSubmitting(false));
   };
 
   return (
     <>
       <DocReqTitle>Upload {docReq.docName}</DocReqTitle>
-      <div style={{ display: "flex", flexDirection: "column", maxWidth: '700px' , margin: 'auto'}}>
+      <div style={{display: "flex", flexDirection: "column", maxWidth: '700px', margin: 'auto'}}>
         {isSubmitting ? <MoonLoader
-            size={45}
-            color={config.accentColor}
-            loading={true}
-            css={css`
+          size={45}
+          color={config.accentColor}
+          loading={true}
+          css={css`
               margin: 0 auto;
             `}
-          /> : (
-        <FileUpload>
-          Upload File
-          <input
-            type="file"
-            onChange={(e) => uploadFile(e.target.files[0])}
-            style={{ display: "none" }}
-          />
-        </FileUpload>
+        /> : (
+          <FileUpload>
+            Upload File
+            <input
+              type="file"
+              onChange={(e) => uploadFile(e.target.files[0])}
+              style={{display: "none"}}
+            />
+          </FileUpload>
         )}
       </div>
     </>
@@ -581,8 +591,8 @@ const SmallHeader = styled.div`
   margin-right: 50px;
 `;
 
-const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, showModal, ...props }) => {
-  const { docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected } = docReq;
+const DocumentaryRequirement = ({documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, showModal, advisingAccess, ...props}) => {
+  const {docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected} = docReq;
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState('');
 
@@ -605,11 +615,11 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
         onClick={() => setExpanded((e) => !e)}
         {...props}
       >
-        <DocReqTitle style={{ margin: "15px 0" }}>
+        <DocReqTitle style={{margin: "15px 0"}}>
           {title}
           <FontAwesomeIcon
             icon={expanded ? faChevronDown : faChevronRight}
-            style={{ color: config.accentColor, marginLeft: "10px" }}
+            style={{color: config.accentColor, marginLeft: "10px"}}
           />
         </DocReqTitle>
         <DocReqDate>{dueDate}</DocReqDate>
@@ -619,13 +629,13 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
         <ExpandedDocumentaryEntry>
           <DocumentaryEntryFlex>
             <div>
-              <div style={{ marginRight: "30px" }}>
+              <div style={{marginRight: "30px"}}>
                 Required Values: {requiredValues}
               </div>
             </div>
             <div>
-              {live && linkToSubmittedDoc && <Button style={{ marginRight: "10px", minWidth: '80px' }}
-                onClick={() => showModal(docReq, lcid, "view")}>View</Button>}
+              {live && linkToSubmittedDoc && <Button style={{marginRight: "10px", minWidth: '80px'}}
+                                                     onClick={() => showModal(docReq, lcid, "view")}>View</Button>}
             </div>
             <div>
               {linkToSubmittedDoc && (
@@ -634,31 +644,31 @@ const DocumentaryRequirement = ({ documentaryRequirement: docReq, lcid, userType
                 </div>
               )}
               {live &&
-                status !== "Approved" &&
-                (!linkToSubmittedDoc || rejected) && (
-                  <Button style={{ marginRight: "10px", minWidth: '80px' }}
-                onClick={() => showModal(docReq, lcid, "create")}>Create</Button>
-                )}
+              status !== "Approved" &&
+              (!linkToSubmittedDoc || rejected) && (
+                <Button style={{marginRight: "10px", minWidth: '80px'}}
+                        onClick={() => showModal(docReq, lcid, "create")}>Create</Button>
+              )}
             </div>
           </DocumentaryEntryFlex>
           {live &&
-            userType === "issuer" &&
-            status !== "Approved" &&
-            !rejected &&
-            linkToSubmittedDoc && (
-              <DocumentaryEntryEvaluation>
-                <Button onClick={approve}>Approve</Button>
-                <Button onClick={reject}>Reject</Button>
-                <div>
-                  <SmallHeader>Comments</SmallHeader>
-                  <input
-                    type="text"
-                    value={comments}
-                    onChange={(e) => setComments(e.target.value)}
-                  />
-                </div>
-              </DocumentaryEntryEvaluation>
-            )}
+          (userType === "issuer" || (userType === "advisor" && advisingAccess)) &&
+          status !== "Approved" &&
+          !rejected &&
+          linkToSubmittedDoc && (
+            <DocumentaryEntryEvaluation>
+              <Button onClick={approve}>Approve</Button>
+              <Button onClick={reject}>Reject</Button>
+              <div>
+                <SmallHeader>Comments</SmallHeader>
+                <input
+                  type="text"
+                  value={comments}
+                  onChange={(e) => setComments(e.target.value)}
+                />
+              </div>
+            </DocumentaryEntryEvaluation>
+          )}
         </ExpandedDocumentaryEntry>
       )}
     </DocumentaryEntryWrapper>
@@ -680,8 +690,8 @@ const useModal = () => {
   }
 };
 
-const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
-  const { showModal, hideModal, isModalShowing, modalDocReq } = useModal();
+const DocumentaryRequirements = ({lc, userType, live, refreshLc}) => {
+  const {showModal, hideModal, isModalShowing, modalDocReq} = useModal();
   const docReqs = lc.documentaryrequirementSet;
   return (
     <Panel title="Documentary Requirements">
@@ -697,15 +707,17 @@ const DocumentaryRequirements = ({ lc, userType, live, refreshLc }) => {
           lcid={lc.id}
           live={live}
           userType={userType}
+          advisingAccess={lc?.confirmationMeans === "Confirmation by a bank selected by the beneficiary"
+          && lc?.creditExpiryLocation?.id === lc?.advisingBank?.id}
           refreshLc={refreshLc}
           key={d.docName}
           showModal={showModal}
-          />
-        ) : (
-          <div style={{ marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
-            There are no documentary requirements for this LC.
-          </div>
-        )
+        />
+      ) : (
+        <div style={{marginTop: "10px", fontStyle: "italic", fontWeight: "300"}}>
+          There are no documentary requirements for this LC.
+        </div>
+      )
       }
       <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc} lc={lc}/>
     </Panel>
