@@ -55,8 +55,8 @@ const Error = styled.span`
   padding-right: 20px;
 `;
 
-export const Modal = ({show, title, children, onCancel, onSelect, containerStyle,
-  onShow, error, selectDisabled, selectButton = "Select", cancelButton = "Cancel"}) => {
+export const Modal = ({show, title, children, onCancel, onSelect = () => {}, containerStyle,
+  onShow, error, selectDisabled, submitFormik, selectButton = "Select", cancelButton = "Cancel"}) => {
 
   useEffect(() => {
     const scrollTop = show ? `-${document.documentElement.scrollTop}px` : -parseInt(document.body.style.top);
@@ -88,7 +88,7 @@ export const Modal = ({show, title, children, onCancel, onSelect, containerStyle
           <ButtonWrapper>
             <Error>{error}</Error>
             <CancelButton type={"button"} onClick={onCancel}>{cancelButton}</CancelButton>
-            <ActionButton type={"button"} disabled={selectDisabled} onClick={onSelect}>{selectButton}</ActionButton>
+            <ActionButton type={submitFormik ? "submit" : "button"} disabled={selectDisabled} onClick={onSelect}>{selectButton}</ActionButton>
           </ButtonWrapper>
         </Container>
       </Background>

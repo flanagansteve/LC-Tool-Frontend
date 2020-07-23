@@ -1,4 +1,4 @@
-import React, {useContext, useEffect, useRef, useState} from "react";
+import React, {Fragment, useContext, useEffect, useRef, useState} from "react";
 import styled from "styled-components";
 import { NavLink } from "react-router-dom";
 import {Field, Form, Formik, useField, useFormikContext} from "formik";
@@ -17,6 +17,9 @@ import ComplianceChecks from "./ComplianceChecks";
 import { Link } from "react-router-dom";
 import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
+import {SearchableSelect} from "../../components/ui/Dropdown";
+import {array, boolean, date, number, object, string} from 'yup';
+
 
 // TODO break this file up into multiple files
 
@@ -32,6 +35,51 @@ const StyledLink = styled(Link)`
   color: #000;
   line-height: 1.25;
 `
+
+const DocReqFieldWrapper = styled.div`
+  padding-top: 10px;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #cdcdcd;
+  ${props => props.disabled && `background-color: ${disabledBackgroundColor};`}
+  > :first-child {
+    width: 130px;
+    font-weight: 300;
+    border-right: 1px solid #cdcdcd;
+    padding: 10px 10px 5px;
+    text-align: right;
+  }
+`;
+
+const Asterisk = styled.span`
+  color: #dc3545;
+  font-size: 16px;
+`;
+
+const StyledDocReqField = styled(Field)`
+  padding: 10px 10px 5px;
+  font-size: 16px;
+  border: none;
+  flex: 1;
+  width: calc(100% - 130px);
+  line-height: 1em;
+  color: #000;
+  background-color: ${props => props.disabled ? disabledBackgroundColor : '#fff'};
+`;
+
+const InputWrapper = styled.div`
+  max-width: 700px;
+  margin: 10px auto;
+  padding: 15px 25px;
+  border-radius: 10px;
+  border: 1px solid #cdcdcd;
+  transition: border 0.3s;
+  background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
+
+  ${props => !props.disabled && `&:hover {
+    border: 1px solid ${config.accentColor};
+  }`}
+`;
 
 const LeftColumn = styled.div`
   flex-grow: 1;
@@ -190,8 +238,21 @@ const HistoryOrder = styled.div`
 `;
 
 const BankInfo = ({bank}) => {
-  console.log(bank);
-  return (
+    const [expanded, setExpanded] = useState(false);
+
+    return (
+      <Fragment>
+      <AdvisorTitle style={{margin: "15px 0 0 0"}} clickable
+                    onClick={() => setExpanded((e) => !e)}>
+          {bank ?
+              <a href={`/bank/profile/${bank.id}`}>{bank.name}</a>
+              : <p>None</p>}
+          <FontAwesomeIcon
+              icon={expanded ? faChevronDown : faChevronRight}
+              style={{color: config.accentColor, marginLeft: "10px"}}
+          />
+      </AdvisorTitle>
+          {expanded &&
       <ExpandedAdvisor>
         <p>address-</p>
         <p style = {{paddingLeft: 20}}>{bank.address}</p>
@@ -200,30 +261,103 @@ const BankInfo = ({bank}) => {
         <p>country-</p>
         <p style = {{paddingLeft: 20}}>{bank.country}</p>
       </ExpandedAdvisor>
+              }
+      </Fragment>
   )
 }
 
-const AdvisingBank = ({lc}) => {
+
+const BasicInput = ({bankId}) => {
+    const [, meta, helpers] = useField("advisingBank");
+    const {error, touched} = meta;
+    const {handleChange} = useFormikContext();
+    const {value} = meta;
+    const {setValue} = helpers;
+    const autocompleteTimeout = useRef(null);
+    const [suggested, setSuggested] = useState([]);
+
+    useEffect(() => {
+        clearTimeout(autocompleteTimeout.current);
+        const timeoutId = setTimeout(() =>
+            makeAPIRequest(`/bank/autocomplete/?string=${value.name}&exclude_ids=[${bankId}]`)
+                .then(suggested => setSuggested(suggested)), 400);
+        autocompleteTimeout.current = timeoutId;
+    }, [value]);
+
+    return (
+        <InputWrapper id={"advisingBank"}>
+            {error && touched && <Subtitle style={{color: '#dc3545'}}>{typeof error !== 'object' ? error : null}</Subtitle>}
+            <DocReqFieldWrapper>
+                <span>{"Name"}<Asterisk> *</Asterisk></span>
+                <SearchableSelect
+                    onSelect={item => setValue(
+                        {...value, name: item.name, address: item.address, country: item.country, email: item.email})}
+                    items={suggested}
+                    questionKey={"advisingBank.name"}
+                    handleChange={handleChange}
+                />
+            </DocReqFieldWrapper>
+            <DocReqFieldWrapper>
+                <span>{"Address"}<Asterisk> *</Asterisk></span>
+                <StyledDocReqField type={"text"} name={"advisingBank.address"}></StyledDocReqField>
+            </DocReqFieldWrapper>
+            <DocReqFieldWrapper>
+                <span>{"Country"}<Asterisk> *</Asterisk></span>
+                <StyledDocReqField type={"text"} name={"advisingBank.country"}></StyledDocReqField>
+            </DocReqFieldWrapper>
+            <DocReqFieldWrapper>
+                <span>{"Email"}<Asterisk> *</Asterisk></span>
+                <StyledDocReqField type={"text"} name={"advisingBank.email"}></StyledDocReqField>
+            </DocReqFieldWrapper>
+        </InputWrapper>
+    )
+};
+
+
+const AdvisingBank = ({lc, userType, refreshLc}) => {
   const advisingBank = get(lc, 'advisingBank');
-  const [expanded, setExpanded] = useState(false);
+  const type3Bank = get(lc, 'type3AdvisingBank');
+  const [advisingModal, setAdvisingModal] = useState(false);
 
 
   return (
+      <Fragment>
       <Panel title="Advising Banks">
         <ClientInformationWrapper>
-          <AdvisorTitle style={{margin: "15px 0 0 0"}} clickable
-                       onClick={() => setExpanded((e) => !e)}>
-            {advisingBank ?
-                <a href={`/bank/profile/${advisingBank.id}`}>{advisingBank.name}</a>
-                : <p>None</p>}
-            <FontAwesomeIcon
-                icon={expanded ? faChevronDown : faChevronRight}
-                style={{color: config.accentColor, marginLeft: "10px"}}
-            />
-          </AdvisorTitle>
-          {expanded && advisingBank && <BankInfo bank={advisingBank} />}
+          <BankInfo bank={advisingBank} />
+          {userType === "issuer" && !type3Bank ? <Button onClick={() => setAdvisingModal(true)}>Add Forwarding Bank</Button> : <BankInfo bank={type3Bank} /> }
         </ClientInformationWrapper>
       </Panel>
+
+          <Formik validationSchema={object().shape({advisingBank: object().shape({name: string().required(), address: string().required(), country: string().required(), email: string().required()})})} initialValues={ {advisingBank : {name: "", address: "", country: "", email: ""}}}
+                  onSubmit={(values, {setSubmitting}) => {
+              setSubmitting(true);
+              makeAPIRequest(`/lc/${lc.id}/issuer/select_advising_bank/`, 'PUT', values.advisingBank)
+                  .then(() =>       {
+                      setAdvisingModal(false)
+                      setSubmitting(false)
+                      refreshLc();
+                  }
+                  )
+                  .catch((error) => {
+                      console.log(error);
+                      setSubmitting(false);
+                  })
+          }} >
+            <Form>
+                <Modal containerStyle={{width: "55%"}} show={advisingModal === true}
+                       title={"Add Forwarding Bank"}
+                       onCancel={() => setAdvisingModal(false)}
+                       selectButton={"Add"}
+                       submitFormik
+                >
+                    <div>
+                        <BasicInput bankId={lc.issuer.id} />
+                    </div>
+                </Modal>
+            </Form>
+          </Formik>
+      </Fragment>
   )
 }
 
@@ -935,7 +1069,7 @@ const LCViewPage = ({match}) => {
                        stateName={stateName} setModal={setModal}/>
           {get(lc, 'latestVersionNotes') && <OrderNotes lc={lc}/>}
           <ClientInformation lc={lc}/>
-          <AdvisingBank lc={lc} />
+          <AdvisingBank lc={lc} userType = {userType} refreshLc = {refreshLc} />
           {userType === 'issuer' ? null : <IssuerBank lc={lc} />}
           <Comments lc={lc} setLc={setLc} comments={lc?.comments} userType={userType}/>
         </LeftColumn>
