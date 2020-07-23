@@ -4,6 +4,7 @@ import { useAuthentication, UserContext } from "../../../utils/auth";
 import { makeAPIRequest } from "../../../utils/api";
 import BasicLayout from "../../../components/BasicLayout";
 import {get} from "lodash";
+import {Modal} from "../../../components/ui/Modal";
 import {faEdit, faSearch} from "@fortawesome/free-solid-svg-icons";
 import Button from "../../../components/ui/Button";
 import {Dropdown} from "../../../components/ui/Dropdown";
@@ -19,6 +20,19 @@ const StyledLink = styled(Link)`
   line-height: 1.25;
 `
 
+const StyledButton = styled.button`
+  background-color: ${(props) => props.selected ? config.accentColor : `#fff`};
+  border-radius: 5px;
+  padding: 5px 10px;
+  color: ${(props) => props.selected ? `#fff` : config.accentColor};
+  border: 1px solid ${config.accentColor};
+  font-size: 16px;
+  cursor: pointer;
+  margin: 10px 0;
+  display: flex;
+  align-items: center;
+`;
+
 const ListEntryField = styled.li`
   flex-grow: 1;
   flex-basis: 20%;
@@ -33,7 +47,7 @@ const ListEntryWrapper = styled.ul`
   border: 1px solid #cdcdcd;
   font-weight: 500;
   align-items: center;
-
+  
   ${(props) => !props.header && `
   font-weight: 400;
   &:hover {
@@ -45,8 +59,11 @@ const ListEntryWrapper = styled.ul`
 
 
 export const LCListEntry = ({setChange, toChange, employee, setEmployees, bank_id, edit}) => {
+    console.log(bank_id);
+    console.log(employee);
     const options = ['Authorized', 'Unauthorized'];
     const [index, setIndex] = useState(null);
+    const [modal, setModal] = useState(false);
 
         useEffect(() => {
             console.log("dropdown use effect")
@@ -66,35 +83,50 @@ export const LCListEntry = ({setChange, toChange, employee, setEmployees, bank_i
             setIndex(1);
     }, [setIndex, toChange, index]);
 
+    const Reject = () => {
+        makeAPIRequest(`/business/${employee.employee.id}/${bank_id}/Unauthorized/`, 'PUT')
+            .then(json => {
+                console.log(json);
+                setIndex(1);
+                window.location.reload(true);
+            }).catch((error) => {console.log(error)})
+    }
 
-    const handleChange = (item) => {
-        for (let changeItem of toChange) {
-            // check if it has already been changed once and should just change
-            if (changeItem.id === employee.employee.id) {
-                changeItem.authField = item;
-                let newList = toChange;
-                setChange(newList);
-                setIndex(options.indexOf(item));
-                return;
-            }
-        }
-        // otherwise add it to the change list
-        let newList = toChange;
-        newList.push({id: employee.employee.id, authField: item});
-        setChange(newList);
-        setIndex(options.indexOf(item));
-        return;
+    //  Authorize the employee submitting the LC
+    const Authorize = () => {
+        makeAPIRequest(`/business/${employee.employee.id}/${bank_id}/Authorized/`, 'PUT')
+            .then(json => {
+                console.log(json);
+                setIndex(0);
+                window.location.reload(true);
+            }).catch((error) => {console.log(error)})
     }
 
     return (
+        <Fragment>
             <ListEntryWrapper>
                 <ListEntryField>{employee.employee.name}</ListEntryField>
                 <ListEntryField>{employee.employee.email}</ListEntryField>
-                <ListEntryField>{edit ?
-                    <Dropdown items={options} onChange={item => handleChange(item)}
-                              selectedIndex={index}/>
-                              : options[index]}</ListEntryField>
+                <ListEntryField>
+               <StyledButton style = {{float: "left"}} selected={options[index] === "Authorized"} onClick={Authorize}>Authorize</StyledButton>
+                    <StyledButton selected={options[index] === "Unauthorized"} onClick={() => {
+                        if (options[index] !== "Unauthorized"){
+                            setModal(true)
+                        }
+                    }}>Reject</StyledButton>
+                </ListEntryField>
             </ListEntryWrapper>
+
+            <Modal containerStyle={{width: "55%"}} show={modal === true}
+                   title={"Unauthorize Employee"}
+                   onCancel={() => setModal(false)}
+                   onSelect={Reject}
+                   selectButton={"Yes"}>
+                <div>
+                    Are you sure you want to unauthorize {employee.employee.name}? This will affect every other Letter of Credit they have applied for.
+                </div>
+            </Modal>
+        </Fragment>
     )
 }
 
@@ -134,40 +166,21 @@ const AuthorizedEmployees = ({client, user}) => {
         makeAPIRequest(`/business/${client.id}/${bank_id}/authorized_employees/`).then(json => {
             setEmployees(json)
         })
-    }, [client.id, bank_id])
+    }, [client, bank_id])
 
-    // have a refresh with an await with the fetch... and then reset the change in the LCListEntry
-
-    function handleSave() {
-        for (let changeItem of toChange) {
-            makeAPIRequest(`/business/${changeItem.id}/${bank_id}/${changeItem.authField}/`, 'PUT')
-                .then(json => {
-                }).catch((error) => {console.log(error)})
-        }
-        window.location.reload(false);
-        // setEdit(false);
-        // setChange([]);
-    }
 
     return (
         <BasicLayout
             title={"Authorized Employees"}
             isLoading={!employees}
-            style = {{display: "inline"}}>
+            style = {{display: "inline"}}
+            >
             {/* "Heading" of the feed - delete if you think it unnecessary*/}
             <div>
                 <ListEntryWrapper header>
                     <ListEntryField>Employee</ListEntryField>
                     <ListEntryField>Email</ListEntryField>
                     <ListEntryField>Authorized</ListEntryField>
-                    {edit ? <div style = {{position: "relative"}}>
-                           <Button onClick={() => handleSave()}style = {{margin: 10}}>Save</Button>
-                            <Button onClick={() => {
-                                setEdit(false)
-                                setChange([]);
-                            }}>Cancel</Button></div> :
-                    <FontAwesomeIcon icon={faEdit} onClick={() => setEdit(true)}  style={{ padding: "0 10px", cursor: "pointer"}} />}
-
                 </ListEntryWrapper>
             </div>
                     {employees.map(employee => <LCListEntry toChange = {toChange} setChange={setChange} employee={employee} setEmployees = {setEmployees} bank_id={bank_id} key={employee.email} edit={edit}/>)}
@@ -175,6 +188,18 @@ const AuthorizedEmployees = ({client, user}) => {
             {employees.length === 0 ? <center style={{ marginTop: '30px', fontStyle: 'italic', color: '#888' }}>This Business has no Employees</center> : null}
         </BasicLayout>
     )
+}
+
+const AdvisorClientFeed = ({match}) => {
+    useAuthentication(`/bank/lcs/client/${match.params.clientid}`);
+    const [user] = useContext(UserContext);
+    const [client, setClient] = useState(null);
+    useEffect(() => {
+        makeAPIRequest(`/business/${match.params.clientid}/`)
+            .then(json => setClient(json))
+    }, [match.params.clientid])
+
+
 }
 
 const ManageClientFeed = ({ match }) => {
@@ -193,6 +218,9 @@ const ManageClientFeed = ({ match }) => {
         url={`/lc/by_client/${match.params.clientid}/`}
         user={user}
         hideSearch
+        clientPage
+        currentlyOnIssuer
+        // switchLink={}
     />
         {client ?
             <AuthorizedEmployees

@@ -30,6 +30,9 @@ import ManageClientFeed from "./pages/bank/feeds/ManageClientFeed";
 import BankProfile from "./pages/ProfilePage/BankProfile";
 import BusinessProfile from "./pages/ProfilePage/BusinessProfile";
 import BankViewProfile from "./pages/ProfilePage/BankViewProfile";
+import BankLiveLCFeedPageAdvisor from "./pages/bank/feeds/BankLiveLCFeedPageAdvisor";
+import BankLCFeedPageAdvisor from "./pages/bank/feeds/BankLCFeedPageAdvisor";
+import BankLCAppFeedPageAdvisor from "./pages/bank/feeds/BankLCAppFeedPageAdvisor";
 
 // TODO It seems like having the presentational nav in this mostly-container
 //      component is poor separation of concerns. Look into this.
@@ -64,12 +67,20 @@ function App() {
                 <BankClientFeedPage {...props}/>} />
           <Route path="/bank/lcs/client/:clientid" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLCFeedPageByClient {...props}/>}/>
+          <Route path="/bank/lcs/live/advisor" render ={props => user && user.business ? <Redirect to={"/"}/> :
+          <BankLiveLCFeedPageAdvisor {...props}/>}/>
+          <Route path="/bank/lcs/live/issuer" render ={props => user && user.business ? <Redirect to={"/"}/> :
+              <BankLiveLCFeedPage {...props}/>}/>
           <Route path="/bank/lcs/live" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLiveLCFeedPage {...props}/>}/>
+          <Route path="/bank/lcs/apps/issuer" render={props => user && user.business ? <Redirect to={"/"}/> :
+              <BankLCAppFeedPage {...props}/>}/>
+          <Route path="/bank/lcs/apps/advisor" render={props => user && user.business ? <Redirect to={"/"}/> :
+              <BankLCAppFeedPageAdvisor {...props}/>}/>
           <Route path="/bank/lcs/apps" render={props => user && user.business ? <Redirect to={"/"}/> :
             <BankLCAppFeedPage {...props}/>}/>
           <Route path="/bank/lcs/advisor" render={props => user && user.business ? <Redirect to={"/"}/> :
-              <AdvisorLCFeedPage {...props}/>}/>
+              <BankLCFeedPageAdvisor {...props}/>}/>
           <Route path="/bank/lcs/issuer" render={props => user && user.business ? <Redirect to={"/"}/> :
               <BankLCFeedPage {...props}/>}/>
           <Route path="/bank/lcs" render={props => user && user.business ? <Redirect to={"/"}/> :

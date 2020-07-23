@@ -928,7 +928,7 @@ const LCViewPage = ({match}) => {
   }, [match.params.lcid, user?.id]);
 
   return (
-    <LCView lc={lc}>
+    <LCView lc={lc} userType = {userType}>
       <TwoColumnHolder>
         <LeftColumn>
           <OrderStatus lc={lc} totalCredit={totalCredit} userType={userType} setLc={setLc} live={live}

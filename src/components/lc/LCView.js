@@ -42,7 +42,7 @@ const StyledLink = styled(Link)`
   display: block;
 `
 
-const LCView = ({ lc, children }) => {
+const LCView = ({ lc, children, userType }) => {
   return (
     <Margin>
       <StyledLink to="/">
@@ -61,8 +61,8 @@ const LCView = ({ lc, children }) => {
         ) : (
           <>
       <TitleWrapper>
-      {lc.client &&
-          <LCTitle to={`/bank/lcs/client/${lc.client.id}`}>{lc.client.name}</LCTitle>
+      {lc.client && (userType === "issuer" || userType === "advising") &&
+          <LCTitle to={`/bank/client/${lc.client.id}`}>{lc.client.name}</LCTitle>
       }
         <Subtitle>{`LC #${lc.id}`}</Subtitle>
       </TitleWrapper>
