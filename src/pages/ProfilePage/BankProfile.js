@@ -6,7 +6,6 @@ import styled from "styled-components";
 const BankProfile = () => {
     useAuthentication("/bank/account");
     const [user, setUser] = useContext(UserContext);
-    console.log(user);
 
     const Header = styled.h3`
   padding: 30px 0;

@@ -59,14 +59,11 @@ const ListEntryWrapper = styled.ul`
 
 
 export const LCListEntry = ({setChange, toChange, employee, setEmployees, bank_id, edit}) => {
-    console.log(bank_id);
-    console.log(employee);
     const options = ['Authorized', 'Unauthorized'];
     const [index, setIndex] = useState(null);
     const [modal, setModal] = useState(false);
 
         useEffect(() => {
-            console.log("dropdown use effect")
         for (let changeItem of toChange) {
             if (changeItem.id === employee.employee.id) {
                 setIndex(options.indexOf(changeItem.authField));
@@ -86,7 +83,6 @@ export const LCListEntry = ({setChange, toChange, employee, setEmployees, bank_i
     const Reject = () => {
         makeAPIRequest(`/business/${employee.employee.id}/${bank_id}/Unauthorized/`, 'PUT')
             .then(json => {
-                console.log(json);
                 setIndex(1);
                 window.location.reload(true);
             }).catch((error) => {console.log(error)})
@@ -96,7 +92,6 @@ export const LCListEntry = ({setChange, toChange, employee, setEmployees, bank_i
     const Authorize = () => {
         makeAPIRequest(`/business/${employee.employee.id}/${bank_id}/Authorized/`, 'PUT')
             .then(json => {
-                console.log(json);
                 setIndex(0);
                 window.location.reload(true);
             }).catch((error) => {console.log(error)})
@@ -162,7 +157,6 @@ const AuthorizedEmployees = ({client, user}) => {
     const [toChange, setChange] = useState([]);
 
     useEffect(() => {
-        console.log("authorized use effect")
         makeAPIRequest(`/business/${client.id}/${bank_id}/authorized_employees/`).then(json => {
             setEmployees(json)
         })

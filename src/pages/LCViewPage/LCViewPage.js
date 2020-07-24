@@ -131,8 +131,8 @@ const APPROVALS_TO_STATE = {
   },
   clientIssuer: {
     message: "LC has been sent to beneficiary and is awaiting approval or proposed changes.",
-    canEdit: ['beneficiary'],
-    canApprove: ['beneficiary', 'advisor'],
+    canEdit: ['beneficiary', 'advisor'],
+    canApprove: ['beneficiary'],
   },
   // clientBene is not possible
   bene: {
@@ -384,7 +384,6 @@ const IssuerBank = ({lc}) => {
 }
 
 const ClientInformation = ({lc}) => {
-  console.log(lc);
   const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
   const [clientOrders, setClientOrders] = useState(null);

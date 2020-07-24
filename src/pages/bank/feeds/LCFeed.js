@@ -80,7 +80,6 @@ const Filter = ({ lcs, setShownLcs }) => {
 }
 
 const LCListEntry = ({ lc }) => {
-  console.log(lc);
   // NOTE: due_date and credit_amt will only be available for DigitalLCs
   return (
       <StyledLink to={`/lc/${lc.id}`}>

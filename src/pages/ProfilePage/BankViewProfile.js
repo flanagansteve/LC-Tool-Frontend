@@ -28,7 +28,6 @@ const BankViewProfile = ({match}) => {
 
 
     if (bank && user) {
-        console.log(bank);
         return (
             <BasicLayout title={bank.name} isLoading={!user}>
                 <div style={{
