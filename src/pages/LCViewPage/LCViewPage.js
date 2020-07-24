@@ -84,7 +84,7 @@ const APPROVALS_TO_STATE = {
   clientIssuer: {
     message: "LC has been sent to beneficiary and is awaiting approval or proposed changes.",
     canEdit: ['beneficiary'],
-    canApprove: ['beneficiary'],
+    canApprove: ['beneficiary', 'advisor'],
   },
   // clientBene is not possible
   bene: {
