@@ -61,7 +61,7 @@ const ModalButtonsWrapper = styled.div`
 
 const MODAL_TYPES = {CREATE: 'create', UPLOAD: 'upload'};
 
-const Modal = ({show, docReq, hideModal, refreshLc, lc}) => {
+const Modal = ({show, docReq, hideModal, refreshLc, userType, lc}) => {
   const [type, setType] = useState(MODAL_TYPES.CREATE);
   if (docReq && docReq.type === 'generic') {
     return (
@@ -87,12 +87,12 @@ const Modal = ({show, docReq, hideModal, refreshLc, lc}) => {
       ) : docReq && (
         <ModalWrapper>
           <ModalButtonsWrapper>
-            <Button onClick={() => setType(MODAL_TYPES.CREATE)} unselected={type !== MODAL_TYPES.CREATE}>Create Digital
-              DocReq</Button>
+            {userType !== "issuer" && <Button onClick={() => setType(MODAL_TYPES.CREATE)} unselected={type !== MODAL_TYPES.CREATE}>Create Digital
+              DocReq</Button>}
             <Button onClick={() => setType(MODAL_TYPES.UPLOAD)} unselected={type !== MODAL_TYPES.UPLOAD}>Upload PDF
               DocReq</Button>
           </ModalButtonsWrapper>
-          {type === MODAL_TYPES.CREATE
+          {userType === "issuer" ? <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/> : type === MODAL_TYPES.CREATE
             ? <CreateModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal} lc={lc}/>
             : <UploadModal docReq={docReq} refreshLc={refreshLc} hideModal={hideModal}/>
           }
@@ -590,11 +590,12 @@ const SmallHeader = styled.div`
   min-width: 150px;
   margin-right: 50px;
 `;
-
-const DocumentaryRequirement = ({documentaryRequirement: docReq, lcid, userType, status, live, refreshLc, showModal, advisingAccess, ...props}) => {
+// there's no link to the submitted doc
+const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySelectedAccess, lcid, userType, status, live, refreshLc, showModal, advisingAccess, ...props}) => {
   const {docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected} = docReq;
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState('');
+
 
   const approve = () => {
     makeAPIRequest(`/lc/${lcid}/doc_req/${id}/evaluate/`, 'POST', {
@@ -634,7 +635,9 @@ const DocumentaryRequirement = ({documentaryRequirement: docReq, lcid, userType,
               </div>
             </div>
             <div>
-              {live && linkToSubmittedDoc && <Button style={{marginRight: "10px", minWidth: '80px'}}
+              {live &&
+              // linkToSubmittedDoc &&
+              <Button style={{marginRight: "10px", minWidth: '80px'}}
                                                      onClick={() => showModal(docReq, lcid, "view")}>View</Button>}
             </div>
             <div>
@@ -645,17 +648,18 @@ const DocumentaryRequirement = ({documentaryRequirement: docReq, lcid, userType,
               )}
               {live &&
               status !== "Approved" &&
-              (!linkToSubmittedDoc || rejected) && (
-                <Button style={{marginRight: "10px", minWidth: '80px'}}
+              (!linkToSubmittedDoc || rejected) &&
+                  (userType === "issuer" || userType === "beneficiary" || (userType === 'Beneficiary-Selected Advisor' && beneficiarySelectedAccess)) && ( <Button style={{marginRight: "10px", minWidth: '80px'}}
                         onClick={() => showModal(docReq, lcid, "create")}>Create</Button>
               )}
             </div>
           </DocumentaryEntryFlex>
           {live &&
-          (userType === "issuer" || (userType === "advisor" && advisingAccess)) &&
+          (userType === "issuer" || (userType === "Beneficiary-Selected Advisor" && beneficiarySelectedAccess)) &&
           status !== "Approved" &&
           !rejected &&
-          linkToSubmittedDoc && (
+          // linkToSubmittedDoc &&
+          (
             <DocumentaryEntryEvaluation>
               <Button onClick={approve}>Approve</Button>
               <Button onClick={reject}>Reject</Button>
@@ -709,6 +713,7 @@ const DocumentaryRequirements = ({lc, userType, live, refreshLc}) => {
           userType={userType}
           advisingAccess={lc?.confirmationMeans === "Confirmation by a bank selected by the beneficiary"
           && lc?.creditExpiryLocation?.id === lc?.advisingBank?.id}
+          beneficiarySelectedAccess ={lc.beneficiarySelectedDocReq}
           refreshLc={refreshLc}
           key={d.docName}
           showModal={showModal}
@@ -719,7 +724,7 @@ const DocumentaryRequirements = ({lc, userType, live, refreshLc}) => {
         </div>
       )
       }
-      <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc} lc={lc}/>
+      <Modal show={isModalShowing} docReq={modalDocReq} hideModal={hideModal} refreshLc={refreshLc} lc={lc} userType = {userType}/>
     </Panel>
   );
 };

@@ -131,7 +131,7 @@ const APPROVALS_TO_STATE = {
   },
   clientIssuer: {
     message: "LC has been sent to beneficiary and is awaiting approval or proposed changes.",
-    canEdit: ['beneficiary', 'advisor'],
+    canEdit: ['beneficiary', 'Beneficiary-Selected Advisor'],
     canApprove: ['beneficiary'],
   },
   // clientBene is not possible
@@ -164,12 +164,17 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ];
   const handleClickApprove = async () => {
-    const approvedCreditAmt = lc.client.approvedCredit.filter(
-      model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
-    if (userType === "issuer" && (!approvedCreditAmt || parseFloat(totalCredit) +
-      parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
-      setModal("creditOverflowApprove");
-    } else {
+      if (userType === "issuer") {
+          const approvedCreditAmt = lc.client.approvedCredit.filter(
+              model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+          if ((!approvedCreditAmt || parseFloat(totalCredit) +
+              parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
+              setModal("creditOverflowApprove");
+          }
+          makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
+              .then(json => setLc({...lc, [`${userType}Approved`]: true}));
+      }
+    else {
       makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
       .then(json => setLc({...lc, [`${userType}Approved`]: true}));
     } // TODO fix
@@ -193,7 +198,7 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
       <OrderStatusWrapper>
         {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
         <center><Button onClick={handleClickApprove}>Approve</Button></center>}
-        {allApproved && !paidOut && userType === "issuer" &&
+        {allApproved && !paidOut && (userType === "issuer" || userType === "Forwarding Bank") &&
         <center><Button onClick={handleClickPayout}
                         style={{marginBottom: '15px'}}>Pay Out</Button></center>}
         {allApproved && !requested && userType === "beneficiary" &&
@@ -318,14 +323,16 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
   const advisingBank = get(lc, 'advisingBank');
   const type3Bank = get(lc, 'type3AdvisingBank');
   const [advisingModal, setAdvisingModal] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+
 
 
   return (
       <Fragment>
       <Panel title="Advising Banks">
         <ClientInformationWrapper>
-          <BankInfo bank={advisingBank} />
-          {userType === "issuer" && !type3Bank ? <Button onClick={() => setAdvisingModal(true)}>Add Forwarding Bank</Button> : <BankInfo bank={type3Bank} /> }
+            {advisingBank ? <BankInfo bank={advisingBank} /> : null}
+          {userType === "issuer" && !type3Bank && advisingBank ? <Button onClick={() => setAdvisingModal(true)}>Add Forwarding Bank</Button> : type3Bank ? <BankInfo bank={type3Bank} /> : null }
         </ClientInformationWrapper>
       </Panel>
 
@@ -334,15 +341,19 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
               setSubmitting(true);
               makeAPIRequest(`/lc/${lc.id}/issuer/select_advising_bank/`, 'PUT', values.advisingBank)
                   .then(() =>       {
-                      setAdvisingModal(false)
-                      setSubmitting(false)
+                      setAdvisingModal(false);
+                      setSubmitError("");
+                      setSubmitting(false);
                       refreshLc();
                   }
                   )
                   .catch((error) => {
-                      console.log(error);
-                      setSubmitting(false);
-                  })
+                      return error.text();
+                  }).then((message) => {
+                  console.log(message);
+                  setSubmitError(message);
+                  setSubmitting(false);
+              })
           }} >
             <Form>
                 <Modal containerStyle={{width: "55%"}} show={advisingModal === true}
@@ -351,6 +362,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
                        selectButton={"Add"}
                        submitFormik
                 >
+                    {submitError !== "" && <p>{submitError}</p> }
                     <div>
                         <BasicInput bankId={lc.issuer.id} />
                     </div>
@@ -371,12 +383,12 @@ const IssuerBank = ({lc}) => {
           {/*{advisingBank ?*/}
           {/*      <a href={`/bank/profile/${advisingBank.id}`}>{advisingBank.name}</a>*/}
           {/*    : <p>None</p>}*/}
-          <AdvisorTitle style={{margin: "15px 0 0 0"}} clickable
-                        onClick={() => setExpanded((e) => !e)}>
-            {issuer ?
-                <a href={`/bank/profile/${issuer.id}`}>{issuer.name}</a>
-                : <p>None</p>}
-          </AdvisorTitle>
+          {/*<AdvisorTitle style={{margin: "15px 0 0 0"}} clickable*/}
+          {/*              onClick={() => setExpanded((e) => !e)}>*/}
+          {/*  {issuer ?*/}
+          {/*      <a href={`/bank/profile/${issuer.id}`}>{issuer.name}</a>*/}
+          {/*      : <p>None</p>}*/}
+          {/*</AdvisorTitle>*/}
          <BankInfo bank={issuer} />
         </ClientInformationWrapper>
       </Panel>
@@ -1000,15 +1012,21 @@ const Comments = ({lc, setLc, comments, userType}) => {
 const LCViewPage = ({match}) => {
   useAuthentication(`/bank/lcs/${match.params.lcid}`);
   const [user] = useContext(UserContext);
-  const [modal, setModal] = useState("");
+    const [modal, setModal] = useState("");
   const [lc, setLc] = useState(null);
   const [totalCredit, setTotalCredit] = useState();
   let userType = 'unknown';
-  if (get(user, 'bank.id') === get(lc, 'issuer.id')) {
-    userType = 'issuer';
-  } if (get(user, 'bank.id') === get(lc, 'advisingBank.id')) {
-    userType = 'advisor';
-  } else if (get(user, 'business')) {
+
+    if (get(user, 'bank')) {
+        if (get(user, 'bank.id') === get(lc, 'issuer.id')) {
+            userType = 'issuer';
+        } else if (get(user, 'bank.id') === get(lc, 'advisingBank.id')) {
+            userType = 'Beneficiary-Selected Advisor';
+        } else if (get(user, 'bank.id') === get(lc, 'type3AdvisingBank.id')) {
+            userType = 'Forwarding Bank';
+        }
+    }
+  else if (get(user, 'business')) {
     if (get(user, 'business.id') === get(lc, 'client.id')) {
       userType = 'client';
     } else if (get(user, 'business.id') === get(lc, 'beneficiary.id')) {

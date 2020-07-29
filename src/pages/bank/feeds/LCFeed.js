@@ -105,6 +105,7 @@ const LCFeed = ({ title, user, url, hideSearch, currentlyOnIssuer, currentlyOnAd
       .then(json => {
         setLcs(json);
         setShownLcs(json);
+        console.log(json);
       });
   }, [bankid, url]);
 

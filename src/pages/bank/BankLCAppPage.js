@@ -1236,10 +1236,12 @@ const BankLCAppPage = ({match}) => {
     });
     validationSchema = object().shape(schemaObj);
   }
+  console.log(lcApp);
 
   return <BasicLayout
     title={`LC Application ✏️`} isLoading={!lcApp} status={status} marginStyle={{marginBottom: 0, marginTop: 10}}>
-    {lcApp && (
+    {lcApp && lcApp.length === 0 && <p>This Bank is not set up yet to be an issuer</p>}
+    {lcApp && lcApp.length > 0 &&  (
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
