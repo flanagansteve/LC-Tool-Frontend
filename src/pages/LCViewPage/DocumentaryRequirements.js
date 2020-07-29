@@ -306,7 +306,7 @@ const RadioInput = ({ question }) => {
   )
 };
 
-const DateInput = ({ question }) => {
+const DateInput = ({ question }) => { console.log('DateInput', question);
   return (
     <BasicInput question={question}>
       <StyledFormInput type="date" name={question.key}/>
