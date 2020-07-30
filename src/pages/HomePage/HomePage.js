@@ -7,7 +7,7 @@ const HomePage = () => {
   const [user] = useContext(UserContext);
 
   return (
-    user ? <Redirect to={`/${user.business ? "business" : "bank"}/lcs`}/> : <div></div>
+    user ? <Redirect to={`/${user.business ? "business" : "bank"}/lcs`}/> : <div/>
   );
 };
 
