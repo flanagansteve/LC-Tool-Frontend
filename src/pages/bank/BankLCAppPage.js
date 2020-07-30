@@ -263,7 +263,6 @@ const MultipleChoiceOtherInput = ({question}) => {
   const {setValue} = helpers;
 
   const onSelect = (item) => {
-    setValue(item.name);
   };
 
   const options = question.options.map((item, itemIndex) => ({id: itemIndex, name: item}))
