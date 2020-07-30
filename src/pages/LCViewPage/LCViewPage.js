@@ -15,7 +15,7 @@ import config from '../../config';
 import {Modal} from "../../components/ui/Modal";
 import ComplianceChecks from "./ComplianceChecks";
 import { Link } from "react-router-dom";
-import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
+import {faChevronDown, faChevronRight, faPlus} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {SearchableSelect} from "../../components/ui/Dropdown";
 import {array, boolean, date, number, object, string} from 'yup';
@@ -332,7 +332,13 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
       <Panel title="Advising Banks">
         <ClientInformationWrapper>
             {advisingBank ? <BankInfo bank={advisingBank} /> : null}
-          {userType === "issuer" && !type3Bank && advisingBank ? <Button onClick={() => setAdvisingModal(true)}>Add Forwarding Bank</Button> : type3Bank ? <BankInfo bank={type3Bank} /> : null }
+          {userType === "issuer" && !type3Bank && advisingBank ? <div> <p style = {{fontSize: 10, fontStyle: "italic", paddingTop: 20, inline: "Left"}}>Add Forwarding bank</p>
+                  <FontAwesomeIcon
+                  icon={faPlus}
+                  onClick={() => setAdvisingModal(true)}
+              />
+              </div>
+             : type3Bank ? <BankInfo bank={type3Bank} /> : null }
         </ClientInformationWrapper>
       </Panel>
 
