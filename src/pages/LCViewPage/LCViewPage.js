@@ -193,11 +193,11 @@ const BankInfo = ({bank}) => {
   console.log(bank);
   return (
       <ExpandedAdvisor>
-        <p>address-</p>
+        <p><b>Address-</b></p>
         <p style = {{paddingLeft: 20}}>{bank.address}</p>
-        <p>email-</p>
+        <p style = {{fontStyle: "bold"}}>Email-</p>
         <p style = {{paddingLeft: 20}}>{bank.email}</p>
-        <p>country-</p>
+        <p style = {{fontStyle: "bold"}}>Country-</p>
         <p style = {{paddingLeft: 20}}>{bank.country}</p>
       </ExpandedAdvisor>
   )
