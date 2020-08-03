@@ -116,11 +116,16 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ];
   const handleClickApprove = async () => {
-    const approvedCreditAmt = lc.client.approvedCredit.filter(
-      model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
-    if (userType === "issuer" && (!approvedCreditAmt || parseFloat(totalCredit) +
-      parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt))) {
-      setModal("creditOverflowApprove");
+    if (userType === "issuer") {
+      const approvedCreditAmt = lc.client.approvedCredit.filter(
+        model => model.bank.id === lc.issuer.id)[0]?.approvedCreditAmt;
+      if (!approvedCreditAmt || parseFloat(totalCredit) +
+        parseFloat(lc.creditAmt) - parseFloat(lc.cashSecure) > parseFloat(approvedCreditAmt)) {
+        setModal("creditOverflowApprove");
+      } else {
+        makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
+        .then(json => setLc({...lc, [`${userType}Approved`]: true}));
+      } // TODO fix
     } else {
       makeAPIRequest(`/lc/${get(lc, 'id')}/evaluate/`, 'POST', {approve: true})
       .then(json => setLc({...lc, [`${userType}Approved`]: true}));
