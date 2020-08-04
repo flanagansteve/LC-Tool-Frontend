@@ -636,7 +636,7 @@ const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySele
             </div>
             <div>
               {live &&
-              // linkToSubmittedDoc &&
+              linkToSubmittedDoc &&
               <Button style={{marginRight: "10px", minWidth: '80px'}}
                                                      onClick={() => showModal(docReq, lcid, "view")}>View</Button>}
             </div>
@@ -658,7 +658,7 @@ const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySele
           (userType === "issuer" || (userType === "Beneficiary-Selected Advisor" && beneficiarySelectedAccess)) &&
           status !== "Approved" &&
           !rejected &&
-          // linkToSubmittedDoc &&
+          linkToSubmittedDoc &&
           (
             <DocumentaryEntryEvaluation>
               <Button onClick={approve}>Approve</Button>
