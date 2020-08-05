@@ -97,11 +97,9 @@ const ClientFeed = ({ title, user, url, hideSearch }) => {
     const bankid = get(user, ['bank', 'id']);
 
     useEffect(() => {
-        console.log(url);
         if (!bankid) return;
         makeAPIRequest(url)
             .then(json => {
-                console.log(json);
                 setClients(json);
                 setShownClients(json);
             });

@@ -97,7 +97,7 @@ const BankEmployeeSignUpPage = ({ history, match }) => {
           makeAPIRequest(`/bank/${match.params.bankid}/register/`, "POST", values)
           .then((json) => {
             setUser({ ...json.userEmployee, bank: json.usersEmployer });
-            history.push("/bank/invite");
+            history.push(match.params.lcid ? `/lc/${match.params.lcid}` : "/bank/invite");
           })
           .then(() => setSubmitting(false))
           .catch(e => {

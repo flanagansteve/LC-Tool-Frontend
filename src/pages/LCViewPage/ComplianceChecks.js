@@ -276,7 +276,6 @@ const ComplianceCheck = ({
   const Reject = () => {
       makeAPIRequest(`/business/${lc.taskedClientEmployees[0].id}/${lc.issuer.id}/${"Unauthorized"}/`, 'PUT')
           .then(json => {
-            console.log(json);
             window.location.reload(true);
           }).catch((error) => {console.log(error)})
   }
@@ -285,7 +284,6 @@ const ComplianceCheck = ({
   const Authorize = () => {
     makeAPIRequest(`/business/${lc.taskedClientEmployees[0].id}/${lc.issuer.id}/${"Authorized"}/`, 'PUT')
         .then(json => {
-          console.log(json);
           window.location.reload(true);
         }).catch((error) => {console.log(error)})
   }

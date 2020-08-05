@@ -80,7 +80,6 @@ const Filter = ({ lcs, setShownLcs }) => {
 }
 
 const LCListEntry = ({ lc }) => {
-  console.log(lc);
   // NOTE: due_date and credit_amt will only be available for DigitalLCs
   return (
       <StyledLink to={`/lc/${lc.id}`}>
@@ -95,7 +94,7 @@ const LCListEntry = ({ lc }) => {
   )
 }
 
-const LCFeed = ({ title, user, url, hideSearch, currentlyOnIssuer}) => {
+const LCFeed = ({ title, user, url, hideSearch, currentlyOnIssuer, currentlyOnAdvising, clientPage, switchLink, livePage}) => {
   const [lcs, setLcs] = useState(null);
   const [shownLcs, setShownLcs] = useState(null);
   const bankid = get(user, ['bank', 'id']);
@@ -106,14 +105,16 @@ const LCFeed = ({ title, user, url, hideSearch, currentlyOnIssuer}) => {
       .then(json => {
         setLcs(json);
         setShownLcs(json);
+        console.log(json);
       });
   }, [bankid, url]);
+
 
   return (
     <BasicLayout
       title={title}
       isLoading={!shownLcs}
-      link={`/bank/lcs/${currentlyOnIssuer ? "advisor" : "issuer"}`}
+      link={switchLink}
       linktext={`View LCs for which you are a ${currentlyOnIssuer ? "advisor" : "issuer"}`}
     >
 
