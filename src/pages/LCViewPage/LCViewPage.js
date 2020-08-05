@@ -15,7 +15,7 @@ import config from '../../config';
 import {Modal} from "../../components/ui/Modal";
 import ComplianceChecks from "./ComplianceChecks";
 import { Link } from "react-router-dom";
-import {faChevronDown, faChevronRight} from "@fortawesome/free-solid-svg-icons";
+import {faChevronDown, faChevronRight, faPlus} from "@fortawesome/free-solid-svg-icons";
 import {FontAwesomeIcon} from "@fortawesome/react-fontawesome";
 import {SearchableSelect} from "../../components/ui/Dropdown";
 import {array, boolean, date, number, object, string} from 'yup';
@@ -201,9 +201,9 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
         {allApproved && !paidOut && (userType === "issuer" || userType === "Forwarding Bank") &&
         <center><Button onClick={handleClickPayout}
                         style={{marginBottom: '15px'}}>Pay Out</Button></center>}
-        {allApproved && !requested && userType === "beneficiary" &&
+        {allApproved && !requested && (userType === "beneficiary" || userType === 'Beneficiary-Selected Advisor') &&
         <center><Button onClick={handleClickRequest} style={{marginBottom: '15px'}}>Request</Button></center>}
-        {allApproved && !drawn && userType === "beneficiary" &&
+        {allApproved && !drawn && (userType === "beneficiary" || userType === 'Beneficiary-Selected Advisor') &&
         <center><Button onClick={handleClickDraw} style={{marginBottom: '15px'}}>Draw</Button></center>}
         {allApproved && <PartyDisplayMessage style={{marginTop: '0'}}>This LC is live.</PartyDisplayMessage>}
         {allApproved && paidOut ? <PartyDisplayMessage style={{marginTop: '0'}}>This LC has been paid
@@ -259,12 +259,14 @@ const BankInfo = ({bank}) => {
       </AdvisorTitle>
           {expanded &&
       <ExpandedAdvisor>
-        <p>address-</p>
+          <div style ={{fontWeight: "bold"}}>
+        <p>Address-</p>
         <p style = {{paddingLeft: 20}}>{bank.address}</p>
-        <p>email-</p>
+        <p>Email-</p>
         <p style = {{paddingLeft: 20}}>{bank.email}</p>
-        <p>country-</p>
-        <p style = {{paddingLeft: 20}}>{bank.country}</p>
+        <p>Country-</p>
+        <p style = {{paddingLeft: 20 }}>{bank.country}</p>
+          </div>
       </ExpandedAdvisor>
               }
       </Fragment>
@@ -332,7 +334,16 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
       <Panel title="Advising Banks">
         <ClientInformationWrapper>
             {advisingBank ? <BankInfo bank={advisingBank} /> : null}
-          {userType === "issuer" && !type3Bank && advisingBank ? <Button onClick={() => setAdvisingModal(true)}>Add Forwarding Bank</Button> : type3Bank ? <BankInfo bank={type3Bank} /> : null }
+          {userType === "issuer" && !type3Bank && advisingBank ?
+              <div style = {{paddingTop: 15}}>
+              <FontAwesomeIcon
+                  icon={faPlus}
+                  style={{color: config.accentColor, marginLeft: "10px"}}
+                  onClick={() => setAdvisingModal(true)}
+              />
+              <p style ={{fontSize: 12, display: "inline", float: "middle", marginLeft: 10}}>Add Forwarding Bank</p>
+              </div>
+              : type3Bank ? <BankInfo bank={type3Bank} /> : null }
         </ClientInformationWrapper>
       </Panel>
 
@@ -404,6 +415,12 @@ const ClientInformation = ({lc}) => {
     .then(json => setClientOrders(json));
   }, [client.id]);
 
+  const abbreviateDescription = (description) => {
+      if (description.length > 100) {
+          return description.substring(0, 125) + "...";
+      }
+      return description
+  }
   return (
     <Panel title="Client Information">
       <ClientInformationWrapper>
@@ -413,7 +430,7 @@ const ClientInformation = ({lc}) => {
         <h1 style={{fontWeight: "500", margin: "15px 0"}}>Order History</h1>
         {clientOrders && clientOrders.map(order => (
           <HistoryOrder key={order.id}>
-            <a href={`/lc/${order.id}`}>{order.purchasedItem || `LC #${order.id}`}</a>
+            <a href={`/lc/${order.id}`}>{abbreviateDescription(order.purchasedItem) || `LC #${order.id}`}</a>
             {lc.paidOut ? <span>{order.dueDate}</span> : <span>{order.applicationDate}</span>}
           </HistoryOrder>
         ))}
