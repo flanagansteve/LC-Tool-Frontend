@@ -26,22 +26,22 @@ src <br>
 ├── pages : the page displayed for Businesses and Banks<br> 
     ├── HomePage <br>
         └── HomePage.js <br>
-    ├── LCViewPage <br>
+    ├── LCViewPage : Pages that display the specifics of an LC <br>
         ├── DocumentaryRequirements.js : Displays the Documentary Requirements on the LCViewPage <br>
-        ├── LCViewPage.js Page that displays all the specifics of a selected LC <br>
+        ├── LCViewPage.js <br>
         ├── Panel.js <br>
         └── Pdf.js <br>
     ├── LoginPage <br>
         └── LoginPage.js : Logging into LC Tool <br>
     ├── bank <br>
-        Sign up Page for Banks
+        Sign up Page for Banks <br>
         ├── BankEmployeeSignUpPage.js <br>
         ├── BankInvitePage.js <br>
-        ├── BankLCAppPage.js <br>
+        ├── BankLCAppPage.js : Application for Business Applying for LC <br>
         ├── BankManageAccountPage.js <br>
         ├── BankSignUpPage.js <br> 
         └── feeds <br>
-            Displays for Bank Viewing LCs and Clients (this structure is a bit outdated as there are a few additional pages)
+            Displays for Bank Viewing LCs and Clients (this structure is a bit outdated as there are a few additional pages) <br>
             ├── AdvisorLCFeedPage.js <br>
             ├── BankClientFeedPage.js <br>
             ├── BankLCAppFeedPage.js <br>
@@ -52,17 +52,18 @@ src <br>
             ├── BankLiveLCFeedPage.js <br>
             ├── BankLiveLCFeedPageAdvisor.js <br>
             ├── ClientFeed.js <br>
-            └── LCFeed.js <br>
+            └── LCFeed.js : Component for viewing all the LCs as cards <br>
             └── ManageClientFeed.js <br>
  
     └── business <br>
+        sign up pages for businesses <br>
         ├── BusinessEmployeeSignUpPage.js <br>
         ├── BusinessInvitePage.js <br>
         ├── BusinessManageAccountPage.js <br>
         ├── BusinessSignUpPage.js <br>
         ├── beneficiary <br>
         │   └── ClaimBeneficiaryStatusPage.js <br>
-        └── feeds <br>
+        └── feeds : Business's Feeds <br> 
             ├── BankDirectoryPage.js <br>
             ├── BeneficiaryLCFeedPage.js <br>
             ├── BusinessLCFeed.js <br>
