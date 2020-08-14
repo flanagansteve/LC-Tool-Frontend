@@ -4,6 +4,7 @@ import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 import ClientFeed from "./ClientFeed";
 
+// show banks all their clients
 const BankClientFeedPage = () => {
     useAuthentication('/bank/lcs/live');
     const [user] = useContext(UserContext);

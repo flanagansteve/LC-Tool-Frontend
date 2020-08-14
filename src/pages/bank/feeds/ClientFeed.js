@@ -90,7 +90,7 @@ export const LCListEntry = ({ client }) => {
         </StyledLink>
     )
 }
-
+// shows all the clients for a specific bank (based on issuing)
 const ClientFeed = ({ title, user, url, hideSearch }) => {
     const [clients, setClients] = useState(null);
     const [shownClients, setShownClients] = useState(null);

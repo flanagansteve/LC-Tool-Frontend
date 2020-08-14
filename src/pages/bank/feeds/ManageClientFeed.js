@@ -195,7 +195,7 @@ const AdvisorClientFeed = ({match}) => {
 
 
 }
-
+// page for managing financials and employees of a specific client
 const ManageClientFeed = ({ match }) => {
     useAuthentication(`/bank/lcs/client/${match.params.clientid}`);
     const [user] = useContext(UserContext);

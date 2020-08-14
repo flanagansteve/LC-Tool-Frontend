@@ -389,6 +389,7 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   checkbox: array().of(string()),
 };
 
+// create doc req
 const CreateModal = ({docReq, hideModal, refreshLc, lc}) => {
   const [fields, setFields] = useState([]);
   const [suggestedFields, setSuggestedFields] = useState([]);
@@ -484,6 +485,7 @@ const CreateModal = ({docReq, hideModal, refreshLc, lc}) => {
   )
 };
 
+// upload doc req file
 const UploadModal = ({docReq, refreshLc, hideModal}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const uploadFile = (file) => {

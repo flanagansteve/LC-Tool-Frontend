@@ -4,7 +4,7 @@ import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
 
-
+// Shows Bank all Live LCs they are Advising for
 const BankLiveLCFeedPageAdvisor = () => {
     useAuthentication('/bank/lcs/live');
     const [user] = useContext(UserContext);

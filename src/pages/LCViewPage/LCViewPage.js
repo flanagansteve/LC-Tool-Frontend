@@ -118,6 +118,7 @@ const PartyDisplayMessage = styled.div`
   text-align: center;
 `;
 
+// displays who can/needs to edit or approve before the LC is live
 const APPROVALS_TO_STATE = {
   issuerRejected: {
     message: "LC Application has been rejected by the issuer.",
@@ -157,12 +158,14 @@ const OrderStatusMessage = ({stateName}) => {
   return <div>{message}</div>
 };
 
+
 const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) => {
   const approvals = [
     {name: 'Issuer:', value: get(lc, 'issuerApproved')},
     {name: 'Client:', value: get(lc, 'clientApproved')},
     {name: 'Beneficiary:', value: get(lc, 'beneficiaryApproved')}
   ];
+  // handles an issuer, client, beneficiary (or related advisor) approving and paying out for an LC
   const handleClickApprove = async () => {
       if (userType === "issuer") {
           const approvedCreditAmt = lc.client.approvedCredit.filter(
@@ -196,6 +199,7 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
   return (
     <Panel title="Order Status" highlight>
       <OrderStatusWrapper>
+          {/*control who can approve/payout */}
         {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
         <center><Button onClick={handleClickApprove}>Approve</Button></center>}
         {allApproved && !paidOut && (userType === "issuer" || userType === "Forwarding Bank" || userType === "Nominated Bank") &&
@@ -242,6 +246,7 @@ const HistoryOrder = styled.div`
   justify-content: space-between;
 `;
 
+// displaying each bank with expandable info and link to bank profile
 const BankInfo = ({bank}) => {
     const [expanded, setExpanded] = useState(false);
 
@@ -320,7 +325,7 @@ const BasicInput = ({bankId}) => {
     )
 };
 
-
+// advising banks panel
 const AdvisingBank = ({lc, userType, refreshLc}) => {
   const advisingBank = get(lc, 'advisingBank');
   const type3Bank = get(lc, 'type3AdvisingBank');
@@ -338,6 +343,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
       <Panel title="Advising Banks">
         <ClientInformationWrapper>
             {advisingBank ? <BankInfo bank={advisingBank} /> : null}
+            {/*issuer can add a forwarding bank*/}
           {userType === "issuer" && !type3Bank && advisingBank ?
               <div style = {{paddingTop: 15}}>
               <FontAwesomeIcon
@@ -349,6 +355,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
               </div>
               : type3Bank ? <BankInfo bank={type3Bank} /> : null }
 
+              {/*issuer can  add a nominated bank*/}
             {userType === "issuer" && !issuerSelectedBank && issuerCanSelectBeneAdvisor ? <div style = {{paddingTop: 15}}>
                     <FontAwesomeIcon
                         icon={faPlus}
@@ -366,6 +373,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
         </ClientInformationWrapper>
       </Panel>
 
+          {/*formik form selecting an adivisor as an issuer*/}
           <Formik validationSchema={object().shape({advisingBank: object().shape({name: string().required(), address: string().required(), country: string().required(), email: string().required()})})} initialValues={ {advisingBank : {name: "", address: "", country: "", email: ""}}}
                   onSubmit={(values, {setSubmitting}) => {
               setSubmitting(true);
@@ -387,6 +395,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
               })
           }} >
             <Form>
+                {/*modal for adding the advising bank*/}
                 <Modal containerStyle={{width: "55%"}} show={advisingModal === true}
                        title={modalType === "issuerSelected" ? "Add Beneficiary Advisor" : "Add Forwarding Bank"}
                        onCancel={() => {
@@ -407,6 +416,7 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
   )
 }
 
+// Issuing Bank Panel
 const IssuerBank = ({lc}) => {
   const issuer = get(lc, 'issuer');
   const [expanded, setExpanded] = useState(false);
@@ -414,21 +424,13 @@ const IssuerBank = ({lc}) => {
   return (
       <Panel title="Issuing Bank">
         <ClientInformationWrapper>
-          {/*{advisingBank ?*/}
-          {/*      <a href={`/bank/profile/${advisingBank.id}`}>{advisingBank.name}</a>*/}
-          {/*    : <p>None</p>}*/}
-          {/*<AdvisorTitle style={{margin: "15px 0 0 0"}} clickable*/}
-          {/*              onClick={() => setExpanded((e) => !e)}>*/}
-          {/*  {issuer ?*/}
-          {/*      <a href={`/bank/profile/${issuer.id}`}>{issuer.name}</a>*/}
-          {/*      : <p>None</p>}*/}
-          {/*</AdvisorTitle>*/}
          <BankInfo bank={issuer} />
         </ClientInformationWrapper>
       </Panel>
   )
 }
 
+// client panel
 const ClientInformation = ({lc}) => {
   const employee = get(lc, 'taskedClientEmployees[0]');
   const client = get(lc, 'client');
@@ -438,6 +440,7 @@ const ClientInformation = ({lc}) => {
     .then(json => setClientOrders(json));
   }, [client.id]);
 
+  // abbreviates the hts code being rendered
   const abbreviateDescription = (description) => {
      let splitDescription = description.split(/(`|!|^|\(|\)|{|}|\[|\]|;|:|\"|<|\.|>|\?|\/|\\|\|)/)[0];
       if (splitDescription.length > 100) {
@@ -524,6 +527,7 @@ const Subtitle = styled.div`
   font-weight: 300;
 `;
 
+// Financials panel
 const Financials = ({lc, setModal, totalCredit}) => {
   let creditOverflow = false;
   const approvedCreditAmt = lc.client.approvedCredit.filter(
@@ -632,6 +636,7 @@ const StyledButton = styled.button`
   align-items: center;
 `;
 
+
 const YesNoInput = ({name}) => {
   const [, meta, helpers] = useField(name);
   const {value} = meta;
@@ -650,6 +655,7 @@ const YesNoInput = ({name}) => {
   )
 };
 
+// maps the type of Order detail to the component rendered
 const TYPE_TO_COMPONENT = {
   text: (props) => (<StyledInput type="text" {...props}/>),
   number: (props) => (<StyledInput type="number" {...props}/>),
@@ -876,6 +882,7 @@ const usePrevious = value => {
   return ref.current;
 };
 
+
 const CreditOverflowPopup = ({lc, modal, setModal, refreshLc, setEditing, totalCredit}) => {
   const [selectedButtonIndices, setSelectedButtonIndex] = useState({0: true, 1: false});
   const prevSelectedButtonIndices = usePrevious(selectedButtonIndices);
@@ -1058,6 +1065,7 @@ const LCViewPage = ({match}) => {
   const [totalCredit, setTotalCredit] = useState();
   let userType = 'unknown';
 
+  // set the user type that is viewing this lc (advisor, issuer etc)
     if (get(user, 'bank')) {
         if (get(user, 'bank.id') === get(lc, 'issuer.id')) {
             userType = 'issuer';

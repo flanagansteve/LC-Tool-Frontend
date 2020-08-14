@@ -3,6 +3,8 @@ import LCFeed from "./LCFeed";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 import { makeAPIRequest } from "../../../utils/api";
 
+
+// Shows Bank All LCs for a Client
 const BankLCAppFeedPage = ({ match }) => {
   useAuthentication(`/bank/lcs/client/${match.params.clientid}`);
   const [user] = useContext(UserContext);

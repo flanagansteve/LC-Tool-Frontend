@@ -813,6 +813,7 @@ const scrollToFirstErrorOnSection = ({questions, errors, selectedSection}) => {
   }
 };
 
+
 const ErrorFocus = (props) => {
   let {isSubmitting, errors, touched, questions, selectedSection, setTouched, values} = props;
 
@@ -864,6 +865,7 @@ const usePrevious = value => {
   return ref.current;
 };
 
+// map type of question to the component
 const TYPE_TO_COMPONENT = {
   text: TextInput,
   decimal: NumberInput,
@@ -909,6 +911,7 @@ const TYPE_TO_DEFAULT = {
 
 const REQUIRED_FIELD_MSG = "This field is required.";
 const REQUIRED_SECTION_MSG = "Missing required fields";
+
 
 const TYPE_TO_VALIDATION_SCHEMA = {
   text: string(),

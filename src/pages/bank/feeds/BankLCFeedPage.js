@@ -4,6 +4,7 @@ import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 import BusinessLCFeed from "../../business/feeds/BusinessLCFeed";
 
+// show banks ALL LCs they are issuing for
 const BankLCAppFeedPage = ({ match }) => {
   useAuthentication('/bank/lcs');
   const [user] = useContext(UserContext);

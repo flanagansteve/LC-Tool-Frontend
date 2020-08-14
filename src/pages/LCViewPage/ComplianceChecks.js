@@ -133,6 +133,7 @@ const SmallHeader = styled.div`
   margin-right: 50px;
 `;
 
+// Request Clarification for the LC
 const RequestClarificationModal = ({lc, initialReason, modal, setModal, field, setLc, client, beneficiary}) => {
   const [comment, setComment] = useState(initialReason);
   const textAreaRef = useRef(null);
@@ -162,6 +163,7 @@ const RequestClarificationModal = ({lc, initialReason, modal, setModal, field, s
   )
 };
 
+// Reject the Compliance Chect
 const RejectionModal = ({lc, initialReason, modal, setModal, field, setLc}) => {
   const [rejectionReason, setRejectionReason] = useState(initialReason);
   const textAreaRef = useRef(null);
@@ -250,6 +252,7 @@ const SanctionInfo = ({sanction}) => {
   )
 };
 
+// general compliance check component
 const ComplianceCheck = ({
   lc, setLc, title, initialRequestComment, initialRejectionReason, error, errorMessage, children, status, type
 }) => {
@@ -342,6 +345,7 @@ const ComplianceCheck = ({
   );
 };
 
+// checking OFAC Violations
 const CompanyOFACCheck = ({lc, setLc}) => {
   const beneficiary = get(lc, 'beneficiary.name');
   const sanctions = get(lc, 'ofacSanctions');
@@ -401,6 +405,7 @@ const CountrySanctionCheck = ({lc, setLc}) => {
   )
 };
 
+// checking if an import license/permit may be requiured for the LC
 const ImportLicenseCheck = ({lc, setLc}) => {
   const licenseSanctionMessage = get(lc, "importLicenseMessage");
   const status = get(lc, "importLicenseApproval");
@@ -425,6 +430,7 @@ const ImportLicenseCheck = ({lc, setLc}) => {
   )
 };
 
+
 const BoycottLanguageCheck = ({lc, setLc}) => {
   const boycotts = get(lc, 'boycottLanguage');
   const status = get(lc, 'boycottLanguageStatus');
@@ -435,6 +441,7 @@ const BoycottLanguageCheck = ({lc, setLc}) => {
     }
   };
 
+  // formatting the boycott message
   const boycottToReadable = (source, boycotts) => {
     if (source === "otherInstructions") {
       const indices = [];
@@ -493,6 +500,7 @@ const BoycottLanguageCheck = ({lc, setLc}) => {
   )
 };
 
+// authorizing the employee that applied for the LC
 const DueAuthorization = ({lc, setLc}) => {
   const employee = get(lc, 'taskedClientEmployees[0]');
   const issuer = get(lc, "issuer");

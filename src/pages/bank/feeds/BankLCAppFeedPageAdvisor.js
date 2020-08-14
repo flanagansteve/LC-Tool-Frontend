@@ -3,6 +3,7 @@ import LCFeed from "./LCFeed";
 import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
+// show banks all lc applications they are advising for
 const BankLCAppFeedPage = () => {
     useAuthentication('/bank/lcs/apps');
     const [user] = useContext(UserContext);

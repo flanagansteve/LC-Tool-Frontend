@@ -3,6 +3,7 @@ import LCFeed from "./LCFeed";
 import { get } from "lodash";
 import { useAuthentication, UserContext } from "../../../utils/auth";
 
+// show bank all applications they are issuers for
 const BankLCAppFeedPage = () => {
   useAuthentication('/bank/lcs/apps');
   const [user] = useContext(UserContext);
