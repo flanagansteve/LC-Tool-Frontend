@@ -198,7 +198,7 @@ const OrderStatus = ({lc, setLc, userType, stateName, setModal, totalCredit}) =>
       <OrderStatusWrapper>
         {!allApproved && APPROVALS_TO_STATE[stateName].canApprove.includes(userType) &&
         <center><Button onClick={handleClickApprove}>Approve</Button></center>}
-        {allApproved && !paidOut && (userType === "issuer" || userType === "Forwarding Bank") &&
+        {allApproved && !paidOut && (userType === "issuer" || userType === "Forwarding Bank" || userType === "Nominated Bank") &&
         <center><Button onClick={handleClickPayout}
                         style={{marginBottom: '15px'}}>Pay Out</Button></center>}
         {allApproved && !requested && (userType === "beneficiary" || userType === 'Beneficiary-Selected Advisor') &&
@@ -324,8 +324,12 @@ const BasicInput = ({bankId}) => {
 const AdvisingBank = ({lc, userType, refreshLc}) => {
   const advisingBank = get(lc, 'advisingBank');
   const type3Bank = get(lc, 'type3AdvisingBank');
+  const issuerSelectedBank = get(lc, 'issuerSelectedAdvisingBank');
+  const issuerCanSelectBeneAdvisor = get(lc, 'issuerCanSelectBeneAdvisor');
   const [advisingModal, setAdvisingModal] = useState(false);
+  const [modalType, setModalType] = useState("");
   const [submitError, setSubmitError] = useState("");
+  console.log(lc);
 
 
 
@@ -344,13 +348,29 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
               <p style ={{fontSize: 12, display: "inline", float: "middle", marginLeft: 10}}>Add Forwarding Bank</p>
               </div>
               : type3Bank ? <BankInfo bank={type3Bank} /> : null }
+
+            {userType === "issuer" && !issuerSelectedBank && issuerCanSelectBeneAdvisor ? <div style = {{paddingTop: 15}}>
+                    <FontAwesomeIcon
+                        icon={faPlus}
+                        style={{color: config.accentColor, marginLeft: "10px"}}
+                        onClick={() => {
+                            setAdvisingModal(true)
+                            setModalType("issuerSelected")
+                        }}
+                    />
+                    <p style ={{fontSize: 12, display: "inline", float: "middle", marginLeft: 10}}>Add Nominated Bank</p>
+                </div>
+                : issuerSelectedBank ? <BankInfo bank={issuerSelectedBank} /> : null }
+
+
         </ClientInformationWrapper>
       </Panel>
 
           <Formik validationSchema={object().shape({advisingBank: object().shape({name: string().required(), address: string().required(), country: string().required(), email: string().required()})})} initialValues={ {advisingBank : {name: "", address: "", country: "", email: ""}}}
                   onSubmit={(values, {setSubmitting}) => {
               setSubmitting(true);
-              makeAPIRequest(`/lc/${lc.id}/issuer/select_advising_bank/`, 'PUT', values.advisingBank)
+              let url = modalType === "issuerSelected" ? `/lc/${lc.id}/issuer/issuer_select_bene_advisor/` : `/lc/${lc.id}/issuer/select_advising_bank/`;
+              makeAPIRequest(url, 'PUT', values.advisingBank)
                   .then(() =>       {
                       setAdvisingModal(false);
                       setSubmitError("");
@@ -368,8 +388,11 @@ const AdvisingBank = ({lc, userType, refreshLc}) => {
           }} >
             <Form>
                 <Modal containerStyle={{width: "55%"}} show={advisingModal === true}
-                       title={"Add Forwarding Bank"}
-                       onCancel={() => setAdvisingModal(false)}
+                       title={modalType === "issuerSelected" ? "Add Beneficiary Advisor" : "Add Forwarding Bank"}
+                       onCancel={() => {
+                           setAdvisingModal(false)
+                           setModalType("")
+                       }}
                        selectButton={"Add"}
                        submitFormik
                 >
@@ -416,10 +439,11 @@ const ClientInformation = ({lc}) => {
   }, [client.id]);
 
   const abbreviateDescription = (description) => {
-      if (description.length > 100) {
-          return description.substring(0, 125) + "...";
+     let splitDescription = description.split(/(`|!|^|\(|\)|{|}|\[|\]|;|:|\"|<|\.|>|\?|\/|\\|\|)/)[0];
+      if (splitDescription.length > 100) {
+          return splitDescription.substring(0, 100) + "...";
       }
-      return description
+      return splitDescription;
   }
   return (
     <Panel title="Client Information">
@@ -1041,6 +1065,9 @@ const LCViewPage = ({match}) => {
             userType = 'Beneficiary-Selected Advisor';
         } else if (get(user, 'bank.id') === get(lc, 'type3AdvisingBank.id')) {
             userType = 'Forwarding Bank';
+        }
+        else if (get(user, 'bank.id') === get(lc, 'issuerSelectedAdvisingBank.id')) {
+            userType = "Nominated Bank";
         }
     }
   else if (get(user, 'business')) {
