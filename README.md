@@ -27,24 +27,34 @@ src <br>
     ├── HomePage <br>
         └── HomePage.js <br>
     ├── LCViewPage <br>
-        ├── DocumentaryRequirements.js <br>
-        ├── LCViewPage.js <br>
+        ├── DocumentaryRequirements.js : Displays the Documentary Requirements on the LCViewPage <br>
+        ├── LCViewPage.js Page that displays all the specifics of a selected LC <br>
         ├── Panel.js <br>
         └── Pdf.js <br>
     ├── LoginPage <br>
-        └── LoginPage.js <br>
+        └── LoginPage.js : Logging into LC Tool <br>
     ├── bank <br>
+        Sign up Page for Banks
         ├── BankEmployeeSignUpPage.js <br>
         ├── BankInvitePage.js <br>
         ├── BankLCAppPage.js <br>
         ├── BankManageAccountPage.js <br>
         ├── BankSignUpPage.js <br> 
         └── feeds <br>
-            ├── BankLCAppFeedPage.js <br>
+            Displays for Bank Viewing LCs and Clients (this structure is a bit outdated as there are a few additional pages)
+            ├── AdvisorLCFeedPage.js <br>
+            ├── BankClientFeedPage.js <br>
+            ├── BankLCAppFeedPage.js <br>
+            ├── BankLCAppFeedPageAdvisor.js <br>
             ├── BankLCFeedPage.js <br>
-            ├── BankLCFeedPageByClient.js <br>
-            ├── BankLiveLCFeedPage.js <br>
+            ├── BankLCFeedPageAdvisor.js <br>
+            ├── BankLCFeedPageByClient.js <br>
+            ├── BankLiveLCFeedPage.js <br>
+            ├── BankLiveLCFeedPageAdvisor.js <br>
+            ├── ClientFeed.js <br>
             └── LCFeed.js <br>
+            └── ManageClientFeed.js <br>
+ 
     └── business <br>
         ├── BusinessEmployeeSignUpPage.js <br>
         ├── BusinessInvitePage.js <br>
