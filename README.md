@@ -1,14 +1,14 @@
 # Bountium Frontend
 
 src
-├── App.js
-├── App.test.js
-├── GlobalStyle.js
-├── components
-│   ├── BasicLayout.js
-│   ├── Nav.js
-│   ├── forms
-│   │   └── Inputs.js
+├── App.js <br>
+├── App.test.js <br>
+├── GlobalStyle.js <br>
+├── components <br>
+│   ├── BasicLayout.js <br>
+│   ├── Nav.js <br>
+│   ├── forms <br>
+│   │   └── Inputs.js <br>
 │   ├── lc
 │   │   └── LCView.js
 │   └── ui
