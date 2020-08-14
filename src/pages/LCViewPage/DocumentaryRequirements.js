@@ -591,7 +591,7 @@ const SmallHeader = styled.div`
   margin-right: 50px;
 `;
 // there's no link to the submitted doc
-const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySelectedAccess, lcid, userType, status, live, refreshLc, showModal, advisingAccess, ...props}) => {
+const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySelectedAccess, issuerSelectedAccess, lcid, userType, status, live, refreshLc, showModal, advisingAccess, ...props}) => {
   const {docName: title, dueDate, linkToSubmittedDoc, id, requiredValues, rejected} = docReq;
   const [expanded, setExpanded] = useState(false);
   const [comments, setComments] = useState('');
@@ -655,7 +655,8 @@ const DocumentaryRequirement = ({documentaryRequirement: docReq, beneficiarySele
             </div>
           </DocumentaryEntryFlex>
           {live &&
-          (userType === "issuer" || (userType === "Beneficiary-Selected Advisor" && beneficiarySelectedAccess)) &&
+          (userType === "issuer" || (userType === "Beneficiary-Selected Advisor" && beneficiarySelectedAccess) ||
+              (userType === "Nominated Bank" && issuerSelectedAccess)) &&
           status !== "Approved" &&
           !rejected &&
           linkToSubmittedDoc &&
@@ -714,6 +715,8 @@ const DocumentaryRequirements = ({lc, userType, live, refreshLc}) => {
           advisingAccess={lc?.confirmationMeans === "Confirmation by a bank selected by the beneficiary"
           && lc?.creditExpiryLocation?.id === lc?.advisingBank?.id}
           beneficiarySelectedAccess ={lc.beneficiarySelectedDocReq}
+          issuerSelectedAccess = {!lc.creditExpiryLocation}
+          // creditExpiryLocation = {lc.}
           refreshLc={refreshLc}
           key={d.docName}
           showModal={showModal}
