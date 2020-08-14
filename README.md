@@ -1,7 +1,7 @@
 # Bountium Frontend
 
 src <br>
-├── App.js <br>
+├── App.js : Information about React Routes <br>
 ├── App.test.js <br>
 ├── GlobalStyle.js <br>
 ├── components: Contains all the UI Components that are reused throughout the Front End <br>
@@ -34,7 +34,7 @@ src <br>
     ├── LoginPage <br>
         └── LoginPage.js : Logging into LC Tool <br>
     ├── bank <br>
-        Sign up Page for Banks <br>
+        Sign up Page for Banks and their Employeess <br>
         ├── BankEmployeeSignUpPage.js <br>
         ├── BankInvitePage.js <br>
         ├── BankLCAppPage.js : Application for Business Applying for LC <br>
@@ -56,7 +56,7 @@ src <br>
             └── ManageClientFeed.js <br>
  
     └── business <br>
-        sign up pages for businesses <br>
+        sign up pages for businesses and their employees <br>
         ├── BusinessEmployeeSignUpPage.js <br>
         ├── BusinessInvitePage.js <br>
         ├── BusinessManageAccountPage.js <br>
