@@ -75,13 +75,12 @@ src <br>
     └── auth.js <br>
 
 
+FAQ: <br>
 
+in src/pages/bank/BankLCAppPage.js: <br>
 
+https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value} is the endpoint to grab the hts code/description based on search parameters from the government server (ask Rohil about heroku server details/credentials) <br>
 
-
-
-LC Application: src/pages/bank/BankLCAppPage.js <br>
-
-https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value} is the endpoint to grab the hts code/description based on search parameters (ask Rohil about server)
+Forms Using Formik API (visit [](https://formik.org/)) for more details <br>
 
 
