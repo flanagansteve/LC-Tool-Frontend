@@ -41,7 +41,7 @@ src <br>
         ├── BankManageAccountPage.js <br>
         ├── BankSignUpPage.js <br> 
         └── feeds <br>
-            Displays for Bank Viewing LCs and Clients (this structure is a bit outdated as there are a few additional pages) <br>
+            General Displays for Bank Viewing LCs and Clients <br>
             ├── AdvisorLCFeedPage.js <br>
             ├── BankClientFeedPage.js <br>
             ├── BankLCAppFeedPage.js <br>
