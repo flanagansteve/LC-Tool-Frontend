@@ -4,7 +4,7 @@ src <br>
 ├── App.js <br>
 ├── App.test.js <br>
 ├── GlobalStyle.js <br>
-├── components <br>
+├── components: Contains all the UI Components that are reused throughout the Front End <br>
     ├── BasicLayout.js <br>
     ├── Nav.js <br>
     ├── forms <br>
@@ -23,7 +23,7 @@ src <br>
 ├── images <br>
     └── logo.png <br>
 ├── index.js <br>
-├── pages <br> 
+├── pages : the page displayed for Businesses and Banks<br> 
     ├── HomePage <br>
         └── HomePage.js <br>
     ├── LCViewPage <br>
@@ -62,6 +62,11 @@ src <br>
 └── utils <br>
     ├── api.js <br>
     └── auth.js <br>
+
+
+
+
+
 
 
 LC Application: src/pages/bank/BankLCAppPage.js <br>
