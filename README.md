@@ -8,9 +8,9 @@ src <br>
     ├── BasicLayout.js <br>
     ├── Nav.js <br>
     ├── forms <br>
-    │   └── Inputs.js <br>
+        └── Inputs.js <br>
     ├── lc <br>
-    │   └── LCView.js <br>
+        └── LCView.js <br>
     └── ui <br>
         ├── Button.js <br>
         ├── Dropdown.js <br>
@@ -25,26 +25,26 @@ src <br>
 ├── index.js <br>
 ├── pages <br> 
     ├── HomePage <br>
-    │   └── HomePage.js <br>
+        └── HomePage.js <br>
     ├── LCViewPage <br>
-    │   ├── DocumentaryRequirements.js <br>
-    │   ├── LCViewPage.js <br>
-    │   ├── Panel.js <br>
-    │   └── Pdf.js <br>
+        ├── DocumentaryRequirements.js <br>
+        ├── LCViewPage.js <br>
+        ├── Panel.js <br>
+        └── Pdf.js <br>
     ├── LoginPage <br>
-    │   └── LoginPage.js <br>
+        └── LoginPage.js <br>
     ├── bank <br>
-    │   ├── BankEmployeeSignUpPage.js <br>
-    │   ├── BankInvitePage.js <br>
-    │   ├── BankLCAppPage.js <br>
-    │   ├── BankManageAccountPage.js <br>
-    │   ├── BankSignUpPage.js <br> 
-    │   └── feeds <br>
-    │       ├── BankLCAppFeedPage.js <br>
-    │       ├── BankLCFeedPage.js <br>
-    │       ├── BankLCFeedPageByClient.js <br>
-    │       ├── BankLiveLCFeedPage.js <br>
-    │       └── LCFeed.js <br>
+        ├── BankEmployeeSignUpPage.js <br>
+        ├── BankInvitePage.js <br>
+        ├── BankLCAppPage.js <br>
+        ├── BankManageAccountPage.js <br>
+        ├── BankSignUpPage.js <br> 
+        └── feeds <br>
+            ├── BankLCAppFeedPage.js <br>
+            ├── BankLCFeedPage.js <br>
+            ├── BankLCFeedPageByClient.js <br>
+            ├── BankLiveLCFeedPage.js <br>
+            └── LCFeed.js <br>
     └── business <br>
         ├── BusinessEmployeeSignUpPage.js <br>
         ├── BusinessInvitePage.js <br>
