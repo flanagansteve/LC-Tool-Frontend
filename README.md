@@ -63,7 +63,7 @@ src <br>
         ├── BusinessSignUpPage.js <br>
         ├── beneficiary <br>
         │   └── ClaimBeneficiaryStatusPage.js <br>
-        └── feeds : Business's Feeds <br> 
+        └── feeds:  <br> 
             ├── BankDirectoryPage.js <br>
             ├── BeneficiaryLCFeedPage.js <br>
             ├── BusinessLCFeed.js <br>
