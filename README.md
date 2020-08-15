@@ -77,10 +77,13 @@ src <br>
 
 FAQ: <br>
 
+- Icons from fort-awesome... documentation can be found at https://www.npmjs.com/package/@fortawesome/react-fontawesome
+
 in src/pages/bank/BankLCAppPage.js: <br>
 - https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value} is the endpoint to grab the hts code/description based on search parameters from the government server (ask Rohil about heroku server details/credentials) <br>
-- Forms Using Formik API (visit [](https://formik.org/)) for more details <br>
+- Forms Using Formik API (visit https://formik.org/) for more details <br>
 - Questions for The Application coming from `/bank/${match.params.bankid}/digital_app/` endpoint, NOT the values.py file <br>
+
 
 in src/pages/bank/feeds: <br>
 - Different feeds for Banks based on Live LCs/Applications/Both as Issuers and Advisors
