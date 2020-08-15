@@ -78,13 +78,14 @@ src <br>
 FAQ: <br>
 
 - Icons from fort-awesome... documentation can be found at https://www.npmjs.com/package/@fortawesome/react-fontawesome <br>
+- Forms Using Formik API (visit https://formik.org/docs/tutorial) for more details <br>
+
 
 in src/App.js: <br>
 - React Router checks if user exists (is logged in) and the type of user (business or bank) before navigating to the page... otherwise redirects <br>
 
 in src/pages/bank/BankLCAppPage.js: <br>
 - https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value} is the endpoint to grab the hts code/description based on search parameters from the government server (ask Rohil about heroku server details/credentials) <br>
-- Forms Using Formik API (visit https://formik.org/docs/tutorial) for more details <br>
 - Questions for The Application coming from `/bank/${match.params.bankid}/digital_app/` endpoint, NOT the values.py file <br>
 
 
