@@ -19,7 +19,6 @@ import {ResizableScreenDiv} from "../../components/ui/ResizableScreenDiv";
 import {RouteBlockingModal} from "../../components/ui/RouteBlockingModal";
 import Checkbox from '@material-ui/core/Checkbox';
 
-
 const disabledBackgroundColor = `#c3c1c3`;
 const disabledColor = `black`;
 
@@ -31,7 +30,7 @@ const InputWrapper = styled.div`
   border: 1px solid #cdcdcd;
   transition: border 0.3s;
   background-color: ${props => props.disabled ? disabledBackgroundColor : `#fff`};
-  
+
   ${props => !props.disabled && `&:hover {
     border: 1px solid ${config.accentColor};
   }`}
@@ -340,6 +339,46 @@ const YesNoInput = ({question}) => {
         <StyledButton onClick={handleClick(true)} selected={value === true}>Yes</StyledButton>
         <StyledButton onClick={handleClick(false)} selected={value === false}>No</StyledButton>
       </ButtonWrapper>}
+    </BasicInput>
+  )
+};
+
+const PayInput = ({question}) => {
+  const [, meta, helpers] = useField(question.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  const handleClick = (val) => (e) => {
+    e.preventDefault();
+    setValue(val);
+  };
+
+  return (
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      {!question.disabledTooltip && <ButtonWrapper style={{justifyContent: 'center'}}>
+        <StyledButton onClick={handleClick(true)} selected={value === true}>Acceptance Some Number of Days After</StyledButton>
+        <StyledButton onClick={handleClick(false)} selected={value === false}>Payment at Sight</StyledButton>
+      </ButtonWrapper>}
+    </BasicInput>
+  )
+};
+
+const MultipleChoiceOtherInput = ({question}) => {
+  const [, meta, helpers] = useField(question.key);
+  const {handleChange} = useFormikContext();
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  const onSelect = (item) => {
+    setValue(item)
+  };
+
+  const options = question.options.map((item, itemIndex) => ({id: itemIndex, name: item}))
+
+  return (
+    <BasicInput question={question} disabled={question.disabledTooltip}>
+      <SearchableSelect questionKey={question.key} items={options}
+      handleChange={handleChange} onSelect={onSelect}/>
     </BasicInput>
   )
 };
@@ -781,9 +820,11 @@ const TYPE_TO_COMPONENT = {
   decimal: NumberInput,
   number: NumberInput,
   boolean: YesNoInput,
+  pay: PayInput,
   hts: HTSInput,
   radio: RadioInput,
   date: DateInput,
+  date_ship: DateInput,
   checkbox: CheckboxInput,
   object: ObjectInput,
   array_of_objs: DocReqInput,
@@ -803,13 +844,19 @@ const createDefault = question => {
   return initial;
 };
 
+var today = new Date();
+var default_ship = new Date();
+default_ship.setDate(today.getDate()+21);
+
 const TYPE_TO_DEFAULT = {
   text: "",
   decimal: 0,
   number: 0,
   boolean: null,
+  pay: null,
   radio: null,
   date: (new Date()).toISOString().slice(0, 10),
+  date_ship: default_ship.toISOString().slice(0, 10),
   checkbox: [],
   object: {},
   array_of_objs: [],
@@ -824,9 +871,11 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   decimal: number(),
   number: number(),
   boolean: boolean().nullable(),
+  pay: string().nullable(),
   hts: string(),
   radio: string().nullable(),
   date: date(),
+  date_ship: date(),
   checkbox: array().of(string()),
   dropdown: string()
 };
@@ -1093,7 +1142,9 @@ const BankLCAppPage = ({match}) => {
         json.forEach(q => {
           sectionSet.add(q.section);
           if (q.options) {
-            q.options = JSON.parse(q.options);
+            try { q.options = JSON.parse(q.options); }
+              catch (err) { console.log(q) }
+            //q.options = JSON.parse(q.options);
           }
           if (q.settings) {
             q.settings = JSON.parse(q.settings);
