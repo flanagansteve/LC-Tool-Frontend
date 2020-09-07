@@ -60,13 +60,12 @@ const signUpFormValidationSchema = object().shape({
   name: string().required(requiredMsg),
   title: string().required(requiredMsg),
   email: string().email('Please enter a valid email address.').required(requiredMsg),
-  password: string().required(requiredMsg),
-  // .matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
-  //   "Password must have at least 8 characters, and have at least one of each of the following: " +
-  //   "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
-  //), // wtf is this regex... idk but it works
-  // source https://stackoverflow.com/questions/55451304/formik-yup-password-strength-validation-with-react
-  // TODO update this to be more user friendly
+  password: string().required(requiredMsg).matches(/^(?=.*[A-Za-z])(?=.*\d)(?=.*[@$!%*#?&])[A-Za-z\d@$!%*#?&]{8,}$/,
+    "Password must have at least 8 characters, and have at least one of each of the following: " +
+    "uppercase letter, lowercase letter, number, other special character (@$!%*#?&)."
+  ), // wtf is this regex... idk but it works
+    // source https://stackoverflow.com/questions/55451304/formik-yup-password-strength-validation-with-react
+    // TODO update this to be more user friendly
   passwordConfirm: string().required(requiredMsg)
     .oneOf([ref('password')], "Passwords do not match."),
 });
@@ -98,10 +97,21 @@ const BusinessEmployeeSignUpPage = ({ history, match }) => {
         makeAPIRequest(`/business/${match.params.businessid}/register/`, "POST", values)
           .then((json) => {
             setUser({ ...json.userEmployee, business: json.usersEmployer });
-            history.push("/business/invite");
+            history.push(match.params.lcid ? `/lc/${match.params.lcid}` : "/business/invite");
           })
           .then(() => setSubmitting(false))
-          .catch(e => e.text().then(message => setStatus({status: "error", message})).then(setSubmitting(false)))
+        .catch(e => {
+          if (e.status === 404) {
+            setStatus({status: "error", message: "This link is invalid. Double-check your email."});
+            setSubmitting(false);
+          }
+          else {
+            e.text().then(message => {
+              setStatus({status: "error", message});
+              setSubmitting(false);
+            });
+          }
+        })
       }}
       validationSchema={signUpFormValidationSchema}
     >

@@ -76,7 +76,7 @@ export const postFile = async (url, file, returnFullResponse) => {
   const headers = new Headers();
   headers.append("Content-Type", "application/pdf");
   const response = await fetch(requestURL, {
-    method: "PUT",
+    method: "POST",
     body: form,
     headers
   });

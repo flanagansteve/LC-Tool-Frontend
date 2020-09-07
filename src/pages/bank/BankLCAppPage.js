@@ -206,98 +206,11 @@ const BasicInput = ({question, children, subtitle}) => {
 };
 
 const TextInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
-  const {values, setValues, initialValues, handleChange, setFieldValue} = useFormikContext();
-  const [, meta, helpers] = useField(question.key);
-  const {value} = meta;
-  const {setValue} = helpers;
-  const autofillTemplateTimeout = useRef();
-  const beneficiaryAutocompleteTimeout = useRef(null);
-
-  const [suggested, setSuggested] = useState([]);
-
-  useEffect(() => {
-    if (status.status !== "success" && !appliedTemplate && (question.key === "beneficiary_name" || question.key
-      === "purchased_item")) {
-      clearTimeout(autofillTemplateTimeout.current);
-      const timeoutId = setTimeout(() => {
-        const params = {};
-        if (values.beneficiary_name) {
-          params.beneficiary_name = values.beneficiary_name;
-        }
-        if (values.purchased_item) {
-          params.purchased_item = values.purchased_item;
-        }
-        const paramString = Object.entries(params).map(([key, value]) => `${key}=${value}`).join("&");
-        if (paramString) {
-          makeAPIRequest(`/lc/digital_app_templates/?${paramString}`).then(result => {
-            if (result.length) {
-              const Component = (
-                <div>
-                  <div style={{display: "flex"}}>
-                    <span style={{flex: 1}}/>
-                    <StyledIcon onClick={() => setStatus({status: null, message: ""})}
-                                icon={faTimes} style={{color: "black"}}/>
-                  </div>
-                  <div style={{color: "black"}}>Load Template with Similar Answers:</div>
-                  <div style={{paddingTop: 10}}>
-                    {result.map(template => (
-                      <div key={template.id} style={{paddingTop: 5}}>
-                        <ClickableText onClick={async () => {
-                          setStatus({status: null, message: ""});
-                          await loadTemplateAnswers({
-                            lcApp,
-                            selectedTemplate: template,
-                            values,
-                            initialValues,
-                            setValues,
-                            setAppliedTemplate,
-                            setStatus
-                          });
-                        }}>
-                          {template.templateName}
-                        </ClickableText></div>
-                    ))}
-                  </div>
-                </div>
-              );
-              setStatus({status: "info", message: Component});
-            } else {
-              setStatus({status: null, message: ""});
-            }
-          });
-        }
-      }, 500);
-      autofillTemplateTimeout.current = timeoutId;
-    }
-  }, [value]);
-
-  useEffect(() => {
-    if (question.key === "beneficiary_name") {
-      clearTimeout(beneficiaryAutocompleteTimeout.current);
-      const timeoutId = setTimeout(() =>
-        makeAPIRequest(`/business/autocomplete/?string=${value}`)
-        .then(suggested => setSuggested(suggested)), 400);
-      beneficiaryAutocompleteTimeout.current = timeoutId;
-    }
-  }, [value]);
-
-  const onSelect = async item => {
-    await setFieldValue("beneficiary_address", item.address);
-    await setValue(item.name);
-  };
-
-  const inputComponent = question.key === "beneficiary_name" ?
-    <SearchableSelect
-      onSelect={onSelect}
-      items={suggested}
-      questionKey={question.key}
-      handleChange={handleChange}
-    /> :
-    <StyledFormInput type="text" name={question.key}/>;
-
   return (
     <BasicInput question={question} disabled={question.disabledTooltip}>
-      {!question.disabledTooltip && inputComponent}
+      <SuggestTemplates question={question} status={status} appliedTemplate={appliedTemplate} lcApp={lcApp}
+                        setStatus={setStatus} setAppliedTemplate={setAppliedTemplate}/>
+      {!question.disabledTooltip && <StyledFormInput type="text" name={question.key}/>}
     </BasicInput>
   );
 };
@@ -400,24 +313,22 @@ const HTSInput = ({question}) => {
     if (value && value.length > 1 && useSuggest === true) {
       clearTimeout(beneficiaryAutocompleteTimeout.current);
       const timeoutId = setTimeout(() =>
-          fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
+        fetch(`https://peaceful-journey-01245.herokuapp.com/https://hts.usitc.gov/api/search?query=${value}`, {
 
-            headers: {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-            },
-          }).then((response) => {
-            return response.json()
-          }).then((json) => {
-            console.log(json);
-            setSuggested(json.results);
-          }).catch(() => {
-            setSuggested([]);
-          }), 400);
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+          },
+        }).then((response) => {
+          return response.json()
+        }).then((json) => {
+          setSuggested(json.results);
+        }).catch(() => {
+          setSuggested([]);
+        }), 400);
       beneficiaryAutocompleteTimeout.current = timeoutId;
     }
   }
-
 
   const onSelect = async (hts, description) => {
     await setFieldValue("hts_code", hts);
@@ -436,17 +347,17 @@ const HTSInput = ({question}) => {
     <BasicInput question={question} disabled={question.disabledTooltip}>
       <AllCheckboxesWrapper>
         <Checkbox
-            style = {{color: config.accentColor}}
-            checked={useSuggest}
-            onChange={() => {
-              setUseSuggest(!useSuggest);
-              searchHTSCodes();
-            }}
-            name="suggestCheck"
+          style={{color: config.accentColor}}
+          checked={useSuggest}
+          onChange={() => {
+            setUseSuggest(!useSuggest);
+            searchHTSCodes();
+          }}
+          name="suggestCheck"
         />
-        <QuestionText style = {{paddingTop: 10}}>Suggest an HTS classification</QuestionText>
+        <QuestionText style={{paddingTop: 10}}>Suggest an HTS classification</QuestionText>
       </AllCheckboxesWrapper>
-      {useSuggest === true ? inputComponent :  <StyledFormInput type="text" name={question.key}/>}
+      {useSuggest === true ? inputComponent : <StyledFormInput type="text" name={question.key}/>}
     </BasicInput>
   );
 };
@@ -524,10 +435,11 @@ const CheckboxInput = ({question}) => {
 };
 
 const DocReqFieldWrapper = styled.div`
-  margin: 10px 0;
+  padding-top: 10px;
   display: flex;
   align-items: center;
   border-bottom: 1px solid #cdcdcd;
+  ${props => props.disabled && `background-color: ${disabledBackgroundColor};`}
   > :first-child {
     width: 130px;
     font-weight: 300;
@@ -545,7 +457,7 @@ const StyledDocReqField = styled(Field)`
   width: calc(100% - 130px);
   line-height: 1em;
   color: #000;
-  background-color: #fff;
+  background-color: ${props => props.disabled ? disabledBackgroundColor : '#fff'};
 `;
 
 const StyledDocReqDiv = styled.div`
@@ -569,10 +481,14 @@ const DocReqTitle = styled.h3`
 
 const CommonNestedTypeComponent = ({question, keyName}) => {
   const componentMap = {
-    text: <StyledDocReqField type={"text"} disabled={question.disabled === "True"} name={keyName}/>,
-    number: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
-    decimal: <StyledDocReqField type={"number"} disabled={question.disabled === "True"} name={keyName}/>,
-    date: <StyledDocReqField type={"date"} disabled={question.disabled === "True"} name={keyName}/>,
+    text: <StyledDocReqField type={"text"} disabled={question.disabled === "True" || question.disabledTooltip}
+                             name={keyName}/>,
+    number: <StyledDocReqField type={"number"} disabled={question.disabled === "True" || question.disabledTooltip}
+                               name={keyName}/>,
+    decimal: <StyledDocReqField type={"number"} disabled={question.disabled === "True" || question.disabledTooltip}
+                                name={keyName}/>,
+    date: <StyledDocReqField type={"date"} disabled={question.disabled === "True" || question.disabledTooltip}
+                             name={keyName}/>,
   };
   return componentMap[question.type];
 };
@@ -591,7 +507,7 @@ const ObjectNestedTypeComponent = ({question, value, setValue}) => {
   return componentMap[question.type];
 };
 
-const ObjectInput = ({question}) => {
+const ObjectInput = ({question, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate, bankId}) => {
   const [, meta, helpers] = useField(question.key);
   const {value} = meta;
   const {setValue} = helpers;
@@ -600,16 +516,154 @@ const ObjectInput = ({question}) => {
     <BasicInput question={question}>
       {!question.disabledTooltip && question.children.map(child => {
         const keyName = `${question.key}.${child.key}`;
+        let inputComponent = CommonNestedTypeComponent({question: child, keyName}) ||
+          ObjectNestedTypeComponent({question: child, value, setValue});
+        if (keyName === "beneficiary.name") {
+          inputComponent =
+            <BeneficiaryNameInput parent={question} child={child} status={status} setStatus={setStatus} lcApp={lcApp}
+                                  setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>;
+        } else if (keyName === "advising_bank.name") {
+          inputComponent = <AdvisingBankInput parent={question} child={child} bankId={bankId}/>;
+        }
         return (
-          <DocReqFieldWrapper key={keyName}>
-            <span>{child.questionText}{child.required ? <Asterisk> *</Asterisk> : null}</span>
-            {CommonNestedTypeComponent({question: child, keyName}) ||
-            ObjectNestedTypeComponent({question: child, value, setValue})}
+          <DocReqFieldWrapper key={keyName} disabled={child.disabledTooltip}>
+            <span>{child.questionText}{child.required && !child.disabledTooltip ? <Asterisk> *</Asterisk> : null}</span>
+            {inputComponent}
           </DocReqFieldWrapper>
         )
       })}
     </BasicInput>
   )
+};
+
+const AdvisingBankInput = ({parent, child, bankId}) => {
+  const {handleChange} = useFormikContext();
+  const [, meta, helpers] = useField(parent.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+  const autocompleteTimeout = useRef(null);
+  const [suggested, setSuggested] = useState([]);
+
+  const keyName = `${parent.key}.${child.key}`;
+
+  useEffect(() => {
+    clearTimeout(autocompleteTimeout.current);
+    const timeoutId = setTimeout(() =>
+      makeAPIRequest(`/bank/autocomplete/?string=${value.name}&exclude_ids=[${bankId}]`)
+      .then(suggested => setSuggested(suggested)), 400);
+    autocompleteTimeout.current = timeoutId;
+  }, [value]);
+
+  return (
+    <SearchableSelect
+      onSelect={item => setValue(
+        {...value, name: item.name, address: item.address, country: item.country, email: item.email})}
+      items={suggested}
+      questionKey={keyName}
+      handleChange={handleChange}
+    />
+  )
+};
+
+const BeneficiaryNameInput = ({parent, child, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
+  const autocompleteTimeout = useRef(null);
+  const [suggested, setSuggested] = useState([]);
+  const {handleChange} = useFormikContext();
+  const [, meta, helpers] = useField(parent.key);
+  const {value} = meta;
+  const {setValue} = helpers;
+
+  const keyName = `${parent.key}.${child.key}`;
+
+  const onBeneficiarySelect = async item => {
+    setValue({name: item.name, address: item.address, country: item.country})
+  };
+
+  useEffect(() => {
+    clearTimeout(autocompleteTimeout.current);
+    const timeoutId = setTimeout(() =>
+      makeAPIRequest(`/business/autocomplete/?string=${value.name}`)
+      .then(suggested => setSuggested(suggested)), 400);
+    autocompleteTimeout.current = timeoutId;
+  }, [value.name]);
+
+  return (
+    <React.Fragment>
+      <SuggestTemplates question={parent} keyName={keyName} status={status} appliedTemplate={appliedTemplate}
+                        lcApp={lcApp} setStatus={setStatus} setAppliedTemplate={setAppliedTemplate}/>
+      <SearchableSelect
+        onSelect={onBeneficiarySelect}
+        items={suggested}
+        questionKey={keyName}
+        handleChange={handleChange}
+      />
+    </React.Fragment>
+  )
+};
+
+const SuggestTemplates = ({question, keyName = question.key, status, setStatus, lcApp, setAppliedTemplate, appliedTemplate}) => {
+  const {values, setValues, initialValues} = useFormikContext();
+  const autofillTemplateTimeout = useRef();
+  const [, meta] = useField(question.key);
+  const {value} = meta;
+
+  useEffect(() => {
+    if (status.status !== "success" && !appliedTemplate && (keyName === "beneficiary.name" || keyName
+      === "purchased_item" || keyName === "applicant.country" || keyName === "advising_bank")) {
+      clearTimeout(autofillTemplateTimeout.current);
+      const timeoutId = setTimeout(() => {
+        const params = {};
+        if (values.beneficiary.name) {
+          params.beneficiary_name = values.beneficiary.name;
+        }
+        if (values.purchased_item) {
+          params.purchased_item = values.purchased_item;
+        }
+        const paramString = Object.entries(params).map(([key, value]) => `${key}=${value}`).join("&");
+        if (paramString) {
+          makeAPIRequest(`/lc/digital_app_templates/?${paramString}`).then(result => {
+            if (result.length) {
+              const Component = (
+                <div>
+                  <div style={{display: "flex"}}>
+                    <span style={{flex: 1}}/>
+                    <StyledIcon onClick={() => setStatus({status: null, message: ""})}
+                                icon={faTimes} style={{color: "black"}}/>
+                  </div>
+                  <div style={{color: "black"}}>Load Template with Similar Answers:</div>
+                  <div style={{paddingTop: 10}}>
+                    {result.map(template => (
+                      <div key={template.id} style={{paddingTop: 5}}>
+                        <ClickableText onClick={async () => {
+                          setStatus({status: null, message: ""});
+                          await loadTemplateAnswers({
+                            lcApp,
+                            selectedTemplate: template,
+                            values,
+                            initialValues,
+                            setValues,
+                            setAppliedTemplate,
+                            setStatus
+                          });
+                        }}>
+                          {template.templateName}
+                        </ClickableText></div>
+                    ))}
+                  </div>
+                </div>
+              );
+              setStatus({status: "info", message: Component});
+            } else {
+              setStatus({status: null, message: ""});
+            }
+          });
+        }
+      }, 500);
+      autofillTemplateTimeout.current = timeoutId;
+    }
+  }, [value]);
+
+  return null;
 };
 
 const ArrayNestedTypeComponent = ({question, parentQuestion, value, setValue, valueIndex, options}) => {
@@ -723,21 +777,37 @@ const contains = (option, answer) => {
 const markDisabled = async ({questions, values, setLCApp, validateForm}) => {
   let changed = false;
   const questionsCopy = questions.map(q => ({...q}));
-  questionsCopy.filter(q => q.disabled).forEach(q => {
-    const dependency = JSON.parse(q.disabled);
-    for (let option of dependency.answer) {
-      if (contains(option, values[dependency.key])) {
-        const parentQuestion = questions.find(potential => potential.key === dependency.key);
-        changed = changed || !q.disabledTooltip;
-        const message = (<span style={{color: "#58595A"}}>This question is redundant based on your earlier
-        answer to <ClickableText>'{parentQuestion.questionText}'</ClickableText></span>);
-        q.disabledTooltip = {text: message, parentKey: parentQuestion.key};
-        return;
+  questionsCopy.forEach(q => {
+    q.children.filter(childQ => childQ.disabled && childQ.disabled !== "True").forEach(childQ => {
+      const dependency = JSON.parse(childQ.disabled);
+      for (let option of dependency.answer) {
+        if (contains(option, values[q.key][dependency.key])) {
+          changed = changed || !childQ.disabledTooltip;
+          childQ.disabledTooltip = true;
+          return;
+        }
       }
-    }
-    if (q.disabledTooltip) {
-      q.disabledTooltip = undefined;
-      changed = true;
+      if (childQ.disabledTooltip) {
+        childQ.disabledTooltip = undefined;
+        changed = true;
+      }
+    });
+    if (q.disabled) {
+      const dependency = JSON.parse(q.disabled);
+      for (let option of dependency.answer) {
+        if (contains(option, values[dependency.key])) {
+          const parentQuestion = questions.find(potential => potential.key === dependency.key);
+          changed = changed || !q.disabledTooltip;
+          const message = (<span style={{color: "#58595A"}}>This question is redundant based on your earlier
+        answer to <ClickableText>'{parentQuestion.questionText}'</ClickableText></span>);
+          q.disabledTooltip = {text: message, parentKey: parentQuestion.key};
+          return;
+        }
+      }
+      if (q.disabledTooltip) {
+        q.disabledTooltip = undefined;
+        changed = true;
+      }
     }
   });
   if (changed) {
@@ -828,7 +898,8 @@ const TYPE_TO_COMPONENT = {
   checkbox: CheckboxInput,
   object: ObjectInput,
   array_of_objs: DocReqInput,
-  dropdown: DropdownInput
+  dropdown: DropdownInput,
+  multiple_choice_with_other: MultipleChoiceOtherInput
 };
 
 const createDefault = question => {
@@ -861,7 +932,8 @@ const TYPE_TO_DEFAULT = {
   checkbox: [],
   object: {},
   array_of_objs: [],
-  dropdown: ""
+  dropdown: "",
+  multiple_choice_with_other: ""
 };
 
 const REQUIRED_FIELD_MSG = "This field is required.";
@@ -878,13 +950,14 @@ const TYPE_TO_VALIDATION_SCHEMA = {
   date: date(),
   date_ship: date(),
   checkbox: array().of(string()),
-  dropdown: string()
+  dropdown: string(),
+  multiple_choice_with_other: string()
 };
 
 const createChildrenShape = question => {
   const shape = {};
   question.children.forEach(child => {
-    shape[child.key] = child.required ?
+    shape[child.key] = child.required && !child.disabledTooltip ?
       TYPE_TO_VALIDATION_SCHEMA[child.type].required(REQUIRED_FIELD_MSG) :
       TYPE_TO_VALIDATION_SCHEMA[child.type];
   });
@@ -916,7 +989,7 @@ const loadTemplateAnswers = async ({lcApp, selectedTemplate, values, initialValu
       questionType[questionKey] === "checkbox") {
       value = JSON.parse(value);
     }
-    if (initialValues[questionKey] !== undefined) {
+    if (initialValues[questionKey] !== undefined && !_.isEmpty(value)) {
       values[questionKey] = value;
     }
     template[key] = value;
@@ -994,8 +1067,8 @@ const SaveTemplate = ({setModal, values, lcApp, appliedTemplate, setStatus, setA
            selectDisabled={submitCount && saveTemplateError}
            onShow={() => {
              const fields = [];
-             if (values["beneficiary_name"]) {
-               fields.push(values["beneficiary_name"].trim());
+             if (values.beneficiary?.name) {
+               fields.push(values.beneficiary.name.trim());
              }
              if (values["purchased_item"]) {
                fields.push(values["purchased_item"].trim());
@@ -1164,10 +1237,12 @@ const BankLCAppPage = ({match}) => {
           initialValues = persistedLcApp;
         } else {
           json.forEach(q => {
-            if (user && q.key === 'applicant_name') {
-              initialValues[q.key] = user.business.name;
-            } else if (user && q.key === 'applicant_address') {
-              initialValues[q.key] = user.business.address;
+            if (user && q.key === 'applicant') {
+              initialValues[q.key] = {
+                name: user.business.name,
+                address: user.business.address,
+                country: user.business.country
+              };
             } else {
               initialValues[q.key] = createDefault(q);
             }
@@ -1193,10 +1268,12 @@ const BankLCAppPage = ({match}) => {
     });
     validationSchema = object().shape(schemaObj);
   }
+  console.log(lcApp);
 
   return <BasicLayout
     title={`LC Application ✏️`} isLoading={!lcApp} status={status} marginStyle={{marginBottom: 0, marginTop: 10}}>
-    {lcApp && (
+    {lcApp && lcApp.length === 0 && <p>This Bank is not set up yet to be an issuer</p>}
+    {lcApp && lcApp.length > 0 &&  (
       <Formik
         initialValues={initialValues}
         validationSchema={validationSchema}
@@ -1309,7 +1386,8 @@ const BankLCAppPage = ({match}) => {
                     const Component = TYPE_TO_COMPONENT[question.type];
                     return <Component
                       key={question.id} question={question} status={status} setStatus={setStatus} lcApp={lcApp}
-                      setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}/>;
+                      setAppliedTemplate={setAppliedTemplate} appliedTemplate={appliedTemplate}
+                      bankId={match.params.bankid}/>;
                   })}
                 <div style={{display: "flex", marginLeft: "150px", marginRight: "150px"}}>
                   <Button

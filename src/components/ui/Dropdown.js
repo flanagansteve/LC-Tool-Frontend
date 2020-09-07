@@ -40,6 +40,7 @@ export const Dropdown = ({ items, onChange, selectedIndex }) => {
             <div style={{borderRight: "1px solid #cdcdcd", padding: "10px", flex: 1, wordBreak: "break-word"}}>{items[selectedIndex]}</div>
             <div style={{width: "20px", alignSelf: "center", paddingLeft: "5px"}}>
               <FontAwesomeIcon
+                  style = {{cursor: "pointer"}}
                   icon={faChevronDown}
                   size="lg"
                   color="#000"
@@ -76,7 +77,7 @@ export const SearchableSelect = ({ items, onSelect, questionKey, handleChange })
     } else if (event.keyCode === 13 && highlightedItemIndex > -1) {
       event.preventDefault();
       setMenu(false);
-      onSelect(items[highlightedItemIndex]);
+      onSelect && onSelect(items[highlightedItemIndex]);
     }
   };
 
@@ -92,7 +93,7 @@ export const SearchableSelect = ({ items, onSelect, questionKey, handleChange })
 
   return (
       <OutsideAlerter style={{position: "relative", flex: 1, flexDirection: "column"}} onOutsideClick={() => setMenu(false)}>
-        <div style={{display: "flex"}} onClick={() => setMenu(!menu)}>
+        <div style={{display: "flex", paddingLeft: 10}} onClick={() => setMenu(!menu)}>
           <StyledFormInput autoComplete={"off"} onChange={onChange} type={"text"} name={questionKey} onKeyDown={onKeyDown}/>
         </div>
         {menu && <div style={{

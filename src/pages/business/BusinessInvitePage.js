@@ -73,7 +73,7 @@ const BusinessInvitePage = ({ history }) => {
         initialValues={{ email: '' }}
         onSubmit={(values, { setSubmitting }) => {
           setSubmitting(true);
-          makeAPIRequest(`/business/${user.employer}/invite_teammate/`, "POST", { "inviteeEmail": values.email }, true)
+          makeAPIRequest(`/business/${user.employer.id}/invite_teammate/`, "POST", { "inviteeEmail": values.email }, true)
             .then((response) => {
               if (response.status === 200) setStatus({
                 status: "success",
