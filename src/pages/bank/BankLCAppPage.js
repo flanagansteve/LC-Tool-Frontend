@@ -854,6 +854,7 @@ const TYPE_TO_DEFAULT = {
   number: 0,
   boolean: null,
   pay: null,
+  hts: "",
   radio: null,
   date: (new Date()).toISOString().slice(0, 10),
   date_ship: default_ship.toISOString().slice(0, 10),
